@@ -18,6 +18,8 @@ CREATE TABLE public.circles (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
     type TEXT,
+    creator_id TEXT REFERENCES public.members(id), -- ท้าวแชร์ (ใครเป็นคนสร้างวง)
+    line_group_url TEXT, -- ลิงก์กลุ่ม LINE สำหรับให้ลูกวงกดเข้าตาม
     total_amount NUMERIC NOT NULL,
     amount_per_hand NUMERIC NOT NULL,
     total_hands INTEGER NOT NULL,
