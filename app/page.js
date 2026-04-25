@@ -2,64 +2,48 @@
 
 import { useEffect, useState } from "react";
 import Script from "next/script";
+import Link from "next/link";
 
 export default function Home() {
   const [status, setStatus] = useState("⏳ กำลังเริ่มระบบ...");
-  const [statusColor, setStatusColor] = useState("text-primary");
   const [profile, setProfile] = useState(null);
-  const [logs, setLogs] = useState([]);
-
-  const addLog = (msg) => {
-    setLogs((prev) => [...prev, msg]);
-  };
+  const [dbUser, setDbUser] = useState(null);
+  const [isInitializing, setIsInitializing] = useState(true);
+  const [needsLogin, setNeedsLogin] = useState(false);
 
   useEffect(() => {
-    addLog("Component mounted.");
+    // Check if liff is already available on mount (in case it loaded fast)
     if (typeof window !== "undefined" && window.liff) {
-      addLog("liff already exists in window, initializing...");
       initLiff();
     }
   }, []);
 
   const handleScriptLoad = () => {
-    addLog("LIFF Script loaded.");
     if (window.liff) {
       initLiff();
-    } else {
-      addLog("LIFF window object is missing after load.");
     }
   };
 
   const initLiff = async () => {
     try {
-      addLog("Starting initLiff...");
       const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
-      addLog(`LIFF ID configured: ${liffId ? liffId : 'MISSING'}`);
       
       if (!liffId) {
-        setStatus("Error: LIFF ID is not defined in environment variables");
-        setStatusColor("text-danger");
+        setStatus("Error: LIFF ID is not setup");
+        setIsInitializing(false);
         return;
       }
 
       await window.liff.init({ liffId });
-      addLog("LIFF Init successful.");
-      setStatus("Init สำเร็จ! ตรวจสอบสถานะ...");
-      setStatusColor("text-success");
       
       if (!window.liff.isLoggedIn()) {
-        addLog("Not logged in. Waiting for user to click login.");
-        setStatus("กรุณากดปุ่มเพื่อเข้าสู่ระบบ");
-        setStatusColor("text-warning");
+        setNeedsLogin(true);
+        setIsInitializing(false);
         return;
       }
       
-      addLog("Logged in. Fetching profile...");
       const userProfile = await window.liff.getProfile();
       setProfile(userProfile);
-      setStatus("สวัสดีคุณ " + userProfile.displayName);
-      setStatusColor("text-success");
-      addLog("Profile fetched. Registering via API...");
 
       // Auto-register member
       const res = await fetch('/api/action', {
@@ -70,72 +54,111 @@ export default function Home() {
           name: userProfile.displayName,
           nickname: userProfile.displayName, // fallback
           line_id: userProfile.userId,
-          phone: '', // to be updated later
-          bank_account: '' // to be updated later
+          phone: '', 
+          bank_account: ''
         })
       });
       const resData = await res.json();
-      addLog(`API Response: ${JSON.stringify(resData)}`);
+      
+      if (resData.status === 'success') {
+        setDbUser(resData); // Holds id, role, member_status etc.
+      }
+      
+      setIsInitializing(false);
 
     } catch (err) {
-      addLog(`Error in initLiff: ${err.message || err.toString()}`);
       setStatus("Error: " + (err.message || err.toString()));
-      setStatusColor("text-danger");
+      setIsInitializing(false);
     }
   };
 
   const handleLoginClick = () => {
-    addLog("User clicked Login button.");
     if (window.liff) {
       window.liff.login();
     }
   };
 
-  return (
-    <div style={{ padding: "20px", fontFamily: "Kanit, sans-serif", textAlign: "center", minHeight: "100vh" }}>
-      <Script 
-        src="https://static.line-scdn.net/liff/edge/versions/2.22.1/sdk.js" 
-        onLoad={handleScriptLoad}
-        onError={() => addLog("Failed to load LIFF script.")}
-      />
-      
-      <h3>🔧 ระบบ Green Share Dashboard</h3>
-      
-      <div style={{ background: "#f8f9fa", padding: "15px", borderRadius: "10px", margin: "20px 0", border: "1px solid #ddd" }}>
-        <p>สถานะปัจจุบัน:</p>
-        <h2 className={statusColor} style={{ color: statusColor === "text-danger" ? "red" : statusColor === "text-warning" ? "orange" : statusColor === "text-success" ? "green" : "blue", wordBreak: "break-word", fontSize: "1.2rem" }}>
-          {status}
-        </h2>
-        
-        {status === "กรุณากดปุ่มเพื่อเข้าสู่ระบบ" && (
-          <button 
-            onClick={handleLoginClick} 
-            style={{ marginTop: "15px", padding: "10px 20px", fontSize: "16px", background: "#00B900", color: "#fff", border: "none", borderRadius: "5px", cursor: "pointer", fontWeight: "bold" }}
-          >
-            เข้าสู่ระบบด้วย LINE
-          </button>
-        )}
-        {profile && (
-          <div style={{ marginTop: "20px" }}>
-            <img src={profile.pictureUrl} alt="Profile" style={{ width: "80px", borderRadius: "50%" }} />
-          </div>
-        )}
+  if (isInitializing) {
+    return (
+      <div style={{ padding: "20px", minHeight: "100vh" }}>
+        <Script 
+          src="https://static.line-scdn.net/liff/edge/versions/2.22.1/sdk.js" 
+          onLoad={handleScriptLoad}
+        />
+        <div className="loader-container">
+          <div className="loader"></div>
+          <h3 style={{ color: "var(--primary)" }}>กำลังโหลดข้อมูล...</h3>
+        </div>
       </div>
-      
-      <div id="fallback" style={{ marginTop: "20px" }}>
-        <a 
-          href={`https://liff.line.me/${process.env.NEXT_PUBLIC_LIFF_ID}`} 
-          style={{ display: "block", padding: "10px", background: "#ffc107", color: "#000", textDecoration: "none", borderRadius: "5px" }}
+    );
+  }
+
+  if (needsLogin) {
+    return (
+      <div style={{ padding: "20px", textAlign: "center", minHeight: "100vh", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+        <h2 style={{ marginBottom: "20px", color: "var(--foreground)" }}>ยินดีต้อนรับสู่ Green Share</h2>
+        <p style={{ marginBottom: "30px", color: "#64748b" }}>กรุณาเข้าสู่ระบบผ่านแอป LINE เพื่อดำเนินการต่อ</p>
+        <button 
+          onClick={handleLoginClick} 
+          style={{ padding: "16px 32px", fontSize: "18px", background: "#00B900", color: "#fff", border: "none", borderRadius: "12px", cursor: "pointer", fontWeight: "bold", width: "100%", maxWidth: "300px", margin: "0 auto", boxShadow: "0 4px 14px rgba(0, 185, 0, 0.4)" }}
         >
-          🔄 ลองกดโหลดใหม่ หรือเปิดผ่านแอป LINE
-        </a>
+          💬 เข้าสู่ระบบด้วย LINE
+        </button>
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div style={{ padding: "20px", textAlign: "center" }}>
+        <h3 style={{ color: "var(--danger)" }}>{status}</h3>
+      </div>
+    );
+  }
+
+  const isAdmin = dbUser?.role === 'SUPERADMIN' || dbUser?.role === 'ADMIN';
+
+  return (
+    <div style={{ padding: "24px 16px", minHeight: "100vh", maxWidth: "600px", margin: "0 auto" }}>
+      {/* Header Profile Section */}
+      <div className="glass-panel" style={{ textAlign: "center", marginBottom: "32px" }}>
+        <div style={{ position: "relative", display: "inline-block" }}>
+          <img 
+            src={profile.pictureUrl} 
+            alt="Profile" 
+            style={{ width: "90px", height: "90px", borderRadius: "50%", border: "4px solid white", boxShadow: "0 4px 12px rgba(0,0,0,0.1)", objectFit: "cover" }} 
+          />
+        </div>
+        <h2 style={{ marginTop: "12px", fontSize: "1.5rem", fontWeight: "600" }}>{profile.displayName}</h2>
+        
+        <div className="badge-collection">
+          {isAdmin && <span className="badge badge-admin">SUPERADMIN</span>}
+          <span className="badge badge-active">{dbUser?.member_status || "ACTIVE"}</span>
+        </div>
       </div>
 
-      <div style={{ marginTop: "40px", textAlign: "left", background: "#333", color: "#0f0", padding: "10px", borderRadius: "5px", fontFamily: "monospace", fontSize: "0.8rem", overflowY: "auto", maxHeight: "300px" }}>
-        <p>Debug Logs:</p>
-        {logs.map((log, i) => (
-          <div key={i}>&gt; {log}</div>
-        ))}
+      <h3 style={{ fontSize: "1.2rem", marginBottom: "16px", paddingLeft: "4px", color: "#475569" }}>เมนูหลัก</h3>
+      
+      {/* Main Action Grid */}
+      <div className="dashboard-grid">
+        <Link href="/circles/create" className="btn-dashboard btn-green">
+          <span className="icon">💰</span>
+          <span>ตั้งวงแชร์</span>
+        </Link>
+        <Link href="/circles/view" className="btn-dashboard btn-blue">
+          <span className="icon">📊</span>
+          <span>ดูวงแชร์</span>
+        </Link>
+        <Link href="/profile" className="btn-dashboard btn-orange">
+          <span className="icon">📝</span>
+          <span>แก้ไขข้อมูล</span>
+        </Link>
+        {isAdmin && (
+          <Link href="/admin" className="btn-dashboard btn-purple">
+            <span className="icon">🔧</span>
+            <span>ระบบหลังบ้าน</span>
+          </Link>
+        )}
       </div>
     </div>
   );
