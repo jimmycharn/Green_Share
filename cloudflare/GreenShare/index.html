@@ -1,0 +1,2607 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Green Share App</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <style>
+        body {
+            background: #f0f2f5;
+            font-family: 'Kanit', sans-serif;
+            padding-bottom: 80px;
+        }
+
+        .page-section {
+            display: none;
+        }
+
+        .active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .menu-btn {
+            height: 100px;
+            font-size: 1.2rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 15px;
+            border: none;
+            transition: 0.2s;
+        }
+
+        .menu-btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-admin {
+            background: #6f42c1;
+            color: white;
+        }
+
+        .circle-card {
+            border-radius: 20px;
+            border: none;
+            background: linear-gradient(145deg, #ffffff 0%, #f8f9ff 100%);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .circle-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #00c853, #69f0ae);
+        }
+
+        .circle-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+        }
+
+        .circle-card:active {
+            transform: scale(0.98);
+        }
+
+        .circle-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 20px 20px 0 20px;
+        }
+
+        .circle-card-body {
+            padding: 16px 20px 20px 20px;
+        }
+
+        .circle-name {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 8px;
+        }
+
+        .circle-type-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            color: #2e7d32;
+        }
+
+        .circle-amount-box {
+            text-align: right;
+        }
+
+        .circle-amount-label {
+            font-size: 0.65rem;
+            color: #9e9e9e;
+            text-transform: uppercase;
+        }
+
+        .circle-amount {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #00c853 0%, #1de9b6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .circle-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        @media (max-width: 480px) {
+            .circle-stats {
+                grid-template-columns: 1fr 1fr;
+                gap: 6px;
+            }
+
+            .circle-stats .circle-stat-item:last-child {
+                grid-column: span 2;
+            }
+
+            .circle-card-header {
+                padding: 14px 14px 0 14px;
+            }
+
+            .circle-card-body {
+                padding: 12px 14px 14px 14px;
+            }
+
+            .circle-name {
+                font-size: 1.1rem;
+            }
+
+            .circle-amount {
+                font-size: 1.25rem;
+            }
+
+            .circle-type-badge {
+                font-size: 0.7rem;
+                padding: 4px 10px;
+            }
+        }
+
+        .circle-stat-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 10px;
+            background: #f5f7fa;
+            border-radius: 10px;
+        }
+
+        .circle-stat-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            flex-shrink: 0;
+        }
+
+        .circle-stat-icon.hands {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        }
+
+        .circle-stat-icon.date {
+            background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+        }
+
+        .circle-stat-icon.perpay {
+            background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+        }
+
+        .circle-stat-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .circle-stat-value {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #1a1a2e;
+            white-space: nowrap;
+        }
+
+        .circle-stat-label {
+            font-size: 0.55rem;
+            color: #9e9e9e;
+            white-space: nowrap;
+        }
+
+        .page-title-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .page-title {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: #1a1a2e;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .page-title-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .empty-state-text {
+            color: #9e9e9e;
+            font-size: 1.1rem;
+        }
+
+        .bid-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .bid-item:first-child {
+            background-color: #fff9c4;
+            font-weight: bold;
+            border-radius: 10px 10px 0 0;
+            color: #d32f2f;
+        }
+
+        .hand-slot {
+            border: 2px dashed #ccc;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            margin-bottom: 10px;
+            background: white;
+            transition: 0.2s;
+        }
+
+        .hand-slot.taken {
+            border: 2px solid #198754;
+            background: #e8f5e9;
+        }
+
+        .hand-slot.empty:active {
+            background: #e9ecef;
+            transform: scale(0.98);
+        }
+
+        .hand-slot .slot-num {
+            font-weight: bold;
+            color: #aaa;
+            font-size: 0.8rem;
+        }
+
+        .hand-slot.taken .slot-num {
+            color: #198754;
+        }
+
+        .status-badge {
+            font-size: 0.8rem;
+            padding: 3px 8px;
+            border-radius: 10px;
+        }
+
+        .status-PENDING {
+            background: #ffc107;
+            color: #000;
+        }
+
+        .status-ACTIVE {
+            background: #198754;
+            color: #fff;
+        }
+
+        .status-BLOCKED {
+            background: #dc3545;
+            color: #fff;
+        }
+
+        /* Role Badges */
+        .role-badge {
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .role-SUPERADMIN {
+            background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%);
+            color: #000;
+            box-shadow: 0 2px 8px rgba(255, 215, 0, 0.4);
+        }
+
+        .role-ADMIN {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+        }
+
+        .role-MANAGER {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: #fff;
+        }
+
+        .role-MEMBER {
+            background: #e9ecef;
+            color: #495057;
+        }
+
+        /* Admin Member Card */
+        .admin-member-card {
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            border: 1px solid #f0f0f0;
+            transition: all 0.2s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .admin-member-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .admin-member-card.superadmin {
+            border-left: 4px solid #ffd700;
+        }
+
+        .admin-member-card.admin {
+            border-left: 4px solid #764ba2;
+        }
+
+        .admin-member-card.manager {
+            border-left: 4px solid #38ef7d;
+        }
+
+        .admin-member-card.member {
+            border-left: 4px solid #dee2e6;
+        }
+
+        .member-info {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .member-name {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+
+        .member-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-change-role {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%);
+            border: 1px solid #dee2e6;
+            color: #495057;
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+
+        .btn-change-role:hover {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: transparent;
+        }
+
+        /* Admin Page Title */
+        .admin-page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 16px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 16px;
+            color: white;
+        }
+
+        .admin-page-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .admin-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .admin-tab-btn {
+            flex: 1;
+            padding: 12px 16px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            background: #f5f7fa;
+            color: #6c757d;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .admin-tab-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .admin-search-box {
+            position: relative;
+            margin-bottom: 16px;
+        }
+
+        .admin-search-box input {
+            width: 100%;
+            padding: 14px 20px 14px 50px;
+            border: 2px solid #f0f0f0;
+            border-radius: 14px;
+            font-size: 0.95rem;
+            transition: border-color 0.2s;
+        }
+
+        .admin-search-box input:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+
+        .admin-search-box .search-icon {
+            position: absolute;
+            left: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9e9e9e;
+        }
+
+        /* ========== MODERN THEME CSS ========== */
+
+        /* Modern Menu Buttons */
+        .menu-btn-modern {
+            height: 110px;
+            font-size: 1.1rem;
+            border-radius: 20px;
+            background: white;
+            border: none;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .menu-btn-modern::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+        }
+
+        .menu-btn-modern:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.12);
+        }
+
+        .menu-btn-modern:active {
+            transform: scale(0.98);
+        }
+
+        .menu-btn-modern.green::before {
+            background: linear-gradient(90deg, #00c853, #69f0ae);
+        }
+
+        .menu-btn-modern.blue::before {
+            background: linear-gradient(90deg, #2196f3, #03a9f4);
+        }
+
+        .menu-btn-modern.purple::before {
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+
+        .menu-btn-modern.orange::before {
+            background: linear-gradient(90deg, #ff9800, #ffc107);
+        }
+
+        .menu-btn-icon {
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+
+        .menu-btn-text {
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+
+        /* Modern Form Inputs */
+        .form-modern {
+            background: white;
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        .form-modern .form-label {
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .form-modern .form-control {
+            border: 2px solid #f0f0f0;
+            border-radius: 12px;
+            padding: 14px 16px;
+            font-size: 1rem;
+            transition: all 0.2s;
+            background: #fafafa;
+        }
+
+        .form-modern .form-control:focus {
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-modern .form-select {
+            border: 2px solid #f0f0f0;
+            border-radius: 12px;
+            padding: 14px 16px;
+            background: #fafafa;
+        }
+
+        .form-modern .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+
+        /* Modern Buttons */
+        .btn-modern {
+            padding: 14px 28px;
+            border-radius: 14px;
+            font-weight: 700;
+            border: none;
+            transition: all 0.3s;
+        }
+
+        .btn-modern-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-modern-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+            color: white;
+        }
+
+        .btn-modern-success {
+            background: linear-gradient(135deg, #00c853 0%, #69f0ae 100%);
+            color: white;
+        }
+
+        .btn-modern-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 200, 83, 0.4);
+            color: white;
+        }
+
+        .btn-modern-danger {
+            background: linear-gradient(135deg, #ff5252 0%, #ff1744 100%);
+            color: white;
+        }
+
+        .btn-modern-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 82, 82, 0.4);
+            color: white;
+        }
+
+        .btn-modern-outline {
+            background: white;
+            border: 2px solid #e0e0e0;
+            color: #666;
+        }
+
+        .btn-modern-outline:hover {
+            border-color: #667eea;
+            color: #667eea;
+            background: #f8f9ff;
+        }
+
+        /* Modern Tabs - Premium Light Theme */
+        .tabs-modern {
+            display: flex;
+            gap: 8px;
+            background: linear-gradient(135deg, #9aaaf3 0%, #7d59a1 100%);
+            padding: 8px;
+            border-radius: 18px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(133, 151, 233, 0.3);
+        }
+
+        .tab-modern {
+            flex: 1;
+            padding: 14px 20px;
+            border: none;
+            border-radius: 14px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            background: transparent;
+            color: #ffffff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .tab-modern.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .tab-modern:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.85);
+        }
+
+        /* Modern Profile Header */
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            margin-bottom: 24px;
+            color: white;
+        }
+
+        .profile-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            object-fit: cover;
+        }
+
+        .profile-name {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .profile-badges {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .profile-badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Modern Detail Card */
+        .detail-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            padding: 24px;
+            color: white;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.3);
+        }
+
+        .detail-card-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .detail-card-amount {
+            font-size: 2.2rem;
+            font-weight: 800;
+        }
+
+        .detail-card-info {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 16px;
+            opacity: 0.9;
+            font-size: 0.85rem;
+        }
+
+        /* Modern List Items */
+        .list-item-modern {
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s;
+        }
+
+        .list-item-modern:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        /* Page Header */
+        .page-header-modern {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .page-header-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .page-header-icon {
+            width: 46px;
+            height: 46px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            color: white;
+        }
+
+        .page-header-text h4 {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: #1a1a2e;
+            margin: 0;
+        }
+
+        .page-header-text small {
+            font-size: 0.75rem;
+            color: #9e9e9e;
+        }
+    </style>
+
+    <script>
+        window.onerror = function (msg, url, line) {
+            // ป้องกัน Alert รบกวน User (แต่ Log ไว้ดูได้)
+            console.error(`Error: ${msg} at line ${line}`);
+            return false;
+        };
+    </script>
+</head>
+
+<body>
+
+    <div class="container mt-3" style="max-width: 600px;">
+
+        <div id="headerProfile" class="d-flex align-items-center mb-4 page-section">
+            <img id="profileImg" src=""
+                style="width: 50px; height: 50px; border-radius: 50%; margin-right: 10px; background: #ddd;">
+            <div>
+                <h5 id="displayName" class="mb-0 fw-bold">กำลังโหลด...</h5>
+                <div class="small">
+                    <span id="userRoleBadge" class="badge bg-secondary">...</span>
+                    <span id="userStatusBadge" class="status-badge status-PENDING ms-1">...</span>
+                    <span id="userId" style="display:none;"></span>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-menu" class="page-section active">
+            <div id="loadingSpinner" class="text-center mt-5">
+                <div class="spinner-border text-primary"></div><br>กำลังเข้าสู่ระบบ...
+            </div>
+
+            <div id="menuContent" style="display:none;">
+                <div id="pendingAlert" class="alert alert-warning shadow-sm" style="display:none;">
+                    ⏳ รอแอดมินอนุมัติบัญชี
+                </div>
+
+                <div class="row g-2">
+                    <div class="col-6" id="btnCreateCircleContainer" style="display:none;">
+                        <button onclick="navTo('page-create-circle')" class="btn w-100 menu-btn-modern green">
+                            <div class="menu-btn-icon">💰</div>
+                            <div class="menu-btn-text">ตั้งวงแชร์</div>
+                        </button>
+                    </div>
+                    <div class="col-6" id="btnViewTableContainer">
+                        <button onclick="openCircleList()" class="btn w-100 menu-btn-modern blue">
+                            <div class="menu-btn-icon">📊</div>
+                            <div class="menu-btn-text">ดูวงแชร์</div>
+                        </button>
+                    </div>
+                    <div class="col-6">
+                        <button onclick="openEditProfile()" class="btn w-100 menu-btn-modern orange">
+                            <div class="menu-btn-icon">📝</div>
+                            <div class="menu-btn-text">แก้ไขข้อมูล</div>
+                        </button>
+                    </div>
+                    <div class="col-6" id="btnAdminPanelContainer" style="display:none;">
+                        <button onclick="openAdminPanel()" class="btn w-100 menu-btn-modern purple">
+                            <div class="menu-btn-icon">🔧</div>
+                            <div class="menu-btn-text">ระบบหลังบ้าน</div>
+                            <span id="pendingCountBadge"
+                                class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                                style="display:none;">0</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-admin" class="page-section">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="mb-0">🔧 ผู้ดูแลระบบ</h4>
+                <button onclick="navTo('page-menu')" class="btn btn-sm btn-outline-secondary">กลับ</button>
+            </div>
+            <div class="tabs-modern">
+                <button class="tab-modern active" id="btn-tab-approve" onclick="switchAdminTab('approve')">⏳
+                    รออนุมัติ</button>
+                <button class="tab-modern" id="btn-tab-users" onclick="switchAdminTab('users')">👥
+                    จัดการสิทธิ์</button>
+                <button class="tab-modern" id="btn-tab-banks" onclick="switchAdminTab('banks')" style="display:none;">🏦
+                    บัญชีธนาคาร</button>
+            </div>
+            <div id="admin-content-approve" class="admin-tab-content">
+                <div id="pendingListContainer" class="pb-5">
+                    <div class="text-center mt-5 text-muted">กำลังโหลด...</div>
+                </div>
+            </div>
+            <div id="admin-content-users" class="admin-tab-content" style="display:none;">
+                <div class="admin-search-box"><i class="fas fa-search search-icon"></i><input type="text"
+                        id="adminSearchInput" class="form-control" placeholder="ค้นหาชื่อ..."
+                        onkeyup="filterUserList()"></div>
+                <div id="allMembersListContainer" class="pb-5">
+                    <div class="text-center mt-5 text-muted">กดแท็บด้านบนเพื่อโหลด</div>
+                </div>
+            </div>
+            <div id="admin-content-banks" class="admin-tab-content" style="display:none;">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="mb-0">📋 รายการบัญชีธนาคาร</h6>
+                    <button onclick="promptAddBank()" class="btn btn-sm btn-success"><i
+                            class="fas fa-plus me-1"></i>เพิ่มบัญชี</button>
+                </div>
+                <div id="bankListContainer" class="pb-5">
+                    <div class="text-center mt-5 text-muted">กำลังโหลด...</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-list-circle" class="page-section">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="mb-0">📊 ตารางวงแชร์</h4>
+                <button onclick="navTo('page-menu')" class="btn btn-sm btn-outline-secondary">กลับ</button>
+            </div>
+            <div id="circleContainer" class="pb-5"></div>
+        </div>
+
+        <div id="page-circle-detail" class="page-section">
+            <!-- Header: Dropdown (left) | Back button (right) -->
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <select id="periodSelector"
+                    class="form-select form-select-sm fw-bold bg-warning border-warning text-dark" style="width: auto;"
+                    onchange="changePeriod(this.value)">
+                    <option value="">โหลด...</option>
+                </select>
+                <button onclick="navTo('page-list-circle')" class="btn btn-sm btn-outline-secondary">⬅ ย้อนกลับ</button>
+            </div>
+
+            <!-- Blue Card with Circle Name -->
+            <div class="card p-3 mb-3 shadow-sm"
+                style="background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%); border-radius: 16px; color: white;">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                        <h4 class="fw-bold mb-1" id="detailTitle" style="font-size: 1.3rem;">รายละเอียด</h4>
+                        <span id="detailType" class="badge bg-white text-primary" style="font-size: 0.75rem;">...</span>
+                    </div>
+                    <span id="periodStatusBadge" class="badge bg-dark bg-opacity-25">...</span>
+                </div>
+                <h2 class="mt-2 mb-0 fw-bold" id="detailTotal" style="font-size: 2rem;">0 ฿</h2>
+                <div class="d-flex justify-content-between mt-3 small opacity-75">
+                    <span id="detailHand">ส่งงวดละ ...</span>
+                    <span id="detailPeriod">งวดที่ ...</span>
+                    <span id="detailStart">เริ่ม ...</span>
+                </div>
+            </div>
+
+            <ul class="nav nav-pills mb-3 nav-fill bg-white p-1 rounded border">
+                <li class="nav-item"><button class="nav-link active" id="tab-bid" onclick="switchTab('bid')">🔨
+                        เปีย</button>
+                <li class="nav-item"><button class="nav-link" id="tab-pay" onclick="switchTab('pay')">🧾
+                        ส่งสลิป</button>
+                <li class="nav-item"><button class="nav-link" id="tab-member" onclick="switchTab('member')">👥
+                        สมาชิก</button>
+        </div>
+
+        <div id="content-bid" style="display:none;">
+            <div id="admin-controls-area"></div>
+
+            <div id="singleBidButtonContainer" style="display:none;">
+                <button type="button" class="btn btn-primary w-100 mb-3 py-2 fw-bold shadow-sm"
+                    onclick="checkAndOpenBidModal()">
+                    <i class="fas fa-gavel"></i> เปีย (เสนอราคา)
+                </button>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-end mb-2 px-1">
+                <span class="text-muted small">รายชื่อลูกวง (<span id="totalPlayersBadge">0</span>)</span>
+                <small class="text-muted" style="font-size: 0.7rem;">(มือที่เปียได้จะขึ้นสีแดง)</small>
+            </div>
+            <div id="bidTableContainer" class="list-group shadow-sm">
+            </div>
+        </div>
+
+        <div id="content-pay" style="display:none;">
+            <div id="payAllSection" style="display:none;"></div>
+
+            <div id="bankAccountSection" class="card p-3 mb-3 shadow-sm border-0"
+                style="background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); border-radius: 16px;">
+                <div class="d-flex align-items-center gap-3">
+                    <div
+                        style="width: 45px; height: 45px; background: #2e7d32; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                        <span style="font-size: 1.5rem;">🏦</span>
+                    </div>
+                    <div>
+                        <div class="small text-muted">โอนเงินเข้าบัญชี</div>
+                        <div id="defaultBankDisplay" class="fw-bold text-success" style="font-size: 1.1rem;">
+                            กำลังโหลด...
+                        </div>
+                    </div>
+                    <button onclick="copyDefaultBank()" class="btn btn-sm btn-outline-success ms-auto">📋
+                        คัดลอก</button>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-end mb-2 px-1 mt-3">
+                <span class="text-muted small">สถานะรายมือ (Section 2)</span>
+                <small class="text-muted" style="font-size: 0.7rem;">คลิกที่ชื่อเพื่อดูสลิป</small>
+            </div>
+            <div id="payTableContainer" class="list-group shadow-sm"></div>
+
+            <div id="adminCheckSlipBtn" style="display:none;" class="mt-3">
+                <button onclick="openPaymentChecklist()" class="btn btn-outline-dark w-100">👮 เมนูตรวจสลิป
+                    (Admin)</button>
+            </div>
+        </div>
+
+        <div id="content-member" style="display:none;">
+            <div id="slotsContainer" class="pb-5"></div>
+        </div>
+    </div>
+
+    <div id="page-register" class="page-section">
+        <div class="container mt-3" style="max-width: 600px;">
+            <!-- Premium Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div class="d-flex align-items-center gap-2">
+                    <div
+                        style="width: 45px; height: 45px; background: linear-gradient(135deg, #1976d2, #42a5f5); border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(25,118,210,0.3);">
+                        <span style="font-size: 1.5rem;">📝</span>
+                    </div>
+                    <div>
+                        <h5 class="mb-0 fw-bold" style="color: #1a1a2e;" id="registerTitle">แก้ไขข้อมูลส่วนตัว</h5>
+                        <small class="text-muted">อัปเดตข้อมูลของคุณ</small>
+                    </div>
+                </div>
+                <button type="button" onclick="navTo('page-menu')"
+                    class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+                    <i class="fas fa-arrow-left me-1"></i> กลับ
+                </button>
+            </div>
+
+            <!-- Premium Card Form -->
+            <div class="card border-0 shadow-lg" style="border-radius: 20px; overflow: hidden;">
+                <!-- Decorative Header -->
+                <div
+                    style="background: linear-gradient(135deg, #1976d2 0%, #42a5f5 50%, #64b5f6 100%); padding: 20px 25px; color: white;">
+                    <div class="d-flex align-items-center gap-3">
+                        <div
+                            style="width: 50px; height: 50px; background: rgba(255,255,255,0.2); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-user-edit fa-lg"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold" style="font-size: 1.1rem;">ข้อมูลส่วนตัว</div>
+                            <small style="opacity: 0.9;">กรอกข้อมูลให้ครบถ้วน</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-4" style="background: linear-gradient(180deg, #f8f9fa 0%, #ffffff 100%);">
+                    <form id="registerForm" onsubmit="submitForm(event, 'register')">
+                        <!-- Name -->
+                        <div class="mb-4">
+                            <label class="form-label small fw-bold text-muted mb-1">
+                                <i class="fas fa-user me-1 text-primary"></i> ชื่อจริง
+                            </label>
+                            <input type="text" name="name" class="form-control form-control-lg"
+                                placeholder="เช่น สมชาย ใจดี" required
+                                style="border-radius: 12px; border: 2px solid #e0e0e0; padding: 14px 18px;">
+                        </div>
+
+                        <!-- Nickname -->
+                        <div class="mb-4">
+                            <label class="form-label small fw-bold text-muted mb-1">
+                                <i class="fas fa-smile me-1 text-warning"></i> ชื่อเล่น
+                            </label>
+                            <input type="text" name="nickname" class="form-control form-control-lg"
+                                placeholder="เช่น ชาย, น้อง" required
+                                style="border-radius: 12px; border: 2px solid #e0e0e0; padding: 14px 18px;">
+                        </div>
+
+                        <!-- Phone -->
+                        <div class="mb-4">
+                            <label class="form-label small fw-bold text-muted mb-1">
+                                <i class="fas fa-phone me-1 text-success"></i> เบอร์โทร
+                            </label>
+                            <input type="tel" name="phone" class="form-control form-control-lg" placeholder="0812345678"
+                                required style="border-radius: 12px; border: 2px solid #e0e0e0; padding: 14px 18px;">
+                        </div>
+
+                        <!-- Bank Account -->
+                        <div class="mb-4">
+                            <label class="form-label small fw-bold text-muted mb-1">
+                                <i class="fas fa-university me-1 text-info"></i> เลขบัญชีธนาคาร
+                            </label>
+                            <input type="text" name="bank_account" class="form-control form-control-lg"
+                                placeholder="กสิกร 123-4-56789-0" required
+                                style="border-radius: 12px; border: 2px solid #e0e0e0; padding: 14px 18px;">
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button type="submit" class="btn btn-lg w-100 text-white fw-bold" id="registerSubmitBtn"
+                            style="background: linear-gradient(135deg, #1976d2, #42a5f5); border: none; border-radius: 14px; padding: 16px; box-shadow: 0 6px 20px rgba(25,118,210,0.35);">
+                            <i class="fas fa-save me-2"></i> บันทึกการแก้ไข
+                        </button>
+
+                        <!-- Info Note -->
+                        <div class="text-center mt-3">
+                            <small class="text-muted">
+                                <i class="fas fa-shield-alt me-1"></i> ข้อมูลของคุณจะถูกเก็บรักษาอย่างปลอดภัย
+                            </small>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <div id="page-create-circle" class="page-section">
+        <div class="container mt-3" style="max-width: 600px;">
+            <!-- Premium Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div class="d-flex align-items-center gap-2">
+                    <div
+                        style="width: 45px; height: 45px; background: linear-gradient(135deg, #2e7d32, #66bb6a); border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(46,125,50,0.3);">
+                        <span style="font-size: 1.5rem;">💰</span>
+                    </div>
+                    <div>
+                        <h5 class="mb-0 fw-bold" style="color: #1a1a2e;">ตั้งวงแชร์ใหม่</h5>
+                        <small class="text-muted">สร้างวงแชร์ของคุณ</small>
+                    </div>
+                </div>
+                <button type="button" onclick="navTo('page-menu')"
+                    class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+                    <i class="fas fa-arrow-left me-1"></i> กลับ
+                </button>
+            </div>
+
+            <!-- Premium Card Form -->
+            <div class="card border-0 shadow-lg" style="border-radius: 20px; overflow: hidden;">
+                <!-- Decorative Header -->
+                <div
+                    style="background: linear-gradient(135deg, #2e7d32 0%, #4caf50 50%, #66bb6a 100%); padding: 20px 25px; color: white;">
+                    <div class="d-flex align-items-center gap-3">
+                        <div
+                            style="width: 50px; height: 50px; background: rgba(255,255,255,0.2); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-users fa-lg"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold" style="font-size: 1.1rem;">รายละเอียดวงแชร์</div>
+                            <small style="opacity: 0.9;">กรอกข้อมูลให้ครบถ้วน</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-4" style="background: linear-gradient(180deg, #f8f9fa 0%, #ffffff 100%);">
+                    <form onsubmit="submitForm(event, 'create_circle')">
+                        <!-- Circle Name -->
+                        <div class="mb-4">
+                            <label class="form-label small fw-bold text-muted mb-1">
+                                <i class="fas fa-tag me-1 text-success"></i> ชื่อวง
+                            </label>
+                            <input type="text" name="circle_name" class="form-control form-control-lg"
+                                placeholder="เช่น วงเพื่อนซี้, วงครอบครัว" required
+                                style="border-radius: 12px; border: 2px solid #e0e0e0; padding: 14px 18px;">
+                        </div>
+
+                        <!-- Type Select -->
+                        <div class="mb-4">
+                            <label class="form-label small fw-bold text-muted mb-1">
+                                <i class="fas fa-cog me-1 text-success"></i> ประเภทวง
+                            </label>
+                            <select name="type" class="form-select form-select-lg"
+                                style="border-radius: 12px; border: 2px solid #e0e0e0; padding: 14px 18px; cursor: pointer;">
+                                <option value="บิงโก">🎯 บิงโก (ประมูลราคาสูงสุด)</option>
+                                <option value="ขั้นบันได">📊 ขั้นบันได (ดอกคงที่)</option>
+                            </select>
+                        </div>
+
+                        <!-- Amount Row -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-6">
+                                <label class="form-label small fw-bold text-muted mb-1">
+                                    <i class="fas fa-coins me-1 text-warning"></i> งวดละ (บาท)
+                                </label>
+                                <input type="number" name="amount_per_hand" class="form-control form-control-lg"
+                                    placeholder="1,000" required
+                                    style="border-radius: 12px; border: 2px solid #e0e0e0; padding: 14px 18px;">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small fw-bold text-muted mb-1">
+                                    <i class="fas fa-hand-paper me-1 text-info"></i> จำนวนมือ
+                                </label>
+                                <input type="number" name="total_hands" class="form-control form-control-lg"
+                                    placeholder="10" required
+                                    style="border-radius: 12px; border: 2px solid #e0e0e0; padding: 14px 18px;">
+                            </div>
+                        </div>
+
+                        <!-- Total Amount -->
+                        <div class="mb-4">
+                            <label class="form-label small fw-bold text-muted mb-1">
+                                <i class="fas fa-calculator me-1 text-primary"></i> ยอดรวมทั้งหมด
+                            </label>
+                            <input type="text" name="total_amount" class="form-control form-control-lg"
+                                placeholder="คำนวณอัตโนมัติ" readonly
+                                style="border-radius: 12px; border: 2px dashed #bdbdbd; padding: 14px 18px; background: #fafafa; color: #2e7d32; font-weight: bold;">
+                        </div>
+
+                        <!-- Start Date -->
+                        <div class="mb-4">
+                            <label class="form-label small fw-bold text-muted mb-1">
+                                <i class="fas fa-calendar-alt me-1 text-danger"></i> วันเริ่มต้น
+                            </label>
+                            <input type="date" name="start_date" class="form-control form-control-lg" required
+                                style="border-radius: 12px; border: 2px solid #e0e0e0; padding: 14px 18px;">
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button type="submit" class="btn btn-lg w-100 text-white fw-bold"
+                            style="background: linear-gradient(135deg, #2e7d32, #4caf50); border: none; border-radius: 14px; padding: 16px; box-shadow: 0 6px 20px rgba(46,125,50,0.35);">
+                            <i class="fas fa-plus-circle me-2"></i> สร้างวงแชร์
+                        </button>
+
+                        <!-- Info Note -->
+                        <div class="text-center mt-3">
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i> หลังสร้างวงแล้วสามารถเพิ่มสมาชิกได้ทันที
+                            </small>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div style="display:none;">
+        <div id="payFormTemplate">
+            <form>
+                <div class="mb-3">
+                    <label class="form-label small text-muted">ยอดที่ต้องโอน (บาท)</label>
+                    <input type="number" id="payAmount" class="form-control fw-bold text-success" required readonly>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small text-muted">แนบหลักฐานการโอน</label>
+                    <input type="file" id="payFile" class="form-control" accept="image/*" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small text-muted">บันทึกช่วยจำ</label>
+                    <input type="text" id="payNote" class="form-control" placeholder="เช่น ฝากจ่าย..">
+                </div>
+                <input type="hidden" id="payHandTarget">
+                <button type="submit" class="btn btn-success w-100 py-2 fw-bold shadow-sm">🚀 ยืนยันการโอนเงิน</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal fade" id="bidModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">🔨 เสนอราคาเปีย</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="bidLoading" class="text-center py-3">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <p class="mt-2">กำลังตรวจสอบคิวเปีย...</p>
+                    </div>
+                    <div id="bidForm" style="display:none;">
+                        <div class="alert alert-info">
+                            <div class="small">กำลังเปียให้:</div>
+                            <strong><span style="font-size: 1.2rem;">👋 มือที่ <span
+                                        id="targetHandNo">...</span></span></strong>
+                        </div>
+                        <div class="mb-3">
+                            <label>จำนวนเงินที่เสนอ (บาท)</label>
+                            <input type="number" id="bidAmountInput"
+                                class="form-control form-control-lg fw-bold text-center text-primary" placeholder="0">
+                            <input type="hidden" id="hiddenHandNo">
+                        </div>
+                    </div>
+                    <div id="bidError" class="alert alert-danger" style="display:none;"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
+                    <button type="button" class="btn btn-primary fw-bold" id="btnConfirmBid"
+                        onclick="submitConfirmBid()" disabled>ยืนยันการเปีย</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+
+    <script>
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxsjyk2K98BBEU38eh6_WIDvMwVJtGQh77DGcmmTc4kYAx0CMDojyX6jNPCGnkHGNbVoQ/exec";
+        const LIFF_ID = "2008736378-RGBZI6ZX";
+
+        // Global Variables
+        let currentUserMemberId = null;
+        let currentUserRole = 'MEMBER';
+        let currentUserStatus = 'PENDING';
+        let currentUserProfile = {};
+        let currentCircleId = null;
+        let currentCircleData = null;
+
+        // 🔴 Separate Period Variables
+        let activePeriod = 1; // งวดจริงปัจจุบัน
+        let viewingPeriod = 1; // งวดที่เลือกดูใน Dropdown
+
+        let allActiveMembersCache = [];
+        let adminMembersCache = [];
+
+        function showLoading(msg = '') {
+            Swal.fire({
+                html: `<div style="margin-top: 10px; color: #fff; font-size: 1rem; font-weight: 300;">${msg}</div>`,
+                background: 'transparent', backdrop: 'rgba(0, 0, 0, 0.6)',
+                showConfirmButton: false, allowOutsideClick: false, allowEscapeKey: false,
+                width: 300, padding: 0, didOpen: () => { Swal.showLoading(); }
+            });
+        }
+        function closeLoading() { Swal.close(); }
+
+        // --- MAIN SYSTEM ---
+        async function main() {
+            try {
+                if (SCRIPT_URL.includes("xxxx")) throw new Error("กรุณาใส่ SCRIPT_URL");
+                await liff.init({ liffId: LIFF_ID });
+                if (!liff.isLoggedIn()) { liff.login(); return; }
+                const p = await liff.getProfile();
+
+                const imgEl = document.getElementById('profileImg');
+                if (imgEl) imgEl.src = p.pictureUrl;
+                document.getElementById('displayName').innerText = p.displayName;
+                document.getElementById('userId').innerText = p.userId;
+
+                const d = await callBackend({ action: 'register', line_id: p.userId, name: p.displayName });
+                if (d.status !== 'success') throw new Error(d.message);
+
+                currentUserMemberId = d.id;
+                currentUserRole = d.role || 'MEMBER';
+                currentUserStatus = d.member_status || 'PENDING';
+                currentUserProfile = { name: d.name, nickname: d.nickname, phone: d.phone, bank_account: d.bank_account };
+                if (d.name) document.getElementById('displayName').innerText = d.name;
+
+                document.getElementById('loadingSpinner').style.display = 'none';
+                document.getElementById('menuContent').style.display = 'block';
+                document.getElementById('headerProfile').classList.add('active');
+                updateUIBasedOnRole();
+            } catch (err) { Swal.fire({ icon: 'error', title: 'Error', text: err.message }); }
+        }
+
+        async function callBackend(payload) {
+            const formData = new URLSearchParams(); for (const key in payload) { formData.append(key, payload[key]); }
+            const res = await fetch(SCRIPT_URL, { method: 'POST', body: formData });
+            if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
+            return await res.json();
+        }
+
+        function navTo(pageId) {
+            document.querySelectorAll('.page-section').forEach(el => el.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            // Reset content tabs when leaving circle detail
+            if (pageId !== 'page-circle-detail') {
+                const cm = document.getElementById('content-member');
+                const cb = document.getElementById('content-bid');
+                const cp = document.getElementById('content-pay');
+                if (cm) cm.style.display = 'none';
+                if (cb) cb.style.display = 'none';
+                if (cp) cp.style.display = 'none';
+                // Clear dynamic containers
+                const sc = document.getElementById('slotsContainer'); if (sc) sc.innerHTML = '';
+                const bt = document.getElementById('bidTableContainer'); if (bt) bt.innerHTML = '';
+                const pt = document.getElementById('payTableContainer'); if (pt) pt.innerHTML = '';
+            }
+        }
+        function switchTab(t) {
+            localStorage.setItem('activeCircleTab', t);
+            ['bid', 'pay', 'member'].forEach(x => {
+                const el = document.getElementById('content-' + x);
+                if (el) el.style.display = (x === t) ? 'block' : 'none';
+                const btn = document.getElementById('tab-' + x);
+                if (btn) btn.className = (x === t) ? 'nav-link active' : 'nav-link';
+            });
+            if (t === 'bid') checkAdminControls();
+            if (t === 'pay') loadDefaultBankAccount();
+        }
+
+        function updateUIBasedOnRole() {
+            const r = document.getElementById('userRoleBadge'); if (r) { r.innerText = currentUserRole; r.className = 'badge ' + (currentUserRole === 'MEMBER' ? 'bg-secondary' : 'btn-admin'); }
+            const s = document.getElementById('userStatusBadge'); if (s) { s.innerText = currentUserStatus; s.className = 'status-badge status-' + currentUserStatus; }
+
+            const isPending = (currentUserStatus === 'PENDING' || currentUserStatus === 'BLOCKED');
+            if (document.getElementById('pendingAlert')) document.getElementById('pendingAlert').style.display = isPending ? 'block' : 'none';
+            if (document.getElementById('btnViewTableContainer')) document.getElementById('btnViewTableContainer').style.display = !isPending ? 'block' : 'none';
+
+            const isAdmin = ['SUPERADMIN', 'ADMIN', 'MANAGER'].includes(currentUserRole);
+            if (document.getElementById('btnCreateCircleContainer')) document.getElementById('btnCreateCircleContainer').style.display = (['SUPERADMIN', 'ADMIN'].includes(currentUserRole) && !isPending) ? 'block' : 'none';
+            if (document.getElementById('btnAdminPanelContainer')) document.getElementById('btnAdminPanelContainer').style.display = (isAdmin && !isPending) ? 'block' : 'none';
+            if (document.getElementById('adminCheckSlipBtn')) document.getElementById('adminCheckSlipBtn').style.display = (isAdmin && !isPending) ? 'block' : 'none';
+        }
+
+        // --- CORE: CIRCLE ---
+        function openCircleList() {
+            showLoading('กำลังโหลดวงแชร์...'); navTo('page-list-circle');
+            callBackend({ action: 'get_circles', member_id: currentUserMemberId, caller_role: currentUserRole }).then(d => {
+                closeLoading();
+                if (d.status === 'success') renderCircles(d.circles); else document.getElementById('circleContainer').innerHTML = d.message;
+            });
+        }
+        function renderCircles(circles) {
+            const container = document.getElementById('circleContainer');
+            if (circles.length === 0) {
+                container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📭</div><div class="empty-state-text">ยังไม่มีวงแชร์ที่เปิดรับสมาชิก</div></div>`;
+                return;
+            }
+            let html = '';
+            circles.forEach((c, index) => {
+                let date = new Date(c.start).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
+                let perHand = parseInt(c.hand).toLocaleString();
+                let statusIcon = c.status === 'OPEN' ? '🟢' : '🔒';
+                let statusText = c.status === 'OPEN' ? 'เปิดรับ' : 'ปิดแล้ว';
+
+                html += `
+                    <div class="circle-card" onclick="openCircleDetail('${c.id}')" style="animation: fadeIn 0.4s ease ${index * 0.08}s both;">
+                        <div class="circle-card-header">
+                            <div>
+                                <div class="circle-name">${c.name}</div>
+                                <span class="circle-type-badge">${statusIcon} ${c.type} • ${statusText}</span>
+                            </div>
+                            <div class="circle-amount-box">
+                                <div class="circle-amount-label">ยอดรวม</div>
+                                <div class="circle-amount">${parseInt(c.total).toLocaleString()} ฿</div>
+                            </div>
+                        </div>
+                        <div class="circle-card-body">
+                            <div class="circle-stats">
+                                <div class="circle-stat-item">
+                                    <div class="circle-stat-icon hands">🤝</div>
+                                    <div class="circle-stat-text">
+                                        <span class="circle-stat-value">${c.hands_count} มือ</span>
+                                        <span class="circle-stat-label">จำนวนมือ</span>
+                                    </div>
+                                </div>
+                                <div class="circle-stat-item">
+                                    <div class="circle-stat-icon perpay">💰</div>
+                                    <div class="circle-stat-text">
+                                        <span class="circle-stat-value">${perHand} ฿</span>
+                                        <span class="circle-stat-label">ต่องวด</span>
+                                    </div>
+                                </div>
+                                <div class="circle-stat-item">
+                                    <div class="circle-stat-icon date">📅</div>
+                                    <div class="circle-stat-text">
+                                        <span class="circle-stat-value">${date}</span>
+                                        <span class="circle-stat-label">วันเริ่มต้น</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function openCircleDetail(id, viewPeriod = null) {
+            showLoading('กำลังโหลดข้อมูล...'); currentCircleId = id; navTo('page-circle-detail');
+            // Restore saved tab or default to 'bid'
+            const savedTab = localStorage.getItem('activeCircleTab') || 'bid';
+            if (viewPeriod === null) switchTab(savedTab); checkAdminControls();
+
+            callBackend({ action: 'get_circle_detail', circle_id: id, member_id: currentUserMemberId, view_period: viewPeriod }).then(d => {
+                closeLoading();
+                if (d.status === 'success') {
+                    const c = d.circle; currentCircleData = c;
+
+                    // 🔴 Set Both Periods
+                    activePeriod = c.current_period;
+                    viewingPeriod = c.view_period || c.current_period;
+
+                    renderPeriodSelector(c.current_period, viewingPeriod, c.total_hands);
+                    renderHeader(c);
+
+                    renderBidTable(d.players, d.bids, c, d.admin_payments || {}, d.winner_history || {});
+                    renderPayTable(d.players, d.slips, c, d.admin_bank);
+                    renderSlots(c, d.players);
+                    checkAdminControls();
+                } else { Swal.fire('Error', d.message, 'error'); }
+            }).catch(e => {
+                closeLoading(); Swal.fire('Error', e.message, 'error');
+            });
+        }
+
+        function changePeriod(period) { if (!currentCircleId) return; openCircleDetail(currentCircleId, period); }
+
+        function renderHeader(c) {
+            document.getElementById('detailTitle').innerText = c.name; document.getElementById('detailType').innerText = c.type; document.getElementById('detailPeriod').innerText = c.current_period ? 'งวดที่ ' + c.current_period : '-';
+            document.getElementById('detailTotal').innerText = (c.total ? parseInt(c.total).toLocaleString() : '0') + ' ฿'; document.getElementById('detailHand').innerText = 'ส่งงวดละ ' + (c.hand ? parseInt(c.hand).toLocaleString() : '0') + ' ฿'; document.getElementById('detailStart').innerText = 'เริ่ม ' + (c.start ? new Date(c.start).toLocaleDateString('th-TH') : '-');
+            let badge = document.getElementById('periodStatusBadge'); if (c.view_period < c.current_period) { badge.innerText = "🔒 ปิดงวดแล้ว"; badge.className = "badge bg-secondary"; } else if (c.view_period === c.current_period) { badge.innerText = "🟢 กำลังดำเนินการ"; badge.className = "badge bg-success"; } else { badge.innerText = "⏳ ยังไม่ถึง"; badge.className = "badge bg-light text-dark border"; }
+        }
+        function renderPeriodSelector(currentP, viewP, totalHands) { const sel = document.getElementById('periodSelector'); sel.innerHTML = ''; for (let i = 1; i <= totalHands; i++) { let text = `งวดที่ ${i}`; if (i === currentP) text += " (ปัจจุบัน)"; else if (i < currentP) text += " (จบแล้ว)"; else text += " (อนาคต)"; let opt = document.createElement('option'); opt.value = i; opt.innerText = text; if (i === viewP) opt.selected = true; sel.appendChild(opt); } if (viewP < currentP) { sel.className = "form-select form-select-sm fw-bold bg-secondary text-white border-secondary"; } else if (viewP === currentP) { sel.className = "form-select form-select-sm fw-bold bg-warning text-dark border-warning"; } else { sel.className = "form-select form-select-sm fw-bold bg-light text-muted border-secondary"; } }
+
+        // --- PAYMENT (Fixed & Safe) ---
+        function renderPayTable(players, slipsList, circle, adminBank) {
+            const bankEl = document.getElementById('adminBankDisplay');
+            if (bankEl) bankEl.innerText = adminBank || "ไม่ระบุ";
+
+            const container = document.getElementById('payTableContainer');
+            const summaryBox = document.getElementById('payAllSection');
+            if (container) container.innerHTML = '';
+            if (summaryBox) { summaryBox.innerHTML = ''; summaryBox.style.display = 'none'; }
+
+            if (!players || !container) return;
+
+            const slipMap = {};
+            if (Array.isArray(slipsList)) slipsList.forEach(s => { slipMap[s.member_id + '_' + s.hand_no] = s; });
+
+            let myUnpaidCount = 0; let myTotalOwed = 0;
+            const isAdmin = ['SUPERADMIN', 'ADMIN'].includes(currentUserRole);
+
+            container.innerHTML = players.map(p => {
+                let isMe = (p.member_id === currentUserMemberId);
+                let slip = slipMap[p.member_id + '_' + p.hand_no] || slipMap[p.member_id + '_ALL'];
+                let statusBadge = '<span class="badge bg-secondary">ยังไม่ส่ง</span>';
+                let actionBtn = '<span class="text-muted small">รอส่ง</span>';
+                let rowBorder = '';
+
+                let amountToPay = p.must_pay || parseInt(circle.hand);
+
+                if (slip) {
+                    if (slip.status === 'APPROVED') {
+                        statusBadge = '<span class="badge bg-success">✅ จ่ายแล้ว</span>';
+                        actionBtn = isAdmin ? '<span class="text-success fw-bold">ได้รับชำระแล้ว</span>' : '<span class="text-success fw-bold">เรียบร้อย</span>';
+                    } else {
+                        statusBadge = '<span class="badge bg-warning text-dark">⏳ รอตรวจ</span>';
+                        if (isAdmin) {
+                            actionBtn = `<button onclick="openAdminSlipCheck('${slip.id}','${slip.image_url || ''}','${slip.is_cash || ''}')" class="btn btn-sm btn-warning fw-bold"><i class="fas fa-search me-1"></i>ตรวจสอบ</button>`;
+                        } else if (isMe) {
+                            actionBtn = '<span class="text-warning fw-bold">รอแอดมิน</span>';
+                        } else {
+                            actionBtn = '<span class="text-warning fw-bold">รอตรวจ</span>';
+                        }
+                    }
+                } else {
+                    if (isMe) {
+                        statusBadge = '<span class="badge bg-danger bg-opacity-10 text-danger">❌ ค้างจ่าย</span>';
+                        actionBtn = `<button onclick="openPayModal(${amountToPay}, '${p.hand_no}')" class="btn btn-sm btn-success fw-bold">💸 จ่าย</button>`;
+                        rowBorder = 'border-danger border-2';
+                        myUnpaidCount++; myTotalOwed += amountToPay;
+                    }
+                }
+
+                return `
+                    <div class="list-group-item d-flex justify-content-between align-items-center p-3 ${rowBorder}">
+                        <div>
+                            <div class="fw-bold">${p.name} <small class="text-muted">(มือ ${p.hand_no})</small></div>
+                            <div>${statusBadge}</div>
+                        </div>
+                        <div class="text-end">
+                            <div class="small text-muted mb-1">ยอด: ${parseInt(amountToPay).toLocaleString()}</div>
+                            ${actionBtn}
+                        </div>
+                    </div>`;
+            }).join('');
+
+            if (myUnpaidCount > 1 && summaryBox) {
+                summaryBox.style.display = 'block';
+                summaryBox.innerHTML = `<div class="alert alert-danger shadow-sm border-danger"><div class="d-flex justify-content-between align-items-center"><div><h5 class="mb-0 fw-bold text-danger">ค้างจ่าย ${myUnpaidCount} มือ</h5><small>รวม ${myTotalOwed.toLocaleString()} บาท</small></div><button onclick="openPayModal(${myTotalOwed}, 'ALL')" class="btn btn-danger fw-bold">🚀 จ่ายรวบยอด</button></div></div>`;
+            }
+        }
+
+        // --- แก้ไข: เพิ่มปุ่ม "จ่ายเงินสด" ใน Modal ---
+        function openPayModal(amount, handTarget) {
+            document.getElementById('payAmount').value = amount;
+            document.getElementById('payHandTarget').value = handTarget;
+
+            // แก้ไข HTML ใน Modal: เพิ่มปุ่มจ่ายสด
+            const formHtml = `
+                <form>
+                    <div class="text-center mb-4">
+                        <div class="d-inline-flex align-items-center justify-content-center mb-2" 
+                             style="width:70px; height:70px; border-radius:50%; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); box-shadow: 0 6px 15px rgba(40,167,69,0.25);">
+                            <span style="font-size: 1.8rem;">💰</span>
+                        </div>
+                        <input type="number" id="payAmount" class="form-control-plaintext text-center fw-bold text-success" 
+                               style="font-size: 2rem; border:none; background:transparent;" readonly>
+                        <small class="text-muted">บาท</small>
+                    </div>
+                    
+                    <div class="d-flex justify-content-center gap-2 mb-4">
+                        <button type="button" id="btn-transfer" class="btn btn-success px-4 py-2 rounded-pill" onclick="togglePayMode('transfer')">
+                            📱 โอนเงิน
+                        </button>
+                        <button type="button" id="btn-cash" class="btn btn-outline-secondary px-4 py-2 rounded-pill" onclick="togglePayMode('cash')">
+                            💵 เงินสด
+                        </button>
+                    </div>
+
+                    <div id="content-transfer" class="mb-3">
+                        <label class="form-label text-muted small mb-2">📸 แนบสลิปโอนเงิน</label>
+                        <div class="rounded-3 p-3 text-center" style="border: 2px dashed #dee2e6; background: #f8f9fa;">
+                            <input type="file" id="payFile" class="form-control border-0 bg-transparent" accept="image/*" style="cursor:pointer;">
+                        </div>
+                    </div>
+
+                    <div id="content-cash" style="display:none;" class="mb-3">
+                        <div class="text-center p-4 rounded-3" style="background: linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%);">
+                            <div style="font-size: 2.5rem;">🤝</div>
+                            <div class="fw-bold text-dark mt-2">ยื่นเงินสดให้ท้าวแชร์</div>
+                            <small class="text-muted">กรุณาแจ้งท้าวแชร์เพื่อยืนยัน</small>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <input type="text" id="payNote" class="form-control form-control-lg rounded-3" 
+                               placeholder="✍️ บันทึกช่วยจำ (ถ้ามี)" style="border: 1px solid #e0e0e0;">
+                    </div>
+                    
+                    <input type="hidden" id="payHandTarget">
+                    <input type="hidden" id="payMode" value="transfer"> 
+
+                    <button type="submit" class="btn btn-success w-100 py-3 rounded-3 fw-bold shadow-sm" 
+                            style="font-size: 1.1rem; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border: none;">
+                        ✅ ยืนยันชำระเงิน
+                    </button>
+                </form>
+            `;
+
+            Swal.fire({
+                title: '💳 แจ้งชำระเงิน',
+                html: formHtml,
+                showConfirmButton: false,
+                showCloseButton: true,
+                width: 420,
+                didOpen: () => {
+                    const f = Swal.getPopup().querySelector('form');
+                    f.querySelector('#payAmount').value = amount;
+                    f.addEventListener('submit', submitSlip);
+                }
+            });
+        }
+
+        // ฟังก์ชันช่วยสลับโหมด (ใส่เพิ่มเข้าไปใน script ได้เลย)
+        function togglePayMode(mode) {
+            document.getElementById('payMode').value = mode;
+            if (mode === 'transfer') {
+                document.getElementById('content-transfer').style.display = 'block';
+                document.getElementById('content-cash').style.display = 'none';
+                document.getElementById('btn-transfer').className = 'btn btn-success px-4 py-2 rounded-pill';
+                document.getElementById('btn-cash').className = 'btn btn-outline-secondary px-4 py-2 rounded-pill';
+            } else {
+                document.getElementById('content-transfer').style.display = 'none';
+                document.getElementById('content-cash').style.display = 'block';
+                document.getElementById('btn-transfer').className = 'btn btn-outline-secondary px-4 py-2 rounded-pill';
+                document.getElementById('btn-cash').className = 'btn btn-success px-4 py-2 rounded-pill';
+            }
+        }
+
+        // --- แก้ไข: ส่งข้อมูลตามโหมดที่เลือก ---
+        function submitSlip(e) {
+            e.preventDefault();
+            const popup = Swal.getPopup();
+            const mode = document.getElementById('payMode').value;
+            const amount = popup.querySelector('#payAmount').value;
+            const note = popup.querySelector('#payNote').value;
+            const handTarget = document.getElementById('payHandTarget').value;
+
+            // กรณีโอนเงิน: ต้องแนบสลิป
+            if (mode === 'transfer') {
+                const file = popup.querySelector('#payFile').files[0];
+                if (!file) return Swal.fire('กรุณาแนบสลิป');
+
+                showLoading('กำลังอัปโหลดสลิป...');
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = function () {
+                    callBackend({
+                        action: 'upload_slip',
+                        circle_id: currentCircleId,
+                        member_id: currentUserMemberId,
+                        period: viewingPeriod, // ใช้งวดที่ดูอยู่
+                        amount: amount,
+                        image: reader.result,
+                        note: note,
+                        hand_no: handTarget,
+                        is_cash: 'false' // ไม่ใช่เงินสด
+                    }).then(handleSlipResponse);
+                }
+            }
+            // กรณีเงินสด: ไม่ต้องแนบรูป
+            else {
+                showLoading('กำลังบันทึก...');
+                callBackend({
+                    action: 'upload_slip',
+                    circle_id: currentCircleId,
+                    member_id: currentUserMemberId,
+                    period: viewingPeriod, // ใช้งวดที่ดูอยู่
+                    amount: amount,
+                    image: '', // ไม่ส่งรูป
+                    note: note,
+                    hand_no: handTarget,
+                    is_cash: 'true' // แจ้งว่าเป็นเงินสด
+                }).then(handleSlipResponse);
+            }
+        }
+
+        // ฟังก์ชันช่วยจัดการผลลัพธ์ (จะได้ไม่ต้องเขียนซ้ำ)
+        function handleSlipResponse(d) {
+            closeLoading();
+            Swal.close();
+            if (d.status === 'success') {
+                Swal.fire('สำเร็จ', 'บันทึกรายการเรียบร้อย รอแอดมินตรวจสอบ', 'success');
+                openCircleDetail(currentCircleId, viewingPeriod);
+            } else {
+                Swal.fire('Error', d.message, 'error');
+            }
+        }
+
+        function copyBankAcc() { const el = document.getElementById('adminBankDisplay'); if (el) { navigator.clipboard.writeText(el.innerText.split('(')[0].trim().replace(/-/g, '')); Swal.fire({ icon: 'success', title: 'คัดลอกแล้ว', showConfirmButton: false, timer: 1000 }); } }
+
+        // --- ADMIN SLIP CHECK (Fixed) ---
+        function openPaymentChecklist() {
+            showLoading('กำลังโหลด...');
+            callBackend({ action: 'get_payment_checklist', circle_id: currentCircleId, caller_role: currentUserRole }).then(d => {
+                closeLoading();
+                if (d.status === 'success') {
+                    renderPaymentChecklistModal(d.checklist || []);
+                } else { Swal.fire('Error', d.message, 'error'); }
+            }).catch(e => { closeLoading(); Swal.fire('Error', e.message, 'error'); });
+        }
+
+        function renderPaymentChecklistModal(list) {
+            if (!list || list.length === 0) { Swal.fire({ title: '👮 ตรวจสลิป', text: 'ไม่มีรายการรอตรวจสอบ', icon: 'success' }); return; }
+
+            let html = `<div class="text-start"><p class="text-muted small mb-2">พบ ${list.length} รายการ (รวมทุกงวด)</p>`;
+            list.forEach(p => {
+                let periodBadge = `<span class="badge bg-primary">งวด ${p.period}</span>`;
+                let handBadge = p.hand_no === 'ALL' ? 'ทุกมือ' : `มือ ${p.hand_no}`;
+                let actionBtn = `<button onclick="doApprove('${p.slip_row}', '${p.period}', '${p.name}')" class="btn btn-success btn-sm w-100">✅ อนุมัติ</button>`;
+                let slipImg = p.url ? `<a href="${p.url}" target="_blank"><img src="${p.url}" style="width:50px;height:50px;border-radius:5px;object-fit:cover;border:1px solid #ccc;"></a>` : `<div style="width:50px;height:50px;background:#eee;border-radius:5px;"></div>`;
+
+                html += `<div class="card mb-2 p-2 shadow-sm border-0"><div class="d-flex align-items-center justify-content-between"><div class="d-flex align-items-center gap-2">${slipImg}<div><div class="fw-bold text-truncate" style="max-width:150px;">${p.name}</div><div class="small">${periodBadge} <span class="text-muted">| ${handBadge}</span></div><div class="fw-bold text-success small">ยอด ${parseInt(p.amount).toLocaleString()} บ.</div></div></div><div style="width: 80px; text-align:right;">${actionBtn}</div></div></div>`;
+            });
+            Swal.fire({ title: '👮 รายการรออนุมัติ', html: html + '</div>', width: 600, showConfirmButton: false, showCloseButton: true });
+        }
+
+        // --- Admin Slip Check from Pay Table ---
+        function openAdminSlipCheck(slipId, imageUrl, isCash) {
+            let imgHtml = '';
+            if (isCash === 'true') {
+                imgHtml = '<div class="alert alert-warning"><i class="fas fa-money-bill-wave me-2"></i>ชำระเป็นเงินสด</div>';
+            } else if (imageUrl) {
+                let thumbUrl = imageUrl.includes('drive.google.com') ? imageUrl.replace('/view', '/preview').replace('file/d/', 'thumbnail?id=').replace('/view?usp=sharing', '') : imageUrl;
+                if (imageUrl.includes('id=')) thumbUrl = 'https://drive.google.com/thumbnail?id=' + imageUrl.split('id=')[1].split('&')[0];
+                imgHtml = `<a href="${imageUrl}" target="_blank"><img src="${thumbUrl}" style="max-width:100%;max-height:200px;border-radius:8px;cursor:pointer;"></a>`;
+            }
+
+            Swal.fire({
+                title: '🔍 ตรวจสอบสลิป',
+                html: `<div class="text-center mb-3">${imgHtml}</div>`,
+                showCancelButton: true,
+                showDenyButton: true,
+                confirmButtonText: '✅ อนุมัติ',
+                denyButtonText: '❌ ไม่ถูกต้อง',
+                cancelButtonText: 'ปิด',
+                confirmButtonColor: '#198754',
+                denyButtonColor: '#dc3545'
+            }).then(result => {
+                if (result.isConfirmed) {
+                    showLoading('กำลังอนุมัติ...');
+                    callBackend({ action: 'approve_slip', slip_id: slipId, caller_role: currentUserRole }).then(d => {
+                        closeLoading();
+                        if (d.status === 'success') {
+                            Swal.fire('สำเร็จ', 'อนุมัติสลิปเรียบร้อย', 'success');
+                            openCircleDetail(currentCircleId, viewingPeriod);
+                        } else { Swal.fire('Error', d.message, 'error'); }
+                    });
+                } else if (result.isDenied) {
+                    showLoading('กำลังปฏิเสธ...');
+                    callBackend({ action: 'reject_slip', slip_id: slipId, caller_role: currentUserRole }).then(d => {
+                        closeLoading();
+                        if (d.status === 'success') {
+                            Swal.fire('ปฏิเสธแล้ว', 'ลบสลิปเรียบร้อย สมาชิกต้องส่งใหม่', 'info');
+                            openCircleDetail(currentCircleId, viewingPeriod);
+                        } else { Swal.fire('Error', d.message, 'error'); }
+                    });
+                }
+            });
+        }
+
+        // 🎲 สุ่มคนเปีย
+        async function randomSelectBidder() {
+            const result = await Swal.fire({
+                title: '🎲 สุ่มคนเปีย?',
+                html: `<p>ระบบจะสุ่มเลือกคนที่ยังไม่ได้เปีย<br>และให้จ่ายดอกขั้นต่ำอัตโนมัติ</p>`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: '🎲 สุ่มเลย!',
+                cancelButtonText: 'ยกเลิก',
+                confirmButtonColor: '#6f42c1'
+            });
+
+            if (result.isConfirmed) {
+                showLoading('กำลังสุ่ม...');
+                const res = await callBackend({
+                    action: 'random_select_bidder',
+                    caller_role: currentUserRole,
+                    circle_id: currentCircleId,
+                    period: viewingPeriod
+                });
+                closeLoading();
+
+                if (res.status === 'success') {
+                    await Swal.fire({
+                        icon: 'success',
+                        title: '🎉 สุ่มได้แล้ว!',
+                        html: `<b>${res.selected.name}</b> (มือ ${res.selected.hand_no})<br>ดอก: ${res.message.split('ดอก')[1]}`,
+                        confirmButtonColor: '#198754'
+                    });
+                    openCircleDetail(currentCircleId, viewingPeriod);
+                } else {
+                    Swal.fire('Error', res.message, 'error');
+                }
+            }
+        }
+
+        // ⚙️ แก้ไข Settings ของวง
+        async function openCircleSettings() {
+            const circle = currentCircleData;
+            if (!circle) return Swal.fire('Error', 'ไม่พบข้อมูลวง', 'error');
+
+            const isAutoMode = circle.close_mode === 'AUTO';
+
+            const { value: formValues } = await Swal.fire({
+                title: '⚙️ ตั้งค่าวงแชร์',
+                html: `
+                    <div class="text-start">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">⏰ เวลาเปิดประมูล</label>
+                            <input type="time" id="swal-bid-start" class="form-control" value="${circle.bid_start_time || '12:00'}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">⏰ เวลาปิดประมูล</label>
+                            <input type="time" id="swal-bid-end" class="form-control" value="${circle.bid_end_time || '18:00'}">
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <label class="form-label fw-bold">💰 ดอกต่ำสุด</label>
+                                <input type="number" id="swal-min-bid" class="form-control" value="${circle.min_bid || 0}" min="0">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label fw-bold">💰 ดอกสูงสุด</label>
+                                <input type="number" id="swal-max-bid" class="form-control" value="${circle.max_bid || 500}" min="0">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">🔔 แจ้งเตือนก่อน (ชม.)</label>
+                            <input type="number" id="swal-notify-hours" class="form-control" value="${circle.notify_hours || 24}" min="1">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">🔒 โหมดปิดงวด</label>
+                            <select id="swal-close-mode" class="form-select" onchange="toggleAutoAction()">
+                                <option value="MANUAL" ${circle.close_mode === 'MANUAL' ? 'selected' : ''}>Admin ปิดเอง</option>
+                                <option value="AUTO" ${circle.close_mode === 'AUTO' ? 'selected' : ''}>ปิดอัตโนมัติ</option>
+                            </select>
+                        </div>
+                        <div class="mb-3" id="auto-action-section" style="display: ${isAutoMode ? 'block' : 'none'};">
+                            <label class="form-label fw-bold">🎲 เมื่อไม่มีคนเปีย</label>
+                            <select id="swal-auto-action" class="form-select">
+                                <option value="NOTIFY" ${circle.auto_action === 'NOTIFY' ? 'selected' : ''}>แจ้งเตือน Admin</option>
+                                <option value="RANDOM" ${circle.auto_action === 'RANDOM' ? 'selected' : ''}>สุ่มอัตโนมัติ</option>
+                            </select>
+                        </div>
+                    </div>
+                `,
+                width: 420,
+                showCancelButton: true,
+                confirmButtonText: '💾 บันทึก',
+                cancelButtonText: 'ยกเลิก',
+                confirmButtonColor: '#198754',
+                didOpen: () => {
+                    // เพิ่ม event listener สำหรับ toggle
+                    window.toggleAutoAction = function () {
+                        const mode = document.getElementById('swal-close-mode').value;
+                        document.getElementById('auto-action-section').style.display = mode === 'AUTO' ? 'block' : 'none';
+                    };
+                },
+                preConfirm: () => ({
+                    bid_start_time: document.getElementById('swal-bid-start').value,
+                    bid_end_time: document.getElementById('swal-bid-end').value,
+                    min_bid: document.getElementById('swal-min-bid').value,
+                    max_bid: document.getElementById('swal-max-bid').value,
+                    notify_hours: document.getElementById('swal-notify-hours').value,
+                    close_mode: document.getElementById('swal-close-mode').value,
+                    auto_action: document.getElementById('swal-auto-action').value
+                })
+            });
+
+            if (formValues) {
+                showLoading('กำลังบันทึก...');
+                const res = await callBackend({
+                    action: 'update_circle_settings',
+                    caller_role: currentUserRole,
+                    circle_id: currentCircleId,
+                    ...formValues
+                });
+                closeLoading();
+
+                if (res.status === 'success') {
+                    Swal.fire({ icon: 'success', title: 'บันทึกแล้ว!', timer: 1500, showConfirmButton: false });
+                    openCircleDetail(currentCircleId, viewingPeriod);
+                } else {
+                    Swal.fire('Error', res.message, 'error');
+                }
+            }
+        }
+
+        function doApprove(row, period, name) {
+            Swal.fire({ title: `อนุมัติของ ${name}?`, text: `งวดที่ ${period}`, icon: 'question', showCancelButton: true, confirmButtonText: 'ใช่', confirmButtonColor: '#198754' }).then(r => {
+                if (r.isConfirmed) {
+                    Swal.fire({ title: 'บันทึก...', didOpen: () => Swal.showLoading() });
+                    callBackend({ action: 'approve_payment', caller_role: currentUserRole, slip_row: row, target_period: period }).then(d => {
+                        Swal.close();
+                        if (d.status === 'success') {
+                            Swal.fire({ icon: 'success', title: 'เรียบร้อย', timer: 1000, showConfirmButton: false });
+                            openPaymentChecklist(); // Refresh Admin
+                            if (currentCircleId) openCircleDetail(currentCircleId, viewingPeriod); // Refresh Main
+                        } else { Swal.fire('Error', d.message, 'error'); }
+                    });
+                }
+            });
+        }
+
+        // --- SLOTS & MEMBERS ---
+        function renderSlots(circle, players) {
+            const container = document.getElementById('slotsContainer');
+            if (!container) return;
+            const isManager = ['SUPERADMIN', 'ADMIN', 'MANAGER'].includes(currentUserRole);
+            let h = '<div class="mt-3">';
+            for (let i = 1; i <= circle.total_hands; i++) {
+                let p = players.find(x => x.hand_no == i);
+                if (p) {
+                    if (isManager) h += `<div class="hand-slot taken" onclick="adminManageSlot('UNASSIGN',${i},'${p.member_id}','${p.name}')" style="cursor:pointer;border-color:#dc3545;"><div class="d-flex justify-content-between align-items-center"><span class="slot-num text-danger">มือที่ ${i} (แตะเพื่อลบ)</span><span class="fw-bold text-success">✅ ${p.name}</span></div></div>`;
+                    else h += `<div class="hand-slot taken"><div class="d-flex justify-content-between align-items-center"><span class="slot-num">มือที่ ${i}</span><span class="fw-bold text-success">✅ ${p.name}</span></div></div>`;
+                } else {
+                    if (isManager) h += `<div class="hand-slot empty" onclick="adminManageSlot('ASSIGN',${i})" style="border-color:#0d6efd;"><div class="d-flex justify-content-between align-items-center"><span class="slot-num text-primary">มือที่ ${i} (แตะเพื่อเพิ่มคน)</span><span class="text-primary fw-bold">+ เพิ่มสมาชิก</span></div></div>`;
+                    else h += `<div class="hand-slot empty" onclick="joinSlot('${circle.id}',${i})"><div class="d-flex justify-content-between align-items-center"><span class="slot-num">มือที่ ${i}</span><span class="text-primary cursor-pointer">+ กดจอง</span></div></div>`;
+                }
+            }
+            container.innerHTML = h + '</div>';
+        }
+        async function adminManageSlot(type, handNo, targetId, targetName) {
+            if (type === 'UNASSIGN') { Swal.fire({ title: `ลบ ${targetName}?`, showCancelButton: true, confirmButtonColor: '#dc3545' }).then(r => { if (r.isConfirmed) sendManageReq(type, handNo, targetId) }); }
+            else if (type === 'ASSIGN') {
+                if (allActiveMembersCache.length === 0) { const res = await callBackend({ action: 'get_all_active_members', caller_role: currentUserRole }); if (res.status === 'success') allActiveMembersCache = res.members; }
+                const opts = {}; allActiveMembersCache.forEach(m => { opts[m.id] = `${m.name} (${m.nickname})` });
+                const { value: sel } = await Swal.fire({ title: 'เลือกสมาชิก', input: 'select', inputOptions: opts, showCancelButton: true }); if (sel) sendManageReq(type, handNo, sel);
+            }
+        }
+        function sendManageReq(t, h, tid) { Swal.fire({ title: 'Saving...', didOpen: () => Swal.showLoading() }); callBackend({ action: 'manage_slot', caller_role: currentUserRole, circle_id: currentCircleId, type: t, hand_no: h, target_member_id: tid }).then(() => { Swal.fire('OK'); openCircleDetail(currentCircleId) }); }
+        function joinSlot(cId, h) { Swal.fire({ title: 'ยืนยันจอง?', showCancelButton: true }).then(r => { if (r.isConfirmed) callBackend({ action: 'join_circle', circle_id: cId, member_id: currentUserMemberId, hand_no: h }).then(() => Swal.fire('OK')); }); }
+
+        // --- BIDDING ---
+        function renderBidTable(players, bids, circle, adminPayments, winnerHistory) {
+            const container = document.getElementById('bidTableContainer');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const isClosed = (circle.current_period > circle.view_period);
+            const isOpen = (circle.view_period == circle.current_period && circle.status === 'OPEN');
+            const isBingo = (circle.type === 'บิงโก');
+            const isAdmin = ['SUPERADMIN', 'ADMIN'].includes(currentUserRole);
+            adminPayments = adminPayments || {};
+            winnerHistory = winnerHistory || {};
+
+            const btn = document.getElementById('singleBidButtonContainer');
+            if (btn) btn.style.display = isOpen ? 'block' : 'none';
+            if (document.getElementById('totalPlayersBadge')) document.getElementById('totalPlayersBadge').innerText = players.length;
+
+            const bidMap = {};
+            if (isClosed && bids.length > 0) bidMap[bids[0].hand_no] = { ...bids[0], isWinner: true };
+            if (bids) bids.forEach(b => { if (!bidMap[b.hand_no]) bidMap[b.hand_no] = b; });
+
+            container.innerHTML = players.map(p => {
+                let isMe = (p.member_id === currentUserMemberId);
+                let b = bidMap[String(p.hand_no)];
+                let rowClass = "list-group-item list-group-item-action d-flex justify-content-between align-items-center p-3";
+                let status = '<span class="badge bg-success bg-opacity-10 text-success">รอ</span>';
+                let action = '<span class="text-muted small">-</span>';
+
+                if (isBingo) {
+                    // === บิงโก ===
+                    if (p.status === 'DEAD') {
+                        // หางวดที่เขาชนะ
+                        const wonPeriod = winnerHistory[p.member_id];
+                        const payKey = p.member_id + '_' + wonPeriod;
+                        const payInfo = adminPayments[payKey];
+                        const hasPaid = !!payInfo;
+                        const isConfirmed = payInfo && payInfo.confirmed_status === 'CONFIRMED';
+                        const paymentId = payInfo ? payInfo.payment_id : '';
+                        const isMeWinner = (p.member_id === currentUserMemberId);
+
+                        if (b && b.isWinner && isClosed) {
+                            // ผู้ชนะงวดที่กำลังดู
+                            let time = b.time ? new Date(b.time).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) : '';
+                            rowClass += " bg-warning bg-opacity-10 border-warning";
+                            status = `<span class="badge bg-warning text-dark">👑 ชนะประมูล</span><div class="small text-muted mt-1">${parseInt(b.amount).toLocaleString()} ฿ | ${time}</div>`;
+                            if (isAdmin) {
+                                if (!hasPaid) {
+                                    action = `<button onclick="openAdminPayWinner('${p.member_id}','${p.name}','${circle.hand}','${circle.view_period}')" class="btn btn-sm btn-success fw-bold"><i class="fas fa-money-bill-wave me-1"></i>จ่ายเงิน</button>`;
+                                } else if (p.member_id === currentUserMemberId || isConfirmed) {
+                                    action = `<div class="text-end text-success fw-bold"><i class="fas fa-check-circle me-1"></i>ชำระแล้ว</div>`;
+                                } else {
+                                    action = `<div class="text-end text-warning fw-bold"><i class="fas fa-clock me-1"></i>รอตรวจสอบ</div>`;
+                                }
+                            } else if (isMeWinner) {
+                                if (!hasPaid) action = `<div class="text-end text-warning fw-bold"><i class="fas fa-clock me-1"></i>รอรับชำระ</div>`;
+                                else if (isConfirmed) action = `<div class="text-end text-success fw-bold"><i class="fas fa-check-circle me-1"></i>ได้รับชำระแล้ว</div>`;
+                                else action = `<button onclick="openVerifyPayment('${paymentId}','${payInfo ? payInfo.image_url : ''}','${payInfo ? payInfo.is_cash : ''}')" class="btn btn-sm btn-warning fw-bold"><i class="fas fa-search me-1"></i>ตรวจสอบ</button>`;
+                            } else {
+                                action = `<div class="text-end fw-bold text-success" style="font-size:1.1rem;">${parseInt(b.amount).toLocaleString()} ฿</div>`;
+                            }
+                        } else {
+                            // เปียแล้ว (งวดก่อน)
+                            rowClass += " bg-light";
+                            status = `<span class="badge bg-secondary rounded-pill">🏆 สุ่มชนะแล้ว</span>`;
+                            if (isAdmin) {
+                                if (!hasPaid) {
+                                    action = `<button onclick="openAdminPayWinner('${p.member_id}','${p.name}','${circle.hand}','${wonPeriod}')" class="btn btn-sm btn-success fw-bold"><i class="fas fa-money-bill-wave me-1"></i>จ่ายเงิน</button>`;
+                                } else if (p.member_id === currentUserMemberId || isConfirmed) {
+                                    action = `<div class="text-end text-success fw-bold"><i class="fas fa-check-circle me-1"></i>ชำระแล้ว</div>`;
+                                } else {
+                                    action = `<div class="text-end text-warning fw-bold"><i class="fas fa-clock me-1"></i>รอตรวจสอบ</div>`;
+                                }
+                            } else if (isMeWinner) {
+                                if (!hasPaid) action = `<div class="text-end text-warning fw-bold"><i class="fas fa-clock me-1"></i>รอรับชำระ</div>`;
+                                else if (isConfirmed) action = `<div class="text-end text-success fw-bold"><i class="fas fa-check-circle me-1"></i>ได้รับชำระแล้ว</div>`;
+                                else action = `<button onclick="openVerifyPayment('${paymentId}','${payInfo ? payInfo.image_url : ''}','${payInfo ? payInfo.is_cash : ''}')" class="btn btn-sm btn-warning fw-bold"><i class="fas fa-search me-1"></i>ตรวจสอบ</button>`;
+                            } else {
+                                action = `<span class="fw-bold text-muted small">เปียแล้ว</span>`;
+                            }
+                        }
+                    } else if (b) {
+                        let time = b.time ? new Date(b.time).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) : '';
+                        if (b.amount === -1) {
+                            status = `<span class="badge bg-info text-dark">🔒 ร่วมประมูล</span>`;
+                            action = `<div class="text-end text-secondary"><i class="fas fa-lock"></i> ซ่อนยอด<br><small>${time}</small></div>`;
+                        } else {
+                            if (isClosed) {
+                                status = `<span class="badge bg-danger bg-opacity-75">🔥 สู้ดอก</span><div class="small text-muted mt-1">${parseInt(b.amount).toLocaleString()} ฿ | ${time}</div>`;
+                                action = `<div class="text-end text-muted small">ไม่ชนะ</div>`;
+                            } else {
+                                status = `<span class="badge bg-danger">🔥 สู้ราคา</span>`;
+                                action = `<div class="text-end text-danger fw-bold">${parseInt(b.amount).toLocaleString()}<br><small class="text-muted fw-normal">${time}</small></div>`;
+                            }
+                        }
+                    }
+                } else {
+                    // === ขั้นบันได ===
+                    if (p.status === 'DEAD') {
+                        const payKey = p.member_id + '_' + p.hand_no;
+                        const payInfo = adminPayments[payKey];
+                        const hasPaid = !!payInfo;
+                        const isConfirmed = payInfo && payInfo.confirmed_status === 'CONFIRMED';
+                        const paymentId = payInfo ? payInfo.payment_id : '';
+                        const isMeWinner = (p.member_id === currentUserMemberId);
+
+                        if (p.hand_no == circle.view_period) {
+                            rowClass += " bg-warning bg-opacity-10 border-warning";
+                            status = `<span class="badge bg-warning text-dark">💰 ถึงงวดรับเงิน</span>`;
+                            if (isAdmin) {
+                                if (!hasPaid) {
+                                    action = `<button onclick="openAdminPayWinner('${p.member_id}','${p.name}','${circle.hand}','${circle.view_period}')" class="btn btn-sm btn-success fw-bold"><i class="fas fa-money-bill-wave me-1"></i>จ่ายเงิน</button>`;
+                                } else if (p.member_id === currentUserMemberId || isConfirmed) {
+                                    action = `<div class="text-end text-success fw-bold"><i class="fas fa-check-circle me-1"></i>ชำระแล้ว</div>`;
+                                } else {
+                                    action = `<div class="text-end text-warning fw-bold"><i class="fas fa-clock me-1"></i>รอตรวจสอบ</div>`;
+                                }
+                            } else if (isMeWinner) {
+                                if (!hasPaid) action = `<div class="text-end text-warning fw-bold"><i class="fas fa-clock me-1"></i>รอรับชำระ</div>`;
+                                else if (isConfirmed) action = `<div class="text-end text-success fw-bold"><i class="fas fa-check-circle me-1"></i>ได้รับชำระแล้ว</div>`;
+                                else action = `<button onclick="openVerifyPayment('${paymentId}','${payInfo ? payInfo.image_url : ''}','${payInfo ? payInfo.is_cash : ''}')" class="btn btn-sm btn-warning fw-bold"><i class="fas fa-search me-1"></i>ตรวจสอบ</button>`;
+                            } else {
+                                action = `<div class="text-end text-success fw-bold">ได้รับเงิน</div>`;
+                            }
+                        } else {
+                            rowClass += " bg-light";
+                            status = `<span class="badge bg-secondary rounded-pill">🏆 ได้แล้ว</span><div class="small text-muted mt-1">ถึงงวดรับเงิน</div>`;
+                            if (isAdmin) {
+                                if (!hasPaid) {
+                                    action = `<button onclick="openAdminPayWinner('${p.member_id}','${p.name}','${circle.hand}','${p.hand_no}')" class="btn btn-sm btn-success fw-bold"><i class="fas fa-money-bill-wave me-1"></i>จ่ายเงิน</button>`;
+                                } else if (p.member_id === currentUserMemberId || isConfirmed) {
+                                    action = `<div class="text-end text-success fw-bold"><i class="fas fa-check-circle me-1"></i>ชำระแล้ว</div>`;
+                                } else {
+                                    action = `<div class="text-end text-warning fw-bold"><i class="fas fa-clock me-1"></i>รอตรวจสอบ</div>`;
+                                }
+                            } else if (isMeWinner) {
+                                if (!hasPaid) action = `<div class="text-end text-warning fw-bold"><i class="fas fa-clock me-1"></i>รอรับชำระ</div>`;
+                                else if (isConfirmed) action = `<div class="text-end text-success fw-bold"><i class="fas fa-check-circle me-1"></i>ได้รับชำระแล้ว</div>`;
+                                else action = `<button onclick="openVerifyPayment('${paymentId}','${payInfo ? payInfo.image_url : ''}','${payInfo ? payInfo.is_cash : ''}')" class="btn btn-sm btn-warning fw-bold"><i class="fas fa-search me-1"></i>ตรวจสอบ</button>`;
+                            } else {
+                                action = `<span class="fw-bold text-muted small">เปียแล้ว</span>`;
+                            }
+                        }
+                    } else {
+                        status = '<span class="badge bg-secondary bg-opacity-50 text-dark">⏳ รอ</span>';
+                        action = `<span class="text-muted small">-</span>`;
+                    }
+                }
+                return `<div class="${rowClass}"><div class="d-flex align-items-center gap-3"><div class="bg-dark text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width:35px; height:35px; font-size:0.8rem;">${p.hand_no}</div><div><div class="fw-bold ${isMe ? 'text-primary' : ''}">${p.name} ${isMe ? '(ฉัน)' : ''}</div><div class="small mt-1">${status}</div></div></div><div>${action}</div></div>`;
+            }).join('');
+
+            const adminArea = document.getElementById('admin-controls-area');
+            if (['SUPERADMIN', 'ADMIN', 'MANAGER'].includes(currentUserRole) && isOpen) {
+                adminArea.innerHTML = `<button onclick="closeCurrentPeriod()" class="btn btn-danger w-100 mb-3 shadow-sm fw-bold">🛑 ปิดประมูล / สรุปงวดนี้</button>`;
+            } else adminArea.innerHTML = '';
+        }
+
+        function checkAndOpenBidModal() {
+            var myModal = new bootstrap.Modal(document.getElementById('bidModal')); myModal.show(); document.getElementById('bidLoading').style.display = 'block'; document.getElementById('bidForm').style.display = 'none'; document.getElementById('bidError').style.display = 'none'; document.getElementById('btnConfirmBid').disabled = true; document.getElementById('bidAmountInput').value = '';
+            callBackend({ action: 'find_next_bidding_hand', circle_id: currentCircleId, member_id: currentUserMemberId }).then(result => {
+                document.getElementById('bidLoading').style.display = 'none';
+                if (result.canBid) { document.getElementById('bidForm').style.display = 'block'; document.getElementById('targetHandNo').innerText = result.hand_no; document.getElementById('hiddenHandNo').value = result.hand_no; document.getElementById('btnConfirmBid').disabled = false; }
+                else { document.getElementById('bidError').style.display = 'block'; document.getElementById('bidError').innerText = result.message; }
+            }).catch(err => { document.getElementById('bidLoading').style.display = 'none'; document.getElementById('bidError').style.display = 'block'; document.getElementById('bidError').innerText = "System Error: " + err.message; });
+        }
+        function submitConfirmBid() {
+            var amount = document.getElementById('bidAmountInput').value; var handNo = document.getElementById('hiddenHandNo').value;
+            if (!amount || amount <= 0) { Swal.fire('แจ้งเตือน', 'กรุณาระบุจำนวนเงิน', 'warning'); return; }
+            var modalEl = document.getElementById('bidModal'); var modalInstance = bootstrap.Modal.getInstance(modalEl); modalInstance.hide();
+            Swal.fire({ title: 'กำลังบันทึก...', didOpen: () => Swal.showLoading() });
+            callBackend({ action: 'submit_bid', circle_id: currentCircleId, member_id: currentUserMemberId, period: currentPeriod, bid_amount: amount }).then(d => {
+                if (d.status === 'success') { Swal.fire({ icon: 'success', title: 'เรียบร้อย!', text: d.message, timer: 1500 }); openCircleDetail(currentCircleId); } else { Swal.fire({ icon: 'error', title: 'ไม่ได้ครับ', text: d.message }); }
+            });
+        }
+        function checkAdminControls() {
+            const isManager = ['SUPERADMIN', 'ADMIN', 'MANAGER'].includes(currentUserRole);
+            const btn = document.getElementById('admin-period-controls');
+            if (btn) btn.style.display = isManager ? 'block' : 'none';
+
+            // 🔴 เพิ่มปุ่ม Admin Controls ใน bid tab
+            const container = document.getElementById('admin-controls-area');
+            if (container) {
+                if (isManager) {
+                    container.innerHTML = `
+                        <div class="d-flex gap-2 mb-3">
+                            <button onclick="randomSelectBidder()" class="btn btn-outline-primary flex-fill py-2">
+                                🎲 สุ่มคนเปีย
+                            </button>
+                            <button onclick="openCircleSettings()" class="btn btn-outline-secondary flex-fill py-2">
+                                ⚙️ ตั้งค่า
+                            </button>
+                        </div>
+                        <button onclick="closeCurrentPeriod()" class="btn btn-danger w-100 mb-3 py-2 fw-bold">
+                            ⭕ ปิดประมูล / สรุปงวดนี้
+                        </button>
+                    `;
+                } else {
+                    container.innerHTML = '';
+                }
+            }
+        }
+
+        function closeCurrentPeriod() { Swal.fire({ title: 'ยืนยันปิดงวด?', text: 'ผู้ชนะดอกสูงสุดจะเป็นมือตายในงวดหน้า', icon: 'warning', showCancelButton: true, confirmButtonColor: '#dc3545', confirmButtonText: 'ปิดงวดเลย' }).then(r => { if (r.isConfirmed) { Swal.fire({ title: 'Calculating...', didOpen: () => Swal.showLoading() }); callBackend({ action: 'close_period', circle_id: currentCircleId, caller_role: currentUserRole }).then(d => { if (d.status === 'success') { Swal.fire('Success', d.message, 'success'); openCircleDetail(currentCircleId); } else Swal.fire('Error', d.message, 'error'); }); } }); }
+
+        // === Admin จ่ายเงินให้ผู้ชนะ ===
+        async function openAdminPayWinner(memberId, memberName, amount, period) {
+            showLoading('กำลังโหลดข้อมูลบัญชี...');
+            const res = await callBackend({ action: 'get_member_bank_info', member_id: memberId });
+            closeLoading();
+
+            if (res.status !== 'success') {
+                Swal.fire('Error', res.message || 'ไม่สามารถโหลดข้อมูลบัญชีได้', 'error');
+                return;
+            }
+
+            const bank = res.bank_account || 'ไม่ได้ระบุ';
+
+            const formHtml = `
+                <form id="adminPayForm">
+                    <div class="text-start mb-3 p-3 rounded-3" style="background: linear-gradient(135deg, #e8f5e9, #c8e6c9);">
+                        <div class="small text-muted mb-1">โอนเงินไปยังบัญชี</div>
+                        <div class="fw-bold text-success" style="font-size: 1.1rem;">
+                            <i class="fas fa-university me-2"></i>${bank}
+                        </div>
+                        <div class="small text-muted mt-1">ชื่อ: ${memberName}</div>
+                    </div>
+                    <div class="mb-3 text-start">
+                        <label class="form-label small fw-bold text-muted">ยอดที่ต้องโอน</label>
+                        <input type="number" id="adminPayAmount" class="form-control form-control-lg text-success fw-bold" value="${amount}" required style="font-size: 1.3rem;">
+                    </div>
+                    <div class="btn-group w-100 mb-3" role="group">
+                        <button type="button" id="adminBtnTransfer" class="btn btn-success px-4 py-2" onclick="toggleAdminPayMode('transfer')">📲 โอนเงิน</button>
+                        <button type="button" id="adminBtnCash" class="btn btn-outline-secondary px-4 py-2" onclick="toggleAdminPayMode('cash')">💵 เงินสด</button>
+                    </div>
+                    <div id="adminContentTransfer">
+                        <div class="mb-3 text-start">
+                            <label class="form-label small fw-bold text-muted">แนบสลิป</label>
+                            <input type="file" id="adminPayFile" class="form-control" accept="image/*">
+                        </div>
+                    </div>
+                    <div id="adminContentCash" style="display:none;">
+                        <div class="alert alert-info text-start"><i class="fas fa-info-circle me-2"></i>กรุณายืนยันว่าได้จ่ายเงินสดแล้ว</div>
+                    </div>
+                    <div class="mb-3 text-start">
+                        <label class="form-label small fw-bold text-muted">หมายเหตุ</label>
+                        <input type="text" id="adminPayNote" class="form-control" placeholder="เช่น โอนผ่านแอป">
+                    </div>
+                    <input type="hidden" id="adminPayMode" value="transfer">
+                    <input type="hidden" id="adminPayMemberId" value="${memberId}">
+                    <input type="hidden" id="adminPayPeriod" value="${period}">
+                    <button type="submit" class="btn btn-success w-100 py-3 fw-bold" style="font-size: 1.1rem;">✅ ยืนยันจ่ายเงิน</button>
+                </form>
+            `;
+
+            Swal.fire({
+                title: '💳 จ่ายเงินให้ผู้ชนะ',
+                html: formHtml,
+                showConfirmButton: false,
+                showCloseButton: true,
+                width: 420,
+                didOpen: () => { Swal.getPopup().querySelector('form').addEventListener('submit', submitAdminPayWinner); }
+            });
+        }
+
+        function toggleAdminPayMode(mode) {
+            document.getElementById('adminPayMode').value = mode;
+            if (mode === 'transfer') {
+                document.getElementById('adminContentTransfer').style.display = 'block';
+                document.getElementById('adminContentCash').style.display = 'none';
+                document.getElementById('adminBtnTransfer').className = 'btn btn-success px-4 py-2';
+                document.getElementById('adminBtnCash').className = 'btn btn-outline-secondary px-4 py-2';
+            } else {
+                document.getElementById('adminContentTransfer').style.display = 'none';
+                document.getElementById('adminContentCash').style.display = 'block';
+                document.getElementById('adminBtnTransfer').className = 'btn btn-outline-secondary px-4 py-2';
+                document.getElementById('adminBtnCash').className = 'btn btn-success px-4 py-2';
+            }
+        }
+
+        function submitAdminPayWinner(e) {
+            e.preventDefault();
+            const popup = Swal.getPopup();
+            const mode = document.getElementById('adminPayMode').value;
+            const amount = popup.querySelector('#adminPayAmount').value;
+            const note = popup.querySelector('#adminPayNote').value;
+            const memberId = document.getElementById('adminPayMemberId').value;
+            const period = document.getElementById('adminPayPeriod').value;
+
+            if (mode === 'transfer') {
+                const file = popup.querySelector('#adminPayFile').files[0];
+                if (!file) return Swal.fire('กรุณาแนบสลิป');
+                showLoading('กำลังอัปโหลดสลิป...');
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = function () {
+                    callBackend({
+                        action: 'admin_pay_winner', circle_id: currentCircleId, admin_id: currentUserMemberId,
+                        winner_member_id: memberId, period: period, amount: amount, image: reader.result, note: note, is_cash: 'false'
+                    }).then(handleAdminPayResponse);
+                }
+            } else {
+                showLoading('กำลังบันทึก...');
+                callBackend({
+                    action: 'admin_pay_winner', circle_id: currentCircleId, admin_id: currentUserMemberId,
+                    winner_member_id: memberId, period: period, amount: amount, image: '', note: note, is_cash: 'true'
+                }).then(handleAdminPayResponse);
+            }
+        }
+
+        function handleAdminPayResponse(d) {
+            closeLoading();
+            if (d.status === 'success') {
+                Swal.fire({ icon: 'success', title: 'บันทึกเรียบร้อย', text: 'จ่ายเงินให้ผู้ชนะแล้ว', timer: 2000 });
+                openCircleDetail(currentCircleId);
+            } else { Swal.fire('Error', d.message || 'เกิดข้อผิดพลาด', 'error'); }
+        }
+
+        // === สมาชิกตรวจสอบยืนยันว่าได้รับเงินแล้ว ===
+        function openVerifyPayment(paymentId, imageUrl, isCash) {
+            let contentHtml = '';
+            if (isCash === 'true' || isCash === true) {
+                contentHtml = `<div class="alert alert-info text-center" style="font-size: 1.1rem;"><i class="fas fa-money-bill-wave me-2"></i><strong>ชำระเป็นเงินสด</strong></div>`;
+            } else if (imageUrl && imageUrl.length > 5) {
+                // แปลง Google Drive URL ให้แสดงรูปได้
+                let imgSrc = imageUrl;
+                if (imageUrl.includes('drive.google.com')) {
+                    const match = imageUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
+                    if (match) { imgSrc = 'https://drive.google.com/thumbnail?id=' + match[1] + '&sz=w800'; }
+                }
+                contentHtml = `<div class="mb-3"><p class="small text-muted mb-2">สลิปการโอนเงิน:</p><a href="${imageUrl}" target="_blank"><img src="${imgSrc}" style="max-width: 100%; max-height: 300px; border-radius: 8px; border: 1px solid #ddd;"></a></div>`;
+            } else {
+                contentHtml = `<div class="alert alert-secondary text-center">ไม่มีสลิป</div>`;
+            }
+
+            Swal.fire({
+                title: '🔍 ตรวจสอบการรับเงิน',
+                html: `<div class="text-start">${contentHtml}<p class="my-3">กรุณายืนยันว่าคุณได้รับเงินจากท้าวแชร์เรียบร้อยแล้วหรือไม่?</p></div>`,
+                showDenyButton: true,
+                showCancelButton: true,
+                confirmButtonText: '<i class="fas fa-check me-1"></i> ยอมรับ',
+                denyButtonText: '<i class="fas fa-times me-1"></i> ยังไม่ได้รับเงิน',
+                cancelButtonText: 'ยกเลิก',
+                confirmButtonColor: '#28a745',
+                denyButtonColor: '#dc3545'
+            }).then(result => {
+                if (result.isConfirmed) {
+                    showLoading('กำลังบันทึก...');
+                    callBackend({ action: 'confirm_admin_payment', payment_id: paymentId }).then(d => {
+                        closeLoading();
+                        if (d.status === 'success') {
+                            Swal.fire({ icon: 'success', title: 'ยืนยันเรียบร้อย', text: 'บันทึกการรับเงินแล้ว', timer: 2000 });
+                            openCircleDetail(currentCircleId);
+                        } else { Swal.fire('Error', d.message || 'เกิดข้อผิดพลาด', 'error'); }
+                    });
+                } else if (result.isDenied) {
+                    showLoading('กำลังบันทึก...');
+                    callBackend({ action: 'reject_admin_payment', payment_id: paymentId }).then(d => {
+                        closeLoading();
+                        if (d.status === 'success') {
+                            Swal.fire({ icon: 'info', title: 'แจ้งเรียบร้อย', text: 'ท้าวแชร์จะได้รับแจ้งเตือน', timer: 2000 });
+                            openCircleDetail(currentCircleId);
+                        } else { Swal.fire('Error', d.message || 'เกิดข้อผิดพลาด', 'error'); }
+                    });
+                }
+            });
+        }
+
+        // --- GENERAL ---
+        function openEditProfile() { document.querySelector('#page-register input[name="name"]').value = currentUserProfile.name || ''; document.querySelector('#page-register input[name="nickname"]').value = currentUserProfile.nickname || ''; document.querySelector('#page-register input[name="phone"]').value = currentUserProfile.phone || ''; document.querySelector('#page-register input[name="bank_account"]').value = currentUserProfile.bank_account || ''; document.getElementById('registerTitle').innerText = '📝 แก้ไขข้อมูลส่วนตัว'; document.getElementById('registerSubmitBtn').innerText = 'บันทึกการแก้ไข'; document.getElementById('registerForm').setAttribute('onsubmit', "submitForm(event, 'update_profile')"); navTo('page-register'); }
+        function openAdminPanel() {
+            navTo('page-admin');
+            // แสดง bank tab เฉพาะ SUPERADMIN/ADMIN
+            const bankTab = document.getElementById('btn-tab-banks');
+            if (bankTab) bankTab.style.display = ['SUPERADMIN', 'ADMIN'].includes(currentUserRole) ? 'inline-block' : 'none';
+            switchAdminTab('approve');
+        }
+        function switchAdminTab(t) {
+            document.getElementById('admin-content-approve').style.display = 'none';
+            document.getElementById('admin-content-users').style.display = 'none';
+            document.getElementById('admin-content-banks').style.display = 'none';
+            document.getElementById('btn-tab-approve').className = 'tab-modern';
+            document.getElementById('btn-tab-users').className = 'tab-modern';
+            document.getElementById('btn-tab-banks').className = 'tab-modern';
+            document.getElementById('admin-content-' + t).style.display = 'block';
+            document.getElementById('btn-tab-' + t).className = 'tab-modern active';
+            if (t === 'approve') loadPendingMembers();
+            if (t === 'users') loadAllMembersForManage();
+            if (t === 'banks') loadBankAccounts();
+        }
+        function loadPendingMembers() { showLoading('กำลังโหลดรายชื่อรออนุมัติ...'); const c = document.getElementById('pendingListContainer'); callBackend({ action: 'get_pending_members', caller_role: currentUserRole }).then(d => { closeLoading(); if (d.status === 'success') { renderPendingMembers(d.members); document.getElementById('pendingCountBadge').innerText = d.members.length; } else c.innerHTML = d.message; }); }
+        function renderPendingMembers(m) { const c = document.getElementById('pendingListContainer'); if (m.length == 0) { c.innerHTML = '<div class="p-3 text-muted text-center">ไม่มีรายการ</div>'; return; } let h = ''; m.forEach(x => { h += `<div class="card mb-2 p-2"><b>${x.name}</b><button class="btn btn-success btn-sm mt-1" onclick="changeMemberStatus('${x.id}','ACTIVE')">อนุมัติ</button></div>` }); c.innerHTML = h; }
+        function changeMemberStatus(id, s) { Swal.fire({ title: 'Saving...', didOpen: () => Swal.showLoading() }); callBackend({ action: 'update_member_status', caller_role: currentUserRole, target_member_id: id, new_status: s }).then(() => { Swal.fire('OK', '', 'success'); loadPendingMembers(); }); }
+        function loadAllMembersForManage() { showLoading('กำลังโหลดรายชื่อเพื่อจัดการสิทธิ์...'); const c = document.getElementById('allMembersListContainer'); c.innerHTML = 'Loading...'; callBackend({ action: 'get_all_members_manage', caller_role: currentUserRole }).then(d => { closeLoading(); if (d.status === 'success') { renderAllMembers(d.members); } else c.innerHTML = d.message; }); }
+        function renderAllMembers(m) { adminMembersCache = m; filterUserList(); }
+        function filterUserList() {
+            const k = document.getElementById('adminSearchInput').value.toLowerCase();
+            const c = document.getElementById('allMembersListContainer');
+            const f = adminMembersCache.filter(m => m.name.toLowerCase().includes(k) || (m.nickname && m.nickname.toLowerCase().includes(k)));
+            if (f.length == 0) { c.innerHTML = '<div class="text-center py-4 text-muted"><i class="fas fa-search fa-2x mb-2 opacity-50"></i><br>ไม่พบผู้ใช้</div>'; return; }
+            const getRoleIcon = (r) => { return r === 'SUPERADMIN' ? '👑' : r === 'ADMIN' ? '🛡️' : r === 'MANAGER' ? '📋' : '👤'; };
+            const roleRank = { 'SUPERADMIN': 4, 'ADMIN': 3, 'MANAGER': 2, 'MEMBER': 1 };
+            const myRank = roleRank[currentUserRole] || 0;
+            let h = '';
+            f.forEach(m => {
+                const rc = m.current_role.toLowerCase();
+                const ri = getRoleIcon(m.current_role);
+                const targetRank = roleRank[m.current_role] || 0;
+                const canAssign = (currentUserRole === 'SUPERADMIN' || currentUserRole === 'ADMIN') && targetRank < myRank;
+                const actionBtn = canAssign ? `<button onclick="promptChangeRole('${m.id}','${m.name}','${m.current_role}')" class="btn-change-role"><i class="fas fa-user-cog me-1"></i>ตั้งยศ</button>` : '';
+                // แสดงข้อมูลบัญชีที่กำหนดไว้
+                let bankInfoHtml = '';
+                if (m.assigned_bank && m.assigned_bank.bank_name) {
+                    bankInfoHtml = `<div class="assigned-bank-info"><i class="fas fa-university me-1"></i>${m.assigned_bank.bank_name} | ${m.assigned_bank.account_number}</div>`;
+                } else {
+                    bankInfoHtml = `<div class="assigned-bank-info default"><i class="fas fa-check-circle me-1"></i>ใช้บัญชีหลัก</div>`;
+                }
+                // ปุ่มกำหนดบัญชี (เฉพาะ ADMIN/SUPERADMIN)
+                const bankBtn = (currentUserRole === 'SUPERADMIN' || currentUserRole === 'ADMIN')
+                    ? `<button onclick="promptAssignBank('${m.id}','${m.name}','${m.assigned_bank_id || ''}')" class="btn-assign-bank"><i class="fas fa-university me-1"></i>ตั้งบัญชี</button>`
+                    : '';
+                h += `<div class="admin-member-card ${rc}"><div class="member-info"><div class="member-name">${m.name}</div>${bankInfoHtml}<span class="role-badge role-${m.current_role}">${ri} ${m.current_role}</span></div><div class="member-actions">${actionBtn}${bankBtn}</div></div>`;
+            });
+            c.innerHTML = h;
+        }
+        async function promptChangeRole(id, name, role) {
+            let inputOptions = {};
+            if (currentUserRole === 'SUPERADMIN') { inputOptions = { 'MEMBER': 'Member', 'MANAGER': 'Manager', 'ADMIN': 'Admin' }; }
+            else if (currentUserRole === 'ADMIN') { inputOptions = { 'MEMBER': 'Member', 'MANAGER': 'Manager' }; }
+            else { return; }
+            const { value: nr } = await Swal.fire({ title: `เปลี่ยนยศ ${name}`, input: 'select', inputOptions: inputOptions, inputValue: role, showCancelButton: true });
+            if (nr && nr !== role) { Swal.fire({ title: 'Saving...', didOpen: () => Swal.showLoading() }); callBackend({ action: 'update_user_role', caller_id: currentUserMemberId, target_member_id: id, new_role: nr }).then(d => { if (d.status === 'success') { Swal.fire('Success'); loadAllMembersForManage(); } else Swal.fire('Error', d.message, 'error'); }); }
+        }
+
+        // ฟังก์ชันกำหนดบัญชีธนาคารให้สมาชิก
+        let allBankAccountsCache = [];
+        async function promptAssignBank(memberId, memberName, currentBankId) {
+            if (allBankAccountsCache.length === 0) {
+                showLoading('กำลังโหลดบัญชี...');
+                const res = await callBackend({ action: 'get_all_bank_accounts', caller_role: currentUserRole });
+                closeLoading();
+                if (res.status === 'success') {
+                    allBankAccountsCache = res.banks;
+                } else {
+                    Swal.fire('Error', res.message || 'ไม่สามารถโหลดรายการบัญชีได้', 'error');
+                    return;
+                }
+            }
+            const opts = { '': '🏠 ใช้บัญชีหลัก' };
+            allBankAccountsCache.forEach(b => { opts[b.id] = `${b.bank_name} | ${b.account_number}`; });
+            const { value: selectedBankId } = await Swal.fire({
+                title: `🏦 กำหนดบัญชีให้ ${memberName}`,
+                input: 'select',
+                inputOptions: opts,
+                inputValue: currentBankId || '',
+                showCancelButton: true,
+                confirmButtonText: 'บันทึก',
+                cancelButtonText: 'ยกเลิก'
+            });
+            if (selectedBankId !== undefined) {
+                Swal.fire({ title: 'กำลังบันทึก...', didOpen: () => Swal.showLoading() });
+                const d = await callBackend({ action: 'assign_member_bank', caller_role: currentUserRole, target_member_id: memberId, bank_id: selectedBankId });
+                if (d.status === 'success') {
+                    Swal.fire({ icon: 'success', title: 'บันทึกเรียบร้อย', timer: 1500, showConfirmButton: false });
+                    loadAllMembersForManage();
+                } else { Swal.fire('Error', d.message, 'error'); }
+            }
+        }
+        // --- BANK ACCOUNT MANAGEMENT (Admin Only) ---
+        function loadBankAccounts() {
+            showLoading('กำลังโหลดบัญชี...');
+            const c = document.getElementById('bankListContainer');
+            callBackend({ action: 'get_all_bank_accounts_full', caller_role: currentUserRole }).then(d => {
+                closeLoading();
+                if (d.status === 'success') {
+                    renderBankList(d.banks);
+                } else { c.innerHTML = `<div class="text-center py-4 text-danger">${d.message}</div>`; }
+            });
+        }
+        function renderBankList(banks) {
+            const c = document.getElementById('bankListContainer');
+            if (!banks || banks.length === 0) {
+                c.innerHTML = '<div class="text-center py-4 text-muted"><i class="fas fa-university fa-2x mb-2 opacity-50"></i><br>ยังไม่มีบัญชีธนาคาร</div>';
+                return;
+            }
+            let h = '';
+            banks.forEach(b => {
+                const isDefault = b.is_default === true || b.is_default === 'TRUE' || b.is_default === 'true';
+                const defaultBadge = isDefault ? '<span class="badge bg-success ms-2">✓ บัญชีหลัก</span>' : '';
+                const setDefaultBtn = !isDefault ? `<button onclick="setDefaultBank('${b.id}')" class="btn btn-sm btn-outline-success me-1" title="ตั้งเป็นหลัก"><i class="fas fa-star"></i></button>` : '';
+                h += `
+                <div class="card mb-2 p-3 border-0 shadow-sm ${isDefault ? 'border-start border-success border-4' : ''}">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="fw-bold">${b.bank_name}${defaultBadge}</div>
+                            <div class="text-primary">${b.account_number}</div>
+                            <div class="text-muted small">${b.account_name}</div>
+                        </div>
+                        <div>
+                            ${setDefaultBtn}
+                            <button onclick="promptEditBank('${b.id}','${b.bank_name}','${b.account_number}','${b.account_name}')" class="btn btn-sm btn-outline-primary me-1" title="แก้ไข"><i class="fas fa-edit"></i></button>
+                            <button onclick="deleteBank('${b.id}','${b.bank_name}')" class="btn btn-sm btn-outline-danger" title="ลบ"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                </div>`;
+            });
+            c.innerHTML = h;
+        }
+        async function promptAddBank() {
+            const { value: formValues } = await Swal.fire({
+                title: '🏦 เพิ่มบัญชีธนาคาร',
+                html: `
+                    <input id="swal-bank-name" class="swal2-input" placeholder="ชื่อธนาคาร เช่น กสิกร, ไทยพาณิชย์">
+                    <input id="swal-account-number" class="swal2-input" placeholder="เลขบัญชี">
+                    <input id="swal-account-name" class="swal2-input" placeholder="ชื่อบัญชี">
+                `,
+                focusConfirm: false,
+                showCancelButton: true,
+                confirmButtonText: 'เพิ่ม',
+                cancelButtonText: 'ยกเลิก',
+                preConfirm: () => {
+                    return {
+                        bank_name: document.getElementById('swal-bank-name').value,
+                        account_number: document.getElementById('swal-account-number').value,
+                        account_name: document.getElementById('swal-account-name').value
+                    };
+                }
+            });
+            if (formValues && formValues.bank_name && formValues.account_number) {
+                Swal.fire({ title: 'กำลังบันทึก...', didOpen: () => Swal.showLoading() });
+                const d = await callBackend({ action: 'add_bank_account', caller_role: currentUserRole, ...formValues });
+                if (d.status === 'success') {
+                    Swal.fire({ icon: 'success', title: 'เพิ่มบัญชีเรียบร้อย', timer: 1500, showConfirmButton: false });
+                    allBankAccountsCache = [];
+                    loadBankAccounts();
+                } else { Swal.fire('Error', d.message, 'error'); }
+            }
+        }
+        async function promptEditBank(id, bankName, accountNumber, accountName) {
+            const { value: formValues } = await Swal.fire({
+                title: '✏️ แก้ไขบัญชี',
+                html: `
+                    <input id="swal-bank-name" class="swal2-input" placeholder="ชื่อธนาคาร" value="${bankName}">
+                    <input id="swal-account-number" class="swal2-input" placeholder="เลขบัญชี" value="${accountNumber}">
+                    <input id="swal-account-name" class="swal2-input" placeholder="ชื่อบัญชี" value="${accountName}">
+                `,
+                focusConfirm: false,
+                showCancelButton: true,
+                confirmButtonText: 'บันทึก',
+                cancelButtonText: 'ยกเลิก',
+                preConfirm: () => {
+                    return {
+                        bank_name: document.getElementById('swal-bank-name').value,
+                        account_number: document.getElementById('swal-account-number').value,
+                        account_name: document.getElementById('swal-account-name').value
+                    };
+                }
+            });
+            if (formValues && formValues.bank_name && formValues.account_number) {
+                Swal.fire({ title: 'กำลังบันทึก...', didOpen: () => Swal.showLoading() });
+                const d = await callBackend({ action: 'update_bank_account', caller_role: currentUserRole, bank_id: id, ...formValues });
+                if (d.status === 'success') {
+                    Swal.fire({ icon: 'success', title: 'แก้ไขเรียบร้อย', timer: 1500, showConfirmButton: false });
+                    allBankAccountsCache = [];
+                    loadBankAccounts();
+                } else { Swal.fire('Error', d.message, 'error'); }
+            }
+        }
+        async function deleteBank(id, name) {
+            const result = await Swal.fire({
+                title: `ลบบัญชี ${name}?`,
+                text: 'ลบแล้วไม่สามารถกู้คืนได้',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                confirmButtonText: 'ลบเลย',
+                cancelButtonText: 'ยกเลิก'
+            });
+            if (result.isConfirmed) {
+                Swal.fire({ title: 'กำลังลบ...', didOpen: () => Swal.showLoading() });
+                const d = await callBackend({ action: 'delete_bank_account', caller_role: currentUserRole, bank_id: id });
+                if (d.status === 'success') {
+                    Swal.fire({ icon: 'success', title: 'ลบเรียบร้อย', timer: 1500, showConfirmButton: false });
+                    allBankAccountsCache = [];
+                    loadBankAccounts();
+                } else { Swal.fire('Error', d.message, 'error'); }
+            }
+        }
+        async function setDefaultBank(id) {
+            Swal.fire({ title: 'กำลังตั้งค่า...', didOpen: () => Swal.showLoading() });
+            const d = await callBackend({ action: 'set_default_bank', caller_role: currentUserRole, bank_id: id });
+            if (d.status === 'success') {
+                Swal.fire({ icon: 'success', title: 'ตั้งเป็นบัญชีหลักเรียบร้อย', timer: 1500, showConfirmButton: false });
+                allBankAccountsCache = [];
+                loadBankAccounts();
+            } else { Swal.fire('Error', d.message, 'error'); }
+        }
+
+        function submitForm(e, a) { e.preventDefault(); const d = { action: a, line_id: document.getElementById('userId').innerText }; new FormData(e.target).forEach((v, k) => d[k] = v); if (a == 'create_circle') d.total_amount = d.amount_per_hand * d.total_hands; Swal.fire({ title: 'Saving...', didOpen: () => Swal.showLoading() }); callBackend(d).then(res => { Swal.fire('OK', '', 'success'); if (a === 'update_profile' || a === 'register') { currentUserProfile = { name: d.name, nickname: d.nickname, phone: d.phone, bank_account: d.bank_account }; document.getElementById('displayName').innerText = d.name; navTo('page-menu'); } e.target.reset(); }); }
+
+        // โหลดบัญชีธนาคารตามที่ assign ให้สมาชิก (หรือ default ถ้าไม่ได้ assign)
+        function loadDefaultBankAccount() {
+            callBackend({ action: 'get_member_bank_display', member_id: currentUserMemberId }).then(d => {
+                const el = document.getElementById('defaultBankDisplay');
+                if (!el) return;
+
+                if (d.status === 'success' && d.bank) {
+                    el.innerHTML = `${d.bank.bank_name} ${d.bank.account_number}<br><small class="text-muted">${d.bank.account_name}</small>`;
+                } else {
+                    el.innerText = d.message || 'ไม่พบบัญชี';
+                }
+            }).catch(err => {
+                const el = document.getElementById('defaultBankDisplay');
+                if (el) el.innerText = 'เกิดข้อผิดพลาด';
+            });
+        }
+
+        // คัดลอกเลขบัญชี
+        function copyDefaultBank() {
+            const el = document.getElementById('defaultBankDisplay');
+            if (el) {
+                const text = el.innerText.split('\n')[0]; // เอาแค่บรรทัดแรก
+                navigator.clipboard.writeText(text);
+                Swal.fire({ icon: 'success', title: 'คัดลอกแล้ว', showConfirmButton: false, timer: 1000 });
+            }
+        }
+
+        main();
+    </script>
+</body>
+
+</html>

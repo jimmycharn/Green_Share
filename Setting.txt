@@ -1,0 +1,19 @@
+Script URL
+https://script.google.com/macros/s/AKfycbxsjyk2K98BBEU38eh6_WIDvMwVJtGQh77DGcmmTc4kYAx0CMDojyX6jNPCGnkHGNbVoQ/exec
+
+Line
+https://developers.line.biz/console/provider/2004735948
+Provider: GreenShareProject
+LIFF_ID = 2008736378-RGBZI6ZX
+
+Line OA: @791nbvsm
+https://manager.line.biz/
+ชื่อบัญชี: Green Share
+แชนแนล ID : 2008737379
+แชนแนล Secret: edee23461b18ea8456734a90328a242e
+Token: +LgVfxhjHTS3YkqQxKHbrFkAw/5Ms48+7cWCroGHX3fsDkWJo/rJbQ1ui2qnirdH/XJN35O/KsSJQLe6mHcONG7RsD1t607hnyTFTW43VC3Esf3t/C0jmhufnKOrY4ngInm6VLSTD8ClLKLqZKhJYAdB04t89/1O/w1cDnyilFU=
+My UID: Uf129b8220ec5880321b21ba99f3c02bf
+
+https://www.netlify.com/
+My netlify: https://app.netlify.com/projects/flourishing-lollipop-3136be/overview
+Page Link: flourishing-lollipop-3136be.netlify.app

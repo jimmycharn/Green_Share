@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Green Share App</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <style>
+        body { background: #f0f2f5; font-family: 'Kanit', sans-serif; padding-bottom: 80px; }
+        .page-section { display: none; }
+        .active { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        .menu-btn { height: 100px; font-size: 1.2rem; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 15px; border: none; transition: 0.2s; }
+        .menu-btn:active { transform: scale(0.98); }
+        .btn-admin { background: #6f42c1; color: white; } 
+        
+        .circle-card { border-radius: 15px; border: none; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 15px; cursor: pointer; transition: 0.2s; }
+        .circle-card:active { background-color: #f8f9fa; transform: scale(0.99); }
+        
+        .bid-item { padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        .bid-item:first-child { background-color: #fff9c4; font-weight: bold; border-radius: 10px 10px 0 0; color: #d32f2f; }
+        
+        .hand-slot { border: 2px dashed #ccc; border-radius: 10px; padding: 15px; text-align: center; margin-bottom: 10px; background: white; transition: 0.2s; }
+        .hand-slot.taken { border: 2px solid #198754; background: #e8f5e9; }
+        .hand-slot.empty:active { background: #e9ecef; transform: scale(0.98); }
+        .hand-slot .slot-num { font-weight: bold; color: #aaa; font-size: 0.8rem; }
+        .hand-slot.taken .slot-num { color: #198754; }
+
+        .status-badge { font-size: 0.8rem; padding: 3px 8px; border-radius: 10px; }
+        .status-PENDING { background: #ffc107; color: #000; }
+        .status-ACTIVE { background: #198754; color: #fff; }
+        .status-BLOCKED { background: #dc3545; color: #fff; }
+    </style>
+
+    <script>
+        window.onerror = function(msg, url, line) {
+            const div = document.createElement("div");
+            div.style.cssText = "position:fixed; top:0; left:0; width:100%; background:red; color:white; padding:20px; z-index:9999; font-size:16px;";
+            div.innerHTML = `<h3>😱 แอปพังครับพี่! (Syntax Error)</h3><p>${msg}</p><p>บรรทัดที่: ${line}</p>`;
+            document.body.appendChild(div);
+            return false;
+        };
+    </script>
+</head>
+<body>
+
+    <div class="container mt-3" style="max-width: 600px;">
+        
+        <div id="headerProfile" class="d-flex align-items-center mb-4 page-section">
+            <img id="profileImg" src="" style="width: 50px; height: 50px; border-radius: 50%; margin-right: 10px; background: #ddd;">
+            <div>
+                <h5 id="displayName" class="mb-0 fw-bold">กำลังโหลด...</h5>
+                <div class="small">
+                    <span id="userRoleBadge" class="badge bg-secondary">...</span>
+                    <span id="userStatusBadge" class="status-badge status-PENDING ms-1">...</span>
+                    <span id="userId" style="display:none;"></span> 
+                </div>
+            </div>
+        </div>
+
+        <div id="page-menu" class="page-section active">
+            <div id="loadingSpinner" class="text-center mt-5"><div class="spinner-border text-primary"></div><br>กำลังเข้าสู่ระบบ...</div>
+            
+            <div id="menuContent" style="display:none;">
+                <div id="pendingAlert" class="alert alert-warning shadow-sm" style="display:none;">
+                    ⏳ รอแอดมินอนุมัติบัญชี
+                </div>
+
+                <div class="row g-2">
+                    <div class="col-6" id="btnCreateCircleContainer" style="display:none;">
+                        <button onclick="navTo('page-create-circle')" class="btn bg-white w-100 menu-btn text-success">💰<br>ตั้งวงแชร์</button>
+                    </div>
+                    <div class="col-6" id="btnViewTableContainer">
+                        <button onclick="openCircleList()" class="btn bg-white w-100 menu-btn text-info">📊<br>ดูวงแชร์</button>
+                    </div>
+                    <div class="col-6">
+                        <button onclick="openEditProfile()" class="btn bg-white w-100 menu-btn text-primary">📝<br>แก้ไขข้อมูล</button>
+                    </div>
+                     <div class="col-6" id="btnAdminPanelContainer" style="display:none;">
+                        <button onclick="openAdminPanel()" class="btn btn-admin w-100 menu-btn">
+                            🔧<br>ระบบหลังบ้าน
+                            <span id="pendingCountBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display:none;">0</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-admin" class="page-section">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="mb-0">🔧 ผู้ดูแลระบบ</h4>
+                <button onclick="navTo('page-menu')" class="btn btn-sm btn-outline-secondary">กลับ</button>
+            </div>
+            <ul class="nav nav-tabs mb-3 nav-fill">
+                <li class="nav-item"><button class="nav-link active" id="btn-tab-approve" onclick="switchAdminTab('approve')">⏳ รออนุมัติ</button></li>
+                <li class="nav-item"><button class="nav-link" id="btn-tab-users" onclick="switchAdminTab('users')">👥 จัดการสิทธิ์</button></li>
+            </ul>
+            <div id="admin-content-approve" class="admin-tab-content">
+                <div id="pendingListContainer" class="pb-5"><div class="text-center mt-5 text-muted">กำลังโหลด...</div></div>
+            </div>
+            <div id="admin-content-users" class="admin-tab-content" style="display:none;">
+                <div class="input-group mb-3"><span class="input-group-text">🔍</span><input type="text" id="adminSearchInput" class="form-control" placeholder="ค้นหาชื่อ..." onkeyup="filterUserList()"></div>
+                <div id="allMembersListContainer" class="pb-5"><div class="text-center mt-5 text-muted">กดแท็บด้านบนเพื่อโหลด</div></div>
+            </div>
+        </div>
+
+        <div id="page-list-circle" class="page-section">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="mb-0">📊 ตารางวงแชร์</h4>
+                <button onclick="navTo('page-menu')" class="btn btn-sm btn-outline-secondary">กลับ</button>
+            </div>
+            <div id="circleContainer" class="pb-5"></div>
+        </div>
+
+		<div id="page-circle-detail" class="page-section">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <button onclick="navTo('page-list-circle')" class="btn btn-sm btn-outline-secondary">⬅ ย้อนกลับ</button>
+                <h5 class="mb-0 fw-bold text-truncate" style="max-width: 150px;" id="detailTitle">รายละเอียด</h5>
+                
+                <select id="periodSelector" class="form-select form-select-sm fw-bold bg-warning border-warning text-dark" style="width: auto;" onchange="changePeriod(this.value)">
+                    <option value="">โหลด...</option>
+                </select>
+            </div>
+            
+            <div class="card p-3 mb-3 bg-primary text-white shadow-sm">
+                <div class="d-flex justify-content-between">
+                    <span id="detailType" class="badge bg-white text-primary">...</span>
+                    <span id="periodStatusBadge" class="badge bg-dark bg-opacity-25">...</span>
+                </div>
+                <h2 class="mt-2 mb-0 fw-bold" id="detailTotal">0 ฿</h2>
+                <div class="d-flex justify-content-between mt-3 small opacity-75">
+                    <span id="detailHand">ส่งงวดละ ...</span>
+                    <span id="detailDate">เริ่ม ...</span>
+                </div>
+            </div>
+
+            <ul class="nav nav-pills mb-3 nav-fill bg-white p-1 rounded border">
+                <li class="nav-item"><button class="nav-link active" id="tab-bid" onclick="switchTab('bid')">🔨 เปีย</button></li>
+                <li class="nav-item"><button class="nav-link" id="tab-pay" onclick="switchTab('pay')">🧾 ส่งสลิป</button></li>
+                <li class="nav-item"><button class="nav-link" id="tab-member" onclick="switchTab('member')">👥 สมาชิก</button></li>
+            </ul>
+
+			<div id="content-bid">
+                
+                <div id="admin-period-controls" class="mb-3" style="display:none;">
+                    <div class="card bg-danger text-white shadow-sm border-0">
+                        <div class="card-header border-bottom border-white border-opacity-25 py-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0 fw-bold"><i class="bi bi-gear-fill"></i> ผู้ดูแลระบบ</h6>
+                                <span class="badge bg-white text-danger rounded-pill">Admin Only</span>
+                            </div>
+                        </div>
+                        
+                        <div class="card-body p-2">
+                            <div class="d-grid gap-2">
+                                <button onclick="closeCurrentPeriod()" class="btn btn-light text-danger fw-bold shadow-sm">
+                                    🛑 ปิดประมูล / สรุปงวดนี้
+                                </button>
+                                <button onclick="openPaymentChecklist()" class="btn btn-light text-danger fw-bold shadow-sm">
+                                    👮 ตรวจสลิป (งวดปัจจุบัน)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="openBidModal()" class="btn btn-warning w-100 mb-3 p-3 fw-bold shadow-sm border-0" style="font-size: 1.2rem;">
+                    🔨 ใส่ดอกเบี้ยงวดนี้
+                </button>
+
+                <div class="d-flex justify-content-between align-items-end mb-2 px-1">
+                    <h6 class="text-muted small mb-0">🏆 อันดับดอกเบี้ยสูงสุด</h6>
+                    <small class="text-muted" style="font-size: 0.7rem;">เรียงตามยอดเงิน</small>
+                </div>
+                
+                <div id="bidsList" class="card shadow-sm border-0">
+                    <div class="text-center p-4 text-muted bg-light rounded">
+                        ยังไม่มีใครเปีย
+                    </div>
+                </div>
+            </div>
+
+			<div id="content-pay" style="display:none;">
+                
+                <div id="payStatusCard" class="card p-3 mb-3 text-center shadow-sm border-0">
+                    <h1 style="font-size: 3rem;">💸</h1>
+                    <h5 class="fw-bold">ยังไม่ได้ชำระเงิน</h5>
+                    <p class="text-muted small">กรุณาโอนเงินและแนบสลิปด้านล่าง</p>
+                </div>
+
+                <div class="card p-3 mb-3 bg-white shadow-sm border-start border-4 border-primary">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <small class="text-muted">ธนาคารกสิกรไทย (K-Bank)</small>
+                            <h4 class="fw-bold text-primary mb-0" id="adminBankAcc">012-3-45678-9</h4>
+                            <small>ชื่อบัญชี: <b>ท้าวแชร์ ใจดี</b></small>
+                        </div>
+                        <button onclick="copyBankAcc()" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-clipboard"></i> คัดลอก
+                        </button>
+                    </div>
+                </div>
+
+                <div id="payFormContainer" class="card p-4 shadow-sm border-0">
+                    <h6 class="mb-3 fw-bold"><i class="bi bi-upload"></i> แจ้งโอนเงิน</h6>
+                    <form onsubmit="submitSlip(event)">
+                        
+                        <div class="mb-3">
+                            <label class="form-label small text-muted">ยอดที่ต้องโอน (บาท)</label>
+                            <input type="number" id="payAmount" class="form-control form-control-lg fw-bold text-success" required readonly>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small text-muted">แนบหลักฐานการโอน</label>
+                            <input type="file" id="payFile" class="form-control" accept="image/*" required>
+                        </div>
+
+                        <div class="mb-3">
+                             <label class="form-label small text-muted">บันทึกช่วยจำ (ถ้ามี)</label>
+                             <input type="text" id="payNote" class="form-control" placeholder="เช่น ฝากพี่เอจ่าย">
+                        </div>
+
+                        <button type="submit" class="btn btn-success w-100 py-2 fw-bold shadow-sm">
+                            🚀 ยืนยันการโอนเงิน
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div id="content-member" style="display:none;">
+                <div id="slotsContainer" class="pb-5"></div>
+            </div>
+        </div>
+
+        <div id="page-register" class="page-section">
+           <div class="card p-4">
+                <h4 class="mb-3" id="registerTitle">📝 ข้อมูลสมาชิก</h4>
+                <form id="registerForm" onsubmit="submitForm(event, 'register')">
+                    <input type="text" name="name" class="form-control mb-2" placeholder="ชื่อจริง" required>
+                    <input type="text" name="nickname" class="form-control mb-2" placeholder="ชื่อเล่น" required>
+                    <input type="tel" name="phone" class="form-control mb-2" placeholder="เบอร์โทร" required>
+                    <input type="text" name="bank_account" class="form-control mb-3" placeholder="เลขบัญชี" required>
+                    <button type="submit" class="btn btn-primary w-100" id="registerSubmitBtn">บันทึก</button>
+                    <button type="button" onclick="navTo('page-menu')" class="btn btn-link w-100 mt-2">กลับ</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="page-create-circle" class="page-section">
+            <div class="card p-4">
+                <h4 class="mb-3 text-success">💰 ตั้งวงแชร์</h4>
+                <form onsubmit="submitForm(event, 'create_circle')">
+                    <input type="text" name="circle_name" class="form-control mb-2" placeholder="ชื่อวง" required>
+                    <select name="type" class="form-select mb-2"><option value="บิงโก">บิงโก</option><option value="ขั้นบันได">ขั้นบันได</option></select>
+                    <div class="row mb-2">
+                        <div class="col"><input type="number" name="amount_per_hand" class="form-control" placeholder="งวดละ" required></div>
+                        <div class="col"><input type="number" name="total_hands" class="form-control" placeholder="กี่มือ" required></div>
+                    </div>
+                    <input type="text" name="total_amount" class="form-control mb-2" placeholder="ยอดรวม" readonly>
+                    <input type="date" name="start_date" class="form-control mb-3" required>
+                    <button type="submit" class="btn btn-success w-100">สร้างวง</button>
+                    <button type="button" onclick="navTo('page-menu')" class="btn btn-link w-100 mt-2">กลับ</button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+
+    <script>
+        // 🔴🔴🔴 ใส่ URL ของคุณตรงนี้ (ห้ามลืม!) 🔴🔴🔴
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxsjyk2K98BBEU38eh6_WIDvMwVJtGQh77DGcmmTc4kYAx0CMDojyX6jNPCGnkHGNbVoQ/exec";
+        const LIFF_ID = "2008736378-RGBZI6ZX"; 
+		
+		// --- ⏳ ฟังก์ชันช่วยโหลด (Loading Helper) ---
+		/*
+		function showLoading(msg = 'กำลังโหลดข้อมูล...') {
+			Swal.fire({
+				title: msg,
+				text: 'กรุณารอสักครู่...', // เปลี่ยนจาก html เป็น text ธรรมดา
+				showConfirmButton: false, 
+				allowOutsideClick: false,
+				didOpen: () => {
+					Swal.showLoading(); // คำสั่งนี้จะสร้างวงกลมหมุนๆ ให้อัตโนมัติครับ (วงเดียว)
+				}
+			});
+		}
+		*/
+		
+		// --- ⏳ ฟังก์ชันช่วยโหลดแบบ Minimal (โปร่งใส ไม่รกตา) ---
+
+		function showLoading(msg = '') {
+			Swal.fire({
+				// 1. html: สร้างตัวหมุน + ข้อความสีขาว (ปรับแต่งเองได้)
+				html: `
+					<div style="margin-top: 10px; color: #fff; font-size: 1rem; font-weight: 300;">
+						${msg}
+					</div>
+				`,
+				// 2. background: 'transparent' คือทำให้กล่องข้อความหายไป (ใส)
+				background: 'transparent', 
+				
+				// 3. backdrop: สีพื้นหลังทั่วจอ (สีดำจางๆ 60%)
+				backdrop: 'rgba(0, 0, 0, 0.6)', 
+
+				// การตั้งค่ามาตรฐาน
+				showConfirmButton: false,
+				allowOutsideClick: false,
+				allowEscapeKey: false,
+				width: 300,
+				padding: 0,
+				didOpen: () => {
+					Swal.showLoading(); // เรียกตัวหมุนมาตรฐานออกมา
+				}
+			});
+		}
+
+		function closeLoading() {
+			Swal.close();
+		}
+
+		function closeLoading() {
+			Swal.close();
+		}
+
+        // --- เริ่มต้นระบบ ---
+        async function main() {
+            try {
+                if (SCRIPT_URL.includes("xxxx")) throw new Error("คุณลืมเปลี่ยน SCRIPT_URL ในโค้ดครับ!");
+                
+                await liff.init({ liffId: LIFF_ID });
+                if (!liff.isLoggedIn()) { liff.login(); return; }
+                const p = await liff.getProfile();
+                
+                document.getElementById('profileImg').src = p.pictureUrl;
+                document.getElementById('displayName').innerText = p.displayName;
+                document.getElementById('userId').innerText = p.userId;
+
+                // โหลดข้อมูลสมาชิก
+                const d = await callBackend({
+                    action: 'register',
+                    line_id: p.userId,
+                    name: p.displayName,
+                    nickname: '-', phone: '-', bank_account: '-'
+                });
+
+                if (d.status !== 'success') throw new Error(d.message);
+
+                // เก็บค่าเข้าตัวแปร
+                currentUserMemberId = d.id;
+                currentUserRole = d.role || 'MEMBER';
+                currentUserStatus = d.member_status || 'PENDING';
+                currentUserProfile = { name: d.name, nickname: d.nickname, phone: d.phone, bank_account: d.bank_account };
+
+                if(d.name) document.getElementById('displayName').innerText = d.name;
+
+                // เปิดหน้าจอ
+                document.getElementById('loadingSpinner').style.display = 'none';
+                document.getElementById('menuContent').style.display = 'block';
+                document.getElementById('headerProfile').classList.add('active');
+                updateUIBasedOnRole();
+
+            } catch (err) {
+                Swal.fire({ icon: 'error', title: 'Error', text: err.message });
+            }
+        }
+
+        // --- ตัวแปร Global ---
+        let currentUserMemberId = null;
+        let currentUserRole = 'MEMBER';   
+        let currentUserStatus = 'PENDING';
+        let currentUserProfile = {}; 
+        let currentCircleId = null;
+        let currentPeriod = 1;
+        let allActiveMembersCache = [];
+        let adminMembersCache = [];
+
+        async function callBackend(payload) {
+            const formData = new URLSearchParams();
+            for (const key in payload) { formData.append(key, payload[key]); }
+            const res = await fetch(SCRIPT_URL, { method: 'POST', body: formData });
+            if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
+            return await res.json();
+        }
+
+        function navTo(pageId) { 
+            document.querySelectorAll('.page-section').forEach(el => el.classList.remove('active')); 
+            document.getElementById(pageId).classList.add('active'); 
+        }
+
+        function switchTab(t) { 
+            ['bid', 'pay', 'member'].forEach(x => { 
+                document.getElementById('content-'+x).style.display = (x === t) ? 'block' : 'none'; 
+                document.getElementById('tab-'+x).className = (x === t) ? 'nav-link active' : 'nav-link'; 
+            }); 
+            if(t === 'bid') checkAdminControls();
+        }
+
+        function updateUIBasedOnRole() {
+            const r = document.getElementById('userRoleBadge');
+            r.innerText = currentUserRole;
+            r.className = 'badge ' + (currentUserRole === 'MEMBER' ? 'bg-secondary' : 'btn-admin'); 
+            
+            const s = document.getElementById('userStatusBadge');
+            s.innerText = currentUserStatus;
+            s.className = 'status-badge status-' + currentUserStatus; 
+            
+            const isPending = (currentUserStatus === 'PENDING' || currentUserStatus === 'BLOCKED');
+            document.getElementById('pendingAlert').style.display = isPending ? 'block' : 'none';
+            document.getElementById('btnViewTableContainer').style.display = !isPending ? 'block' : 'none';
+
+            const cCreate = ['SUPERADMIN','ADMIN'].includes(currentUserRole); 
+            document.getElementById('btnCreateCircleContainer').style.display = (cCreate && !isPending) ? 'block' : 'none'; 
+            
+            const cAdmin = ['SUPERADMIN','ADMIN','MANAGER'].includes(currentUserRole); 
+            document.getElementById('btnAdminPanelContainer').style.display = (cAdmin && !isPending) ? 'block' : 'none';
+        }
+
+        function openEditProfile() {
+            document.querySelector('#page-register input[name="name"]').value = currentUserProfile.name||'';
+            document.querySelector('#page-register input[name="nickname"]').value = currentUserProfile.nickname||'';
+            document.querySelector('#page-register input[name="phone"]').value = currentUserProfile.phone||'';
+            document.querySelector('#page-register input[name="bank_account"]').value = currentUserProfile.bank_account||'';
+            document.getElementById('registerTitle').innerText = '📝 แก้ไขข้อมูลส่วนตัว';
+            document.getElementById('registerSubmitBtn').innerText = 'บันทึกการแก้ไข';
+            document.getElementById('registerForm').setAttribute('onsubmit',"submitForm(event, 'update_profile')");
+            navTo('page-register');
+        }
+
+        // --- Admin Functions ---
+        //function openAdminPanel() { navTo('page-admin'); switchAdminTab('approve'); }
+		
+		function openAdminPanel() { 
+			navTo('page-admin'); 
+			switchAdminTab('approve'); 
+		}
+		
+        function switchAdminTab(t) {
+            document.getElementById('admin-content-approve').style.display = 'none'; 
+            document.getElementById('admin-content-users').style.display = 'none';
+            document.getElementById('btn-tab-approve').className = 'nav-link'; 
+            document.getElementById('btn-tab-users').className = 'nav-link';
+            
+            document.getElementById('admin-content-'+t).style.display = 'block'; 
+            document.getElementById('btn-tab-'+t).className = 'nav-link active';
+            
+            if(t==='approve') loadPendingMembers(); 
+            if(t==='users') loadAllMembersForManage();
+        }
+
+		/*
+        function loadPendingMembers() {
+            const c = document.getElementById('pendingListContainer'); c.innerHTML='Loading...';
+            callBackend({action:'get_pending_members', caller_role:currentUserRole}).then(d => {
+                if(d.status==='success') { renderPendingMembers(d.members); document.getElementById('pendingCountBadge').innerText=d.members.length; }
+                else c.innerHTML=d.message;
+            });
+        }
+		*/
+		
+		function loadPendingMembers() {
+			showLoading('กำลังโหลดรายชื่อรออนุมัติ...'); // สั่งโหลด
+			const c = document.getElementById('pendingListContainer'); 
+			
+			callBackend({action:'get_pending_members', caller_role:currentUserRole}).then(d => {
+				closeLoading(); // ปิดโหลด
+				if(d.status==='success') { 
+					renderPendingMembers(d.members); 
+					document.getElementById('pendingCountBadge').innerText=d.members.length; 
+				}
+				else c.innerHTML=d.message;
+			});
+		}
+				
+        function renderPendingMembers(m) {
+            const c = document.getElementById('pendingListContainer');
+            if(m.length==0) { c.innerHTML='<div class="p-3 text-muted text-center">ไม่มีรายการ</div>'; return; }
+            let h=''; m.forEach(x => { h+=`<div class="card mb-2 p-2"><b>${x.name}</b><button class="btn btn-success btn-sm mt-1" onclick="changeMemberStatus('${x.id}','ACTIVE')">อนุมัติ</button></div>` });
+            c.innerHTML=h;
+        }
+        function changeMemberStatus(id,s) {
+            Swal.fire({title:'Saving...',didOpen:()=>Swal.showLoading()});
+            callBackend({action:'update_member_status', caller_role:currentUserRole, target_member_id:id, new_status:s}).then(() => { Swal.fire('OK','','success'); loadPendingMembers(); });
+        }
+
+        function loadAllMembersForManage() {
+			showLoading('กำลังโหลดรายชื่อเพื่อจัดการสิทธิ์...'); // สั่งโหลด
+            const c = document.getElementById('allMembersListContainer'); c.innerHTML='Loading...';
+            callBackend({action:'get_all_members_manage', caller_role:currentUserRole}).then(d => {
+			    closeLoading(); // ปิดโหลด
+                if(d.status==='success') { renderAllMembers(d.members); } else c.innerHTML=d.message;
+            });
+        }
+        function renderAllMembers(m) { adminMembersCache=m; filterUserList(); }
+        function filterUserList() {
+            const k = document.getElementById('adminSearchInput').value.toLowerCase();
+            const c = document.getElementById('allMembersListContainer');
+            const f = adminMembersCache.filter(m => m.name.toLowerCase().includes(k) || m.nickname.toLowerCase().includes(k));
+            if(f.length==0) { c.innerHTML='Not Found'; return; }
+            let h='';
+            f.forEach(m => {
+                h += `<div class="card mb-2 p-2 d-flex justify-content-between flex-row align-items-center">
+                        <div><b>${m.name}</b><br><span class="badge bg-secondary">${m.current_role}</span></div>
+                        <button onclick="promptChangeRole('${m.id}','${m.name}','${m.current_role}')" class="btn btn-sm btn-outline-dark">ตั้งยศ</button>
+                      </div>`;
+            });
+            c.innerHTML=h;
+        }
+        async function promptChangeRole(id,name,role) {
+            const {value:nr} = await Swal.fire({title:`เปลี่ยนยศ ${name}`,input:'select',inputOptions:{'MEMBER':'Member','MANAGER':'Manager','ADMIN':'Admin'},inputValue:role,showCancelButton:true});
+            if(nr && nr!==role) {
+                Swal.fire({title:'Saving...',didOpen:()=>Swal.showLoading()});
+                callBackend({action:'update_user_role', caller_id:currentUserMemberId, target_member_id:id, new_role:nr}).then(d => {
+                    if(d.status==='success') { Swal.fire('Success'); loadAllMembersForManage(); } else Swal.fire('Error',d.message,'error');
+                });
+            }
+        }
+
+        // --- Circle Functions ---
+		/*
+        function openCircleList() {
+            navTo('page-list-circle'); document.getElementById('circleContainer').innerHTML='Loading...';
+            callBackend({action:'get_circles', member_id:currentUserMemberId, caller_role:currentUserRole}).then(d => {
+                if(d.status==='success') renderCircles(d.circles); else document.getElementById('circleContainer').innerHTML=d.message;
+            });
+        }
+		*/
+		function openCircleList() {
+			// 1. สั่งโหลด
+			showLoading('กำลังโหลดวงแชร์...'); 
+			navTo('page-list-circle'); 
+
+			callBackend({action:'get_circles', member_id:currentUserMemberId, caller_role:currentUserRole}).then(d => {
+				// 2. ปิดโหลดเมื่อเสร็จ
+				closeLoading(); 
+				if(d.status==='success') renderCircles(d.circles); 
+				else document.getElementById('circleContainer').innerHTML = d.message;
+			});
+		}
+		
+        function renderCircles(circles) {
+            const container = document.getElementById('circleContainer');
+            if(circles.length === 0) { container.innerHTML = `<div class="text-center mt-5 text-muted">ยังไม่มีวงแชร์</div>`; return; }
+            let html = '';
+            circles.forEach(c => {
+                let date = new Date(c.start).toLocaleDateString('th-TH');
+                html += `<div class="card circle-card p-3" onclick="openCircleDetail('${c.id}')">
+                            <div class="d-flex justify-content-between">
+                                <div><h5 class="fw-bold mb-1">${c.name}</h5><span class="badge bg-light text-dark border">${c.type}</span></div>
+                                <div class="text-end text-success fw-bold">${parseInt(c.total).toLocaleString()} ฿</div>
+                            </div>
+                            <hr class="my-2">
+                            <div class="d-flex justify-content-between text-muted small">
+                                <span>🤲 ${c.hands_count} มือ (ละ ${parseInt(c.hand).toLocaleString()})</span>
+                                <span>📅 เริ่ม: ${date}</span>
+                            </div>
+                         </div>`;
+            });
+            container.innerHTML = html;
+        }
+	    /*
+		function openCircleDetail(cId) {
+			showLoading('กำลังโหลดข้อมูลวง...'); // 1. สั่งโหลด
+			currentCircleId = cId; 
+			navTo('page-circle-detail'); 
+			switchTab('bid');
+			
+			// ล้างข้อมูลเก่าก่อน (กันคนงง)
+			document.getElementById('bidsList').innerHTML = '';
+			document.getElementById('slotsContainer').innerHTML = '';
+
+			checkAdminControls(); 
+			callBackend({action:'get_circle_detail', circle_id:cId}).then(d => {
+				closeLoading(); // 2. ปิดโหลด
+				if(d.status==='success') {
+					currentPeriod = d.circle.current_period;
+					renderHeader(d.circle);
+					renderBids(d.bids);
+					renderSlots(d.circle, d.players);
+					// 👉 เพิ่มบรรทัดนี้ครับ: อัปเดตหน้าจ่ายเงิน
+					updatePayTabUI(d.circle, d.players, currentUserMemberId);
+				} else {
+					Swal.fire('Error', d.message, 'error');
+				}
+			});
+		}
+		*/
+		
+		
+		function openCircleDetail(cId) {
+			showLoading('กำลังโหลดข้อมูลวง...'); 
+			currentCircleId = cId; 
+			navTo('page-circle-detail'); 
+			switchTab('bid');
+			
+			document.getElementById('bidsList').innerHTML = '';
+			document.getElementById('slotsContainer').innerHTML = '';
+
+			checkAdminControls(); 
+			
+			callBackend({
+				action: 'get_circle_detail', 
+				circle_id: cId,
+				member_id: currentUserMemberId // 👈 1. เพิ่มบรรทัดนี้: ส่ง ID ตัวเองไปเช็คสลิป
+			}).then(d => {
+				closeLoading(); 
+				if(d.status==='success') {
+					currentPeriod = d.circle.current_period;
+					renderHeader(d.circle);
+					renderBids(d.bids);
+					renderSlots(d.circle, d.players);
+					
+					// 👈 2. แก้บรรทัดนี้: ส่ง status ที่ได้จากหลังบ้านเข้าไป
+					updatePayTabUI(d.circle, d.players, currentUserMemberId, d.my_slip_status); 
+				} else {
+					Swal.fire('Error', d.message, 'error');
+				}
+			});
+		}
+		
+        function renderHeader(c) {
+            document.getElementById('detailTitle').innerText=c.name;
+            document.getElementById('detailType').innerText=c.type;
+            document.getElementById('detailPeriod').innerText='งวดที่ '+c.current_period;
+            document.getElementById('detailTotal').innerText=parseInt(c.total).toLocaleString();
+            document.getElementById('detailHand').innerText='ส่งงวดละ '+parseInt(c.hand).toLocaleString();
+        }
+        function renderBids(b) {
+            document.getElementById('bidsList').innerHTML = (b&&b.length) ? b.map((x,i) => 
+                `<div class="bid-item"><span>${i+1}. ${x.name}</span><b>+${parseInt(x.amount).toLocaleString()}</b></div>`).join('') 
+                : '<div class="text-center p-3 text-muted">ยังไม่มีใครเปีย</div>';
+        }
+
+        function checkAdminControls() {
+            const isManager = ['SUPERADMIN', 'ADMIN', 'MANAGER'].includes(currentUserRole);
+            const btn = document.getElementById('admin-period-controls');
+            if(btn) btn.style.display = isManager ? 'block' : 'none';
+        }
+        function closeCurrentPeriod() {
+            Swal.fire({title:'ยืนยันปิดงวด?',text:'ผู้ชนะดอกสูงสุดจะเป็นมือตายในงวดหน้า',icon:'warning',showCancelButton:true,confirmButtonColor:'#dc3545',confirmButtonText:'ปิดงวดเลย'}).then(r => {
+                if(r.isConfirmed) {
+                    Swal.fire({title:'Calculating...',didOpen:()=>Swal.showLoading()});
+                    callBackend({action:'close_period', circle_id:currentCircleId, caller_role:currentUserRole}).then(d => {
+                        if(d.status==='success') { Swal.fire('Success',d.message,'success'); openCircleDetail(currentCircleId); }
+                        else Swal.fire('Error',d.message,'error');
+                    });
+                }
+            });
+        }
+
+        function renderSlots(circle, players) {
+            const container = document.getElementById('slotsContainer');
+            const isManager = ['SUPERADMIN','ADMIN','MANAGER'].includes(currentUserRole);
+            let h = '<div class="mt-3">';
+            for(let i=1; i<=circle.total_hands; i++) {
+                let p = players.find(x => x.hand_no == i);
+                if(p) {
+                    // มีคนจองแล้ว
+                    if(isManager) h += `<div class="hand-slot taken" onclick="adminManageSlot('UNASSIGN',${i},'${p.member_id}','${p.name}')" style="cursor:pointer;border-color:#dc3545;"><div class="d-flex justify-content-between align-items-center"><span class="slot-num text-danger">มือที่ ${i} (แตะเพื่อลบ)</span><span class="fw-bold text-success">✅ ${p.name}</span></div></div>`;
+                    else h += `<div class="hand-slot taken"><div class="d-flex justify-content-between align-items-center"><span class="slot-num">มือที่ ${i}</span><span class="fw-bold text-success">✅ ${p.name}</span></div></div>`;
+                } else {
+                    // ว่าง
+                    if(isManager) h += `<div class="hand-slot empty" onclick="adminManageSlot('ASSIGN',${i})" style="border-color:#0d6efd;"><div class="d-flex justify-content-between align-items-center"><span class="slot-num text-primary">มือที่ ${i} (แตะเพื่อเพิ่มคน)</span><span class="text-primary fw-bold">+ เพิ่มสมาชิก</span></div></div>`;
+                    else h += `<div class="hand-slot empty" onclick="joinSlot('${circle.id}',${i})"><div class="d-flex justify-content-between align-items-center"><span class="slot-num">มือที่ ${i}</span><span class="text-primary cursor-pointer">+ กดจอง</span></div></div>`;
+                }
+            }
+            container.innerHTML = h + '</div>';
+        }
+
+        async function adminManageSlot(type,handNo,targetId,targetName) {
+            if(type==='UNASSIGN') {
+                Swal.fire({title:`ลบ ${targetName}?`,showCancelButton:true, confirmButtonColor:'#dc3545'}).then(r => { if(r.isConfirmed) sendManageReq(type,handNo,targetId) });
+            } else if(type==='ASSIGN') {
+                if(allActiveMembersCache.length===0) {
+                    const res = await callBackend({action:'get_all_active_members', caller_role:currentUserRole});
+                    if(res.status==='success') allActiveMembersCache=res.members;
+                }
+                const opts={}; allActiveMembersCache.forEach(m => { opts[m.id]=`${m.name} (${m.nickname})` });
+                const {value:sel} = await Swal.fire({title:'เลือกสมาชิก',input:'select',inputOptions:opts,showCancelButton:true});
+                if(sel) sendManageReq(type,handNo,sel);
+            }
+        }
+        function sendManageReq(t,h,tid) {
+            Swal.fire({title:'Saving...',didOpen:()=>Swal.showLoading()});
+            callBackend({action:'manage_slot', caller_role:currentUserRole, circle_id:currentCircleId, type:t, hand_no:h, target_member_id:tid}).then(() => { Swal.fire('OK'); openCircleDetail(currentCircleId) });
+        }
+
+        // --- Actions ทั่วไป ---
+		// แก้ไขฟังก์ชันนี้ใน index.html ครับ
+
+		function openBidModal() {
+			Swal.fire({
+				title: 'ใส่ดอกเบี้ย',
+				text: 'ใส่ยอดเงินที่ต้องการสู้ (บาท)',
+				input: 'number',
+				inputAttributes: { min: 1 }, // ห้ามใส่ติดลบ
+				showCancelButton: true,
+				confirmButtonText: 'สู้ดอก!',
+				cancelButtonText: 'ยกเลิก',
+				confirmButtonColor: '#ffc107',
+				cancelButtonColor: '#6c757d'
+			}).then((result) => {
+				if (result.isConfirmed) {
+					// 1. สั่งให้รอ (Loading)
+					Swal.fire({
+						title: 'กำลังตรวจสอบ...',
+						allowOutsideClick: false,
+						didOpen: () => Swal.showLoading()
+					});
+
+					// 2. ส่งไปหลังบ้าน
+					callBackend({
+						action: 'submit_bid',
+						circle_id: currentCircleId,
+						member_id: currentUserMemberId,
+						period: currentPeriod,
+						bid_amount: result.value
+					}).then(d => {
+						// 3. ฟังผลลัพธ์ที่ตอบกลับมา (สำคัญมาก!)
+						if (d.status === 'success') {
+							// ✅ ถ้าสำเร็จ
+							Swal.fire({
+								icon: 'success',
+								title: 'เรียบร้อย!',
+								text: d.message, // "ส่งดอกเบี้ยเรียบร้อย"
+								timer: 1500
+							});
+							openCircleDetail(currentCircleId); // รีเฟรชหน้าจอเพื่อดูชื่อตัวเอง
+						} else {
+							// ❌ ถ้ามีปัญหา (เช่น เป็นมือตาย)
+							Swal.fire({
+								icon: 'error',
+								title: 'ไม่ได้ครับ',
+								text: d.message // จะโชว์ว่า "คุณเป็นมือตายแล้ว" ตามที่หลังบ้านส่งมา
+							});
+						}
+					}).catch(err => {
+						Swal.fire('Error', err.message, 'error');
+					});
+				}
+			});
+		}
+        function joinSlot(cId,h) {
+            Swal.fire({title:'ยืนยันจอง?',showCancelButton:true}).then(r => {
+                if(r.isConfirmed) callBackend({action:'join_circle', circle_id:cId, member_id:currentUserMemberId, hand_no:h}).then(() => Swal.fire('OK'));
+            });
+        }
+		
+		/*
+        function submitSlip(e) {
+            e.preventDefault();
+            const r = new FileReader();
+            r.readAsDataURL(document.getElementById('payFile').files[0]);
+            r.onload = function() {
+                callBackend({action:'upload_slip', circle_id:currentCircleId, member_id:currentUserMemberId, period:currentPeriod, amount:document.getElementById('payAmount').value, image:r.result}).then(() => { Swal.fire('OK'); e.target.reset() });
+            }
+        }
+		*/
+		
+		function submitSlip(e) {
+			e.preventDefault();
+			
+			// เช็คก่อนว่าแนบไฟล์ไหม
+			if(document.getElementById('payFile').files.length == 0) { Swal.fire('ลืมแนบสลิปครับ'); return; }
+
+			showLoading('กำลังอัปโหลดสลิป...'); // หมุนรอ
+
+			const r = new FileReader();
+			r.readAsDataURL(document.getElementById('payFile').files[0]);
+			r.onload = function() {
+				callBackend({
+					action: 'upload_slip', 
+					circle_id: currentCircleId, 
+					member_id: currentUserMemberId, 
+					period: currentPeriod, 
+					amount: document.getElementById('payAmount').value, 
+					image: r.result,
+					note: document.getElementById('payNote').value
+				}).then(d => { 
+					closeLoading();
+					if(d.status === 'success') {
+						Swal.fire({icon:'success', title:'เรียบร้อย', text:'ส่งสลิปแล้ว รอแอดมินตรวจครับ', timer:1500});
+						e.target.reset(); // ล้างฟอร์ม
+						
+						// 👈 สั่งเปลี่ยนสถานะเป็น "รอตรวจสอบ" ทันที!
+						renderPayStatus('PENDING'); 
+					} else {
+						Swal.fire('Error', d.message, 'error');
+					}
+				});
+			}
+		}
+        
+        function submitForm(e, a) {
+            e.preventDefault();
+            const d = {action:a, line_id:document.getElementById('userId').innerText};
+            new FormData(e.target).forEach((v,k) => d[k]=v);
+            if(a=='create_circle') d.total_amount = d.amount_per_hand * d.total_hands;
+            Swal.fire({title:'Saving...',didOpen:()=>Swal.showLoading()});
+            callBackend(d).then(res => {
+                Swal.fire('OK','','success');
+                if(a==='update_profile'||a==='register') {
+                    currentUserProfile = {name:d.name, nickname:d.nickname, phone:d.phone, bank_account:d.bank_account};
+                    document.getElementById('displayName').innerText = d.name;
+                    navTo('page-menu');
+                }
+                e.target.reset();
+            });
+        }
+		
+		// --- Payment Admin Logic ---
+
+		function openPaymentChecklist() {
+			//Swal.fire({ title: 'กำลังโหลดข้อมูล...', didOpen: () => Swal.showLoading() });
+			showLoading('กำลังโหลดข้อมูล...'); // 1. สั่งโหลด
+			callBackend({
+				action: 'get_payment_checklist',
+				circle_id: currentCircleId,
+				caller_role: currentUserRole
+			}).then(d => {
+				closeLoading(); // 2. ปิดโหลด
+				if(d.status === 'success') {
+					renderPaymentChecklistModal(d.period, d.checklist);
+				} else {
+					Swal.fire('Error', d.message, 'error');
+				}
+			});
+		}
+
+		function renderPaymentChecklistModal(period, list) {
+			let html = `<div class="text-start"><p class="text-muted small mb-2">งวดที่ ${period} (สมาชิก ${list.length} คน)</p>`;
+			
+			list.forEach(p => {
+				let statusBadge = '';
+				let actionBtn = '';
+
+				if(p.slip_status === 'MISSING') {
+					statusBadge = `<span class="badge bg-secondary">ยังไม่ส่ง</span>`;
+					actionBtn = `<small class="text-muted">รอส่ง...</small>`;
+				} else if (p.slip_status === 'PENDING') {
+					statusBadge = `<span class="badge bg-warning text-dark">รอตรวจ</span>`;
+					actionBtn = `<button onclick="doApprove('${p.slip_row}', '${p.name}')" class="btn btn-success btn-sm w-100">✅ อนุมัติ</button>`;
+				} else if (p.slip_status === 'APPROVED') {
+					statusBadge = `<span class="badge bg-success">✅ จ่ายแล้ว</span>`;
+					actionBtn = `<small class="text-success fw-bold">เรียบร้อย</small>`;
+				}
+
+				let slipImg = p.slip_url ? `<a href="${p.slip_url}" target="_blank"><img src="${p.slip_url}" style="width:40px;height:40px;border-radius:5px;object-fit:cover;border:1px solid #ccc;"></a>` : `<div style="width:40px;height:40px;background:#eee;border-radius:5px;"></div>`;
+
+				html += `
+				<div class="card mb-2 p-2 shadow-sm border-0">
+					<div class="d-flex align-items-center justify-content-between">
+						<div class="d-flex align-items-center gap-2">
+							${slipImg}
+							<div>
+								<div class="fw-bold">${p.name}</div>
+								<div class="small text-muted">${p.hands} มือ | ${statusBadge}</div>
+							</div>
+						</div>
+						<div style="width: 80px; text-align:right;">
+							${p.slip_amount > 0 ? `<div class="fw-bold text-primary mb-1">${parseInt(p.slip_amount).toLocaleString()}</div>` : ''}
+							${actionBtn}
+						</div>
+					</div>
+				</div>`;
+			});
+
+			html += `</div>`;
+
+			Swal.fire({
+				title: '👮 ตรวจสลิป',
+				html: html,
+				width: 600,
+				showConfirmButton: false,
+				showCloseButton: true
+			});
+		}
+
+		function doApprove(row, name) {
+			Swal.fire({
+				title: `อนุมัติยอดของ ${name}?`,
+				icon: 'question',
+				showCancelButton: true,
+				confirmButtonText: 'ใช่ อนุมัติเลย',
+				confirmButtonColor: '#198754'
+			}).then(r => {
+				if(r.isConfirmed) {
+					Swal.fire({title:'Saving...', didOpen:()=>Swal.showLoading()});
+					callBackend({
+						action: 'approve_payment',
+						caller_role: currentUserRole,
+						slip_row: row
+					}).then(d => {
+						Swal.close(); // ปิด loading
+						if(d.status === 'success') {
+							// เปิดหน้า Checklist ขึ้นมาใหม่ เพื่ออัปเดตสถานะ
+							openPaymentChecklist();
+						} else {
+							Swal.fire('Error', d.message, 'error');
+						}
+					});
+				}
+			});
+		}
+		
+		// --- 🧾 Logic หน้าจ่ายเงิน (Pay Tab) ---
+
+		function updatePayTabUI(circle, players, myMemberId) {
+			// 1. หาข้อมูลของฉันในวงนี้
+			const me = players.find(p => p.member_id == myMemberId);
+			
+			// ตั้งค่าเลขบัญชีท้าว (แก้เลขตรงนี้ได้เลยครับ)
+			document.getElementById('adminBankAcc').innerText = "012-3-45678-9"; 
+
+			// 2. คำนวณยอดที่ต้องจ่าย
+			let amountToPay = 0;
+			if (me) {
+				if (me.status === 'DEAD') {
+					// ถ้าตายแล้ว (เปียแล้ว) จ่าย: ยอดส่ง + ดอกเบี้ยที่ตัวเองเปียไว้
+					// (สมมติ interest_to_pay เก็บยอดดอกเบี้ยไว้)
+					let interest = parseFloat(me.interest_to_pay) || 0; // ต้องแก้ Backend ให้ส่งค่านี้มาด้วย
+					amountToPay = parseInt(circle.hand) + interest;
+				} else {
+					// ถ้ายังเป็น (LIVE) จ่าย: ยอดส่งปกติ
+					amountToPay = parseInt(circle.hand);
+				}
+			}
+			
+			// ใส่ตัวเลขลงในช่อง (ล็อกไม่ให้แก้)
+			document.getElementById('payAmount').value = amountToPay;
+
+			// 3. เช็คสถานะการจ่าย (อันนี้ต้องดึงจาก Checklist ที่เราทำไปเมื่อกี้)
+			// เดี๋ยวเราจะเขียนฟังก์ชันดึงสถานะเพิ่ม แต่ตอนนี้เอาแบบ Default ไปก่อน
+			//renderPayStatus('MISSING'); 
+			renderPayStatus(slipStatus || 'MISSING');
+		}
+
+		function renderPayStatus(status) {
+			const card = document.getElementById('payStatusCard');
+			const form = document.getElementById('payFormContainer');
+			
+			if (status === 'MISSING') {
+				card.className = "card p-3 mb-3 text-center shadow-sm border-0 bg-white";
+				card.innerHTML = `<h1 class="mb-0">💸</h1><h5 class="fw-bold text-danger">ยังไม่ได้ชำระ</h5><p class="small text-muted mb-0">งวดปัจจุบัน</p>`;
+				form.style.display = 'block'; // ให้เห็นฟอร์ม
+			} else if (status === 'PENDING') {
+				card.className = "card p-3 mb-3 text-center shadow-sm border-0 bg-warning bg-opacity-10";
+				card.innerHTML = `<h1 class="mb-0">⏳</h1><h5 class="fw-bold text-warning text-dark">รอแอดมินตรวจสอบ</h5><p class="small text-muted mb-0">ส่งสลิปแล้ว</p>`;
+				form.style.display = 'none'; // ซ่อนฟอร์ม (กันส่งซ้ำ)
+			} else if (status === 'APPROVED') {
+				card.className = "card p-3 mb-3 text-center shadow-sm border-0 bg-success text-white";
+				card.innerHTML = `<h1 class="mb-0">✅</h1><h5 class="fw-bold">ชำระเรียบร้อย</h5><p class="small text-white-50 mb-0">ขอบคุณครับ</p>`;
+				form.style.display = 'none'; // ซ่อนฟอร์ม
+			}
+		}
+
+		function copyBankAcc() {
+			const num = document.getElementById('adminBankAcc').innerText;
+			navigator.clipboard.writeText(num.replace(/-/g, '')); // ลบขีดออกก่อนก๊อป
+			Swal.fire({
+				icon: 'success',
+				title: 'คัดลอกแล้ว!',
+				text: 'นำไปวางในแอปธนาคารได้เลย',
+				timer: 1000,
+				showConfirmButton: false
+			});
+		}
+		
+		// --- 🔄 ระบบเลือกงวด (Period Selector) ---
+
+		function changePeriod(period) {
+			if(!currentCircleId) return;
+			openCircleDetail(currentCircleId, period); // เรียกโหลดข้อมูลใหม่ โดยระบุงวด
+		}
+
+		// แก้ไขฟังก์ชัน openCircleDetail ให้รับ viewPeriod
+		function openCircleDetail(cId, viewPeriod = null) {
+			showLoading('กำลังโหลดข้อมูล...'); 
+			currentCircleId = cId; 
+			navTo('page-circle-detail'); 
+			
+			// ถ้าไม่ได้ระบุ viewPeriod ให้รีเซ็ต Tab กลับไปหน้าแรก
+			if(viewPeriod === null) switchTab('bid');
+
+			document.getElementById('bidsList').innerHTML = '';
+			// document.getElementById('slotsContainer').innerHTML = ''; // เดี๋ยวเราจะทำตารางใหม่
+
+			checkAdminControls(); 
+			
+			callBackend({
+				action: 'get_circle_detail', 
+				circle_id: cId,
+				member_id: currentUserMemberId,
+				view_period: viewPeriod // ส่งงวดที่อยากดูไป
+			}).then(d => {
+				closeLoading(); 
+				if(d.status==='success') {
+					const c = d.circle;
+					
+					// 1. เรนเดอร์ Dropdown เลือกงวด
+					renderPeriodSelector(c.current_period, c.view_period, c.total_hands);
+					
+					// 2. เรนเดอร์ข้อมูลทั่วไป
+					renderHeader(c);
+					
+					// 3. (เดี๋ยวเราจะทำฟังก์ชันใหม่ตรงนี้ เพื่อสร้างตารางตามที่คุณขอ)
+					// renderBidTable(d.players, d.bids, c);   <-- เดี๋ยวทำ
+					// renderPayTable(d.players, d.slips, c);  <-- เดี๋ยวทำ
+					
+					// ตอนนี้ใช้ของเดิมไปก่อน เพื่อเทส Dropdown
+					renderBids(d.bids); 
+					renderSlots(c, d.players);
+					
+					// อัปเดตยอดเงินตามงวดที่เลือก
+					// (ถ้าเป็นงวดอดีต ต้องคำนวณอีกแบบ เดี๋ยวว่ากัน)
+				} else {
+					Swal.fire('Error', d.message, 'error');
+				}
+			});
+		}
+
+		function renderPeriodSelector(currentP, viewP, totalHands) {
+			const sel = document.getElementById('periodSelector');
+			sel.innerHTML = '';
+			
+			// สร้างตัวเลือกตั้งแต่งวด 1 ถึง งวดสุดท้าย
+			for(let i=1; i<=totalHands; i++) {
+				let text = `งวดที่ ${i}`;
+				if(i === currentP) text += " (ปัจจุบัน)";
+				else if(i < currentP) text += " (จบแล้ว)";
+				else text += " (อนาคต)";
+				
+				let opt = document.createElement('option');
+				opt.value = i;
+				opt.innerText = text;
+				if(i === viewP) opt.selected = true; // เลือกงวดที่กำลังดูอยู่
+				sel.appendChild(opt);
+			}
+			
+			// เปลี่ยนสี Dropdown ตามสถานะ
+			if(viewP < currentP) {
+				sel.className = "form-select form-select-sm fw-bold bg-secondary text-white border-secondary"; // งวดอดีต (สีเทา)
+				document.getElementById('periodStatusBadge').innerText = "🔒 ปิดงวดแล้ว";
+			} else if (viewP === currentP) {
+				sel.className = "form-select form-select-sm fw-bold bg-warning text-dark border-warning"; // งวดปัจจุบัน (สีเหลือง)
+				document.getElementById('periodStatusBadge').innerText = "🟢 กำลังดำเนินการ";
+			} else {
+				sel.className = "form-select form-select-sm fw-bold bg-light text-muted border-secondary"; // งวดอนาคต (สีขาว)
+				document.getElementById('periodStatusBadge').innerText = "⏳ ยังไม่ถึง";
+			}
+		}
+
+        // เริ่มโปรแกรม
+        main();
+    </script>
+</body>
+</html>

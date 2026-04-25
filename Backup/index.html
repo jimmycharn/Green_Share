@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Green Share App</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <style>
+        body { background: #f0f2f5; font-family: 'Kanit', sans-serif; padding-bottom: 80px; }
+        .page-section { display: none; }
+        .active { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        .menu-btn { height: 100px; font-size: 1.2rem; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 15px; border: none; }
+        .menu-btn:active { transform: scale(0.98); }
+        .circle-card { border-radius: 15px; border: none; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 15px; cursor: pointer; }
+        
+        .bid-item { padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        .bid-item:first-child { background-color: #fff9c4; font-weight: bold; border-radius: 10px 10px 0 0; color: #d32f2f; }
+        .bid-rank { width: 30px; text-align: center; margin-right: 10px; font-weight: bold; color: #aaa; }
+
+        .hand-slot { border: 2px dashed #ccc; border-radius: 10px; padding: 15px; text-align: center; margin-bottom: 10px; background: white; transition: 0.2s; }
+        .hand-slot.taken { border: 2px solid #198754; background: #e8f5e9; }
+        .hand-slot.empty:active { background: #e9ecef; transform: scale(0.98); }
+        .hand-slot .slot-num { font-weight: bold; color: #aaa; font-size: 0.8rem; }
+        .hand-slot.taken .slot-num { color: #198754; }
+    </style>
+</head>
+<body>
+
+    <div class="container mt-3" style="max-width: 600px;">
+        
+        <div id="headerProfile" class="d-flex align-items-center mb-4 page-section">
+            <img id="profileImg" src="" style="width: 50px; height: 50px; border-radius: 50%; margin-right: 10px;">
+            <div>
+                <h5 id="displayName" class="mb-0 fw-bold">...</h5>
+                <small class="text-muted">ID: <span id="userId">...</span></small>
+            </div>
+        </div>
+
+        <div id="page-menu" class="page-section">
+            <div class="row g-2">
+                <div class="col-6"><button onclick="navTo('page-register')" class="btn bg-white w-100 menu-btn text-primary">📝<br>สมัครสมาชิก</button></div>
+                <div class="col-6"><button onclick="navTo('page-create-circle')" class="btn bg-white w-100 menu-btn text-success">💰<br>ตั้งวงแชร์</button></div>
+                <div class="col-12"><button onclick="openCircleList()" class="btn bg-white w-100 menu-btn text-info">📊<br>ดูตารางแชร์</button></div>
+            </div>
+        </div>
+
+        <div id="page-list-circle" class="page-section">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="mb-0">📊 ตารางวงแชร์</h4>
+                <button onclick="navTo('page-menu')" class="btn btn-sm btn-outline-secondary">กลับ</button>
+            </div>
+            <div id="circleContainer" class="pb-5"></div>
+        </div>
+
+        <div id="page-circle-detail" class="page-section">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <button onclick="navTo('page-list-circle')" class="btn btn-sm btn-outline-secondary">⬅ ย้อนกลับ</button>
+                <h5 class="mb-0 fw-bold text-truncate" style="max-width: 200px;" id="detailTitle">รายละเอียด</h5>
+                <div style="width: 60px;"></div>
+            </div>
+            
+            <div class="card p-3 mb-3 bg-primary text-white shadow-sm">
+                <div class="d-flex justify-content-between">
+                    <span id="detailType" class="badge bg-white text-primary">...</span>
+                    <span id="detailPeriod" class="badge bg-warning text-dark">งวดที่ ...</span>
+                </div>
+                <h2 class="mt-2 mb-0 fw-bold" id="detailTotal">0 ฿</h2>
+                <div class="d-flex justify-content-between mt-3 small opacity-75">
+                    <span id="detailHand">ส่งงวดละ ...</span>
+                    <span id="detailDate">เริ่ม ...</span>
+                </div>
+            </div>
+
+            <ul class="nav nav-pills mb-3 nav-fill bg-white p-1 rounded border">
+                <li class="nav-item"><button class="nav-link active" id="tab-bid" onclick="switchTab('bid')">🔨 เปีย</button></li>
+                <li class="nav-item"><button class="nav-link" id="tab-pay" onclick="switchTab('pay')">🧾 ส่งสลิป</button></li>
+                <li class="nav-item"><button class="nav-link" id="tab-member" onclick="switchTab('member')">👥 สมาชิก</button></li>
+            </ul>
+
+            <div id="content-bid">
+                <button onclick="openBidModal()" class="btn btn-warning w-100 mb-3 fw-bold shadow-sm p-3">🔨 ใส่ดอกเบี้ยงวดนี้</button>
+                <h6 class="text-muted small">🏆 อันดับดอกเบี้ยสูงสุด</h6>
+                <div id="bidsList" class="card"><div class="text-center p-3 text-muted">ยังไม่มีใครเปีย</div></div>
+            </div>
+
+            <div id="content-pay" style="display:none;">
+                <div class="card p-4">
+                    <h5 class="mb-3">💸 แจ้งโอนเงิน</h5>
+                    <form onsubmit="submitSlip(event)">
+                        <div class="mb-3">
+                            <label>จำนวนเงินที่โอน</label>
+                            <input type="number" id="payAmount" class="form-control" required placeholder="ระบุยอดเงิน">
+                        </div>
+                        <div class="mb-3">
+                            <label>หลักฐานการโอน (รูปสลิป)</label>
+                            <input type="file" id="payFile" class="form-control" accept="image/*" required>
+                            <div class="form-text text-muted">รองรับไฟล์ภาพ .jpg, .png</div>
+                        </div>
+                        <div class="mb-3">
+                            <label>หมายเหตุ (ถ้ามี)</label>
+                            <input type="text" id="payNote" class="form-control" placeholder="เช่น ค่าแชร์งวดที่ 1">
+                        </div>
+                        <button type="submit" class="btn btn-success w-100 btn-lg">🚀 ส่งข้อมูล</button>
+                    </form>
+                </div>
+            </div>
+
+            <div id="content-member" style="display:none;">
+                <div id="slotsContainer" class="pb-5"></div>
+            </div>
+        </div>
+
+        <div id="page-register" class="page-section">
+           <div class="card p-4">
+                <h4 class="mb-3">📝 สมัครสมาชิก</h4>
+                <form onsubmit="submitForm(event, 'register')">
+                    <input type="text" name="name" class="form-control mb-2" placeholder="ชื่อจริง" required>
+                    <input type="text" name="nickname" class="form-control mb-2" placeholder="ชื่อเล่น" required>
+                    <input type="tel" name="phone" class="form-control mb-2" placeholder="เบอร์โทร" required>
+                    <input type="text" name="bank_account" class="form-control mb-3" placeholder="เลขบัญชี" required>
+                    <button type="submit" class="btn btn-primary w-100">บันทึก</button>
+                    <button type="button" onclick="navTo('page-menu')" class="btn btn-link w-100 mt-2">กลับ</button>
+                </form>
+            </div>
+        </div>
+        <div id="page-create-circle" class="page-section">
+            <div class="card p-4">
+                <h4 class="mb-3 text-success">💰 ตั้งวงแชร์</h4>
+                <form onsubmit="submitForm(event, 'create_circle')">
+                    <input type="text" name="circle_name" class="form-control mb-2" placeholder="ชื่อวง" required>
+                    <select name="type" class="form-select mb-2"><option value="บิงโก">บิงโก</option><option value="ขั้นบันได">ขั้นบันได</option></select>
+                    <div class="row mb-2">
+                        <div class="col"><input type="number" name="amount_per_hand" class="form-control" placeholder="งวดละ" required></div>
+                        <div class="col"><input type="number" name="total_hands" class="form-control" placeholder="กี่มือ" required></div>
+                    </div>
+                    <input type="text" name="total_amount" class="form-control mb-2" placeholder="ยอดรวม" readonly>
+                    <input type="date" name="start_date" class="form-control mb-3" required>
+                    <button type="submit" class="btn btn-success w-100">สร้างวง</button>
+                    <button type="button" onclick="navTo('page-menu')" class="btn btn-link w-100 mt-2">กลับ</button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        // 🔴🔴🔴 ใส่ URL ล่าสุดตรงนี้ครับ 🔴🔴🔴
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxsjyk2K98BBEU38eh6_WIDvMwVJtGQh77DGcmmTc4kYAx0CMDojyX6jNPCGnkHGNbVoQ/exec";
+        const LIFF_ID = "2008736378-RGBZI6ZX"; 
+        
+        let currentUserMemberId = null;
+        let currentCircleId = null;
+        let currentPeriod = 1;
+
+        function navTo(pageId) {
+            document.querySelectorAll('.page-section').forEach(el => el.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            if(pageId!=='loading') document.getElementById('headerProfile').classList.add('active');
+        }
+
+        function switchTab(tabName) {
+            ['bid', 'pay', 'member'].forEach(t => {
+                document.getElementById('content-'+t).style.display = (t === tabName) ? 'block' : 'none';
+                document.getElementById('tab-'+t).className = (t === tabName) ? 'nav-link active' : 'nav-link';
+            });
+        }
+
+        // --- ฟังก์ชันส่งสลิป (ใหม่!) ---
+        function submitSlip(e) {
+            e.preventDefault();
+            
+            if(!currentUserMemberId) { Swal.fire('Error', 'ไม่พบสมาชิก', 'error'); return; }
+            
+            const fileInput = document.getElementById('payFile');
+            if (fileInput.files.length === 0) { Swal.fire('แจ้งเตือน', 'กรุณาเลือกรูปสลิป', 'warning'); return; }
+
+            const amount = document.getElementById('payAmount').value;
+            const note = document.getElementById('payNote').value;
+            const file = fileInput.files[0];
+
+            // เช็คขนาดไฟล์ (ไม่เกิน 5MB กันเหนียว)
+            if(file.size > 5 * 1024 * 1024) { Swal.fire('ไฟล์ใหญ่ไป', 'ขอขนาดไม่เกิน 5MB ครับ', 'error'); return; }
+
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            
+            // เริ่มโหลดไฟล์
+            reader.onload = function() {
+                const base64 = reader.result; // ได้รูปเป็นข้อความยาวๆ แล้ว
+                
+                const btn = e.target.querySelector('button[type="submit"]');
+                btn.disabled = true; btn.innerText = 'กำลังอัปโหลด...';
+                
+                // ส่งไป GAS
+                fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'upload_slip',
+                        circle_id: currentCircleId,
+                        member_id: currentUserMemberId,
+                        period: currentPeriod,
+                        amount: amount,
+                        note: note,
+                        image: base64
+                    }),
+                    mode: 'no-cors'
+                }).then(() => {
+                    Swal.fire('สำเร็จ', 'ส่งสลิปเรียบร้อย!', 'success');
+                    document.getElementById('payAmount').value = '';
+                    document.getElementById('payFile').value = '';
+                    document.getElementById('payNote').value = '';
+                    btn.disabled = false; btn.innerText = '🚀 ส่งข้อมูล';
+                }).catch(err => {
+                    Swal.fire('แจ้งเตือน', 'ส่งแล้ว (รอตรวจสอบ)', 'warning');
+                    btn.disabled = false; btn.innerText = '🚀 ส่งข้อมูล';
+                });
+            };
+        }
+
+        // --- ฟังก์ชันอื่นๆ (เดิม) ---
+        function openCircleList() { navTo('page-list-circle'); document.getElementById('circleContainer').innerHTML='Loading...'; fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'get_circles'})}).then(r=>r.json()).then(d=>renderCircles(d.circles)); }
+        function renderCircles(c) { let h=''; c.forEach(x=>{ h+=`<div class="card circle-card p-3" onclick="openCircleDetail('${x.id}')"><h5>${x.name}</h5></div>`}); document.getElementById('circleContainer').innerHTML=h; }
+        
+        function openCircleDetail(cId) {
+            currentCircleId = cId; navTo('page-circle-detail'); switchTab('bid');
+            fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'get_circle_detail',circle_id:cId})}).then(r=>r.json()).then(d=>{
+                currentPeriod = d.circle.current_period;
+                renderHeader(d.circle); renderBids(d.bids); renderSlots(d.circle, d.players);
+            });
+        }
+        function renderHeader(c) { document.getElementById('detailTitle').innerText=c.name; document.getElementById('detailPeriod').innerText='งวดที่ '+c.current_period; document.getElementById('detailTotal').innerText=parseInt(c.total).toLocaleString(); }
+        function renderBids(b) { let h=''; if(b) b.forEach((x,i)=>{ h+=`<div class="bid-item"><span>${i+1}. ${x.name}</span><b>+${x.amount}</b></div>`}); document.getElementById('bidsList').innerHTML=h||'ยังไม่มี'; }
+        function renderSlots(c,p) { let h=''; for(let i=1;i<=c.total_hands;i++){ let u=p.find(x=>x.hand_no==i); h+=u?`<div class="hand-slot taken">มือ ${i} ✅ ${u.name}</div>`:`<div class="hand-slot empty" onclick="joinSlot('${c.id}',${i})">มือ ${i} +จอง</div>`; } document.getElementById('slotsContainer').innerHTML=h; }
+        
+        function openBidModal() {
+            Swal.fire({title:'ใส่ดอกเบี้ย',input:'number',showCancelButton:true}).then(r=>{
+                if(r.isConfirmed) fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'submit_bid',circle_id:currentCircleId,member_id:currentUserMemberId,period:currentPeriod,bid_amount:r.value}),mode:'no-cors'}).then(()=>Swal.fire('OK','','success'));
+            });
+        }
+        function joinSlot(cId,h) {
+            Swal.fire({title:'จองมือ '+h+'?',showCancelButton:true}).then(r=>{ if(r.isConfirmed) fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'join_circle',circle_id:cId,member_id:currentUserMemberId,hand_no:h}),mode:'no-cors'}).then(()=>Swal.fire('OK','','success')); });
+        }
+        function submitForm(e,a) { e.preventDefault(); let d={action:a,line_id:document.getElementById('userId').innerText}; new FormData(e.target).forEach((v,k)=>d[k]=v); if(a=='create_circle')d.total_amount=d.amount_per_hand*d.total_hands; fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify(d),mode:'no-cors'}).then(()=>{Swal.fire('OK','','success'); navTo('page-menu')}); }
+
+        async function main() {
+            await liff.init({ liffId: LIFF_ID });
+            if (!liff.isLoggedIn()) { liff.login(); return; }
+            const p = await liff.getProfile();
+            document.getElementById('profileImg').src=p.pictureUrl; document.getElementById('displayName').innerText=p.displayName; document.getElementById('userId').innerText=p.userId;
+            fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'register',line_id:p.userId,name:p.displayName,nickname:'-',phone:'-',bank_account:'-'})}).then(r=>r.json()).then(d=>currentUserMemberId=d.id);
+            navTo('page-menu');
+        }
+        main();
+    </script>
+</body>
+</html>
