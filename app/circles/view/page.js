@@ -1,95 +1,47 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Script from "next/script";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useUser } from "@/contexts/UserContext";
 
 export default function ViewCircles() {
-  const router = useRouter();
-  const [isInitializing, setIsInitializing] = useState(true);
+  const { dbUser, isLoading: isUserLoading } = useUser();
   const [circles, setCircles] = useState([]);
+  const [isLoadingCircles, setIsLoadingCircles] = useState(true);
   const [message, setMessage] = useState("");
   const [activeTab, setActiveTab] = useState("OPEN"); // OPEN or CLOSED
 
   useEffect(() => {
-    if (typeof window !== "undefined" && window.liff) {
-      initLiff();
+    if (dbUser) {
+      fetchCircles(dbUser.id);
     }
-  }, []);
+  }, [dbUser]);
 
-  const handleScriptLoad = () => {
-    if (window.liff) {
-      initLiff();
-    }
-  };
-
-  const initLiff = async () => {
+  const fetchCircles = async (memberId) => {
     try {
-      const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
-      await window.liff.init({ liffId });
-      
-      if (!window.liff.isLoggedIn()) {
-        router.push('/');
-        return;
-      }
-      
-      const userProfile = await window.liff.getProfile();
-
-      // Ensure user is registered before giving them access
-      const houseParam = new URLSearchParams(window.location.search).get('house');
-      const regRes = await fetch('/api/action', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'register',
-          name: userProfile.displayName,
-          nickname: userProfile.displayName,
-          line_id: userProfile.userId,
-          house: houseParam
-        })
-      });
-      const dbUser = await regRes.json();
-      
-      if (dbUser.status !== 'success') {
-        setMessage("โหลดข้อมูลผู้ใช้ล้มเหลว");
-        setIsInitializing(false);
-        return;
-      }
-
-      // Fetch circles
       const res = await fetch('/api/action', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'get_circles',
-          member_id: dbUser.id
-        })
+        body: JSON.stringify({ action: 'get_circles', member_id: memberId })
       });
-      
-      const resData = await res.json();
-      
-      if (resData.status === 'success') {
-        setCircles(resData.circles);
+      const data = await res.json();
+      if (data.status === 'success') {
+        setCircles(data.circles || []);
       } else {
-        setMessage(resData.message || "ไม่สามารถดึงวงแชร์ได้");
+        setMessage(data.message || "ไม่สามารถดึงวงแชร์ได้");
       }
-      
-      setIsInitializing(false);
     } catch (err) {
       setMessage("การเชื่อมต่อขัดข้อง");
-      setIsInitializing(false);
+      console.error("Failed to fetch circles", err);
     }
+    setIsLoadingCircles(false);
   };
 
-  if (isInitializing) {
+  if (isUserLoading) {
     return (
-      <div style={{ padding: "20px", minHeight: "100vh" }}>
-        <Script src="https://static.line-scdn.net/liff/edge/versions/2.22.1/sdk.js" onLoad={handleScriptLoad} />
-        <div className="loader-container">
-          <div className="loader"></div>
-          <h3 style={{ color: "var(--primary)" }}>กำลังโหลดวงแชร์...</h3>
-        </div>
+      <div className="loader-container">
+        <div className="loader"></div>
+        <h3 style={{ color: "var(--primary)" }}>กำลังโหลด...</h3>
       </div>
     );
   }
@@ -101,8 +53,6 @@ export default function ViewCircles() {
 
   return (
     <div className="animate-fade-in">
-      <Script src="https://static.line-scdn.net/liff/edge/versions/2.22.1/sdk.js" onLoad={handleScriptLoad} />
-
       {/* Header */}
       <div style={{ marginBottom: "24px" }}>
         <h2 style={{ fontSize: "1.5rem", fontWeight: "700", margin: 0 }}>วงแชร์ของคุณ</h2>
@@ -132,11 +82,15 @@ export default function ViewCircles() {
 
       {/* Circle List Cards */}
       <div style={{ display: "flex", flexDirection: "column", gap: "16px", paddingBottom: "20px" }}>
-        {filteredCircles.length === 0 && !message ? (
+        {isLoadingCircles ? (
+            <div className="glass-panel" style={{ textAlign: "center", padding: "40px", color: "#94a3b8" }}>
+                กำลังโหลดวงแชร์...
+            </div>
+        ) : filteredCircles.length === 0 ? (
           <div className="glass-panel" style={{ textAlign: "center", padding: "60px 20px" }}>
             <span style={{ fontSize: "3rem", display: "block", marginBottom: "16px" }}>📭</span>
             <h3 style={{ color: "#94a3b8", fontWeight: "600" }}>ยังไม่มีวงแชร์ในหมวดนี้</h3>
-            <p style={{ fontSize: "0.9rem", color: "#64748b" }}>คุณสามารถสร้างวงแชร์ใหม่ได้ที่ปุ่มด้านบน</p>
+            <p style={{ fontSize: "0.9rem", color: "#64748b" }}>เข้าร่วมวงแชร์ใหม่ได้ที่หน้าแรก</p>
           </div>
         ) : (
           filteredCircles.map((circle) => (
@@ -158,16 +112,14 @@ export default function ViewCircles() {
                     🏷️ {circle.type}
                   </div>
                   <div style={{ fontSize: "0.85rem", color: "var(--primary)", fontWeight: "600", display: "flex", alignItems: "center", gap: "4px" }}>
-                    💰 {circle.amount_per_hand} บ.
+                    💰 {circle.amount_per_hand.toLocaleString()} บ.
                   </div>
                   <div style={{ fontSize: "0.85rem", color: "#64748b", display: "flex", alignItems: "center", gap: "4px" }}>
                     🔢 {circle.total_hands} มือ
                   </div>
                 </div>
               </div>
-              <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", color: "#94a3b8", fontSize: "0.8rem" }}>
-                ❯
-              </div>
+              <div style={{ color: "#94a3b8" }}>❯</div>
             </Link>
           ))
         )}

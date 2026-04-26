@@ -1,72 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Script from "next/script";
 import Link from "next/link";
+import { useUser } from "@/contexts/UserContext";
 
 export default function Home() {
-  const [status, setStatus] = useState("⏳ กำลังเริ่มระบบ...");
-  const [profile, setProfile] = useState(null);
-  const [dbUser, setDbUser] = useState(null);
+  const { profile, dbUser, isLoading: isUserLoading, liff } = useUser();
   const [circles, setCircles] = useState([]);
-  const [isInitializing, setIsInitializing] = useState(true);
   const [isLoadingCircles, setIsLoadingCircles] = useState(true);
-  const [needsLogin, setNeedsLogin] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== "undefined" && window.liff) {
-      initLiff();
+    if (dbUser) {
+      fetchCircles(dbUser.id);
     }
-  }, []);
-
-  const handleScriptLoad = () => {
-    if (window.liff) initLiff();
-  };
-
-  const initLiff = async () => {
-    try {
-      const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
-      if (!liffId) {
-        setStatus("Error: LIFF ID is not setup");
-        setIsInitializing(false);
-        return;
-      }
-      await window.liff.init({ liffId });
-      if (!window.liff.isLoggedIn()) {
-        setNeedsLogin(true);
-        setIsInitializing(false);
-        return;
-      }
-      
-      const userProfile = await window.liff.getProfile();
-      setProfile(userProfile);
-
-      const houseParam = new URLSearchParams(window.location.search).get('house');
-      const res = await fetch('/api/action', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'register',
-          name: userProfile.displayName,
-          nickname: userProfile.displayName,
-          line_id: userProfile.userId,
-          house: houseParam
-        })
-      });
-      const resData = await res.json();
-      
-      if (resData.status === 'success') {
-        setDbUser(resData);
-        fetchCircles(resData.id);
-      }
-      
-      setIsInitializing(false);
-
-    } catch (err) {
-      setStatus("Error: " + (err.message || err.toString()));
-      setIsInitializing(false);
-    }
-  };
+  }, [dbUser]);
 
   const fetchCircles = async (memberId) => {
     try {
@@ -86,22 +33,19 @@ export default function Home() {
   };
 
   const handleLoginClick = () => {
-    if (window.liff) window.liff.login();
+    if (liff) liff.login();
   };
 
-  if (isInitializing) {
+  if (isUserLoading) {
     return (
-      <div style={{ padding: "20px", minHeight: "100vh" }}>
-        <Script src="https://static.line-scdn.net/liff/edge/versions/2.22.1/sdk.js" onLoad={handleScriptLoad} />
-        <div className="loader-container">
-          <div className="loader"></div>
-          <h3 style={{ color: "var(--primary)" }}>กำลังโหลดข้อมูล...</h3>
-        </div>
+      <div className="loader-container">
+        <div className="loader"></div>
+        <h3 style={{ color: "var(--primary)" }}>กำลังโหลด...</h3>
       </div>
     );
   }
 
-  if (needsLogin) {
+  if (!profile) {
     return (
       <div style={{ padding: "40px 20px", textAlign: "center", minHeight: "80vh", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
         <div className="glass-panel" style={{ padding: "40px 24px", width: "100%", maxWidth: "400px" }}>
@@ -120,8 +64,6 @@ export default function Home() {
 
   return (
     <div className="animate-fade-in">
-      <Script src="https://static.line-scdn.net/liff/edge/versions/2.22.1/sdk.js" onLoad={handleScriptLoad} />
-
       <div style={{ marginBottom: "24px", marginTop: "10px" }}>
         <h2 style={{ fontSize: "1.5rem", fontWeight: "800", margin: 0 }}>สวัสดีครับ! 🌿</h2>
         <p style={{ color: "#64748b", margin: "4px 0 0 0", fontSize: "0.9rem" }}>วันนี้มีอะไรให้ช่วยจัดการไหมครับ?</p>

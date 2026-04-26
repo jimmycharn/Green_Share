@@ -1,17 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Script from "next/script";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useUser } from "@/contexts/UserContext";
 
 export default function Profile() {
-  const router = useRouter();
+  const { profile, dbUser, isLoading: isUserLoading } = useUser();
   const [view, setView] = useState("menu"); // "menu" or "edit"
-  const [isInitializing, setIsInitializing] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [profile, setProfile] = useState(null);
-  const [dbUser, setDbUser] = useState(null);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -24,58 +20,15 @@ export default function Profile() {
   const [message, setMessage] = useState({ type: "", text: "" });
 
   useEffect(() => {
-    if (typeof window !== "undefined" && window.liff) {
-      initLiff();
-    }
-  }, []);
-
-  const handleScriptLoad = () => {
-    if (window.liff) initLiff();
-  };
-
-  const initLiff = async () => {
-    try {
-      const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
-      await window.liff.init({ liffId });
-      
-      if (!window.liff.isLoggedIn()) {
-        window.liff.login();
-        return;
-      }
-      
-      const userProfile = await window.liff.getProfile();
-      setProfile(userProfile);
-
-      const houseParam = new URLSearchParams(window.location.search).get('house');
-      const res = await fetch('/api/action', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'register',
-          name: userProfile.displayName,
-          nickname: userProfile.displayName,
-          line_id: userProfile.userId,
-          house: houseParam
-        })
+    if (dbUser) {
+      setFormData({
+        name: dbUser.name || "",
+        nickname: dbUser.nickname || "",
+        phone: dbUser.phone || "",
+        bank_account: dbUser.bank_account || ""
       });
-      const resData = await res.json();
-      
-      if (resData.status === 'success') {
-        setDbUser(resData);
-        setFormData({
-          name: resData.name || "",
-          nickname: resData.nickname || "",
-          phone: resData.phone || "",
-          bank_account: resData.bank_account || ""
-        });
-      }
-      
-      setIsInitializing(false);
-    } catch (err) {
-      setMessage({ type: "error", text: "เกิดข้อผิดพลาดในการเชื่อมต่อระบบ" });
-      setIsInitializing(false);
     }
-  };
+  }, [dbUser]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -104,7 +57,6 @@ export default function Profile() {
       
       if (resData.status === 'success') {
         setMessage({ type: "success", text: "บันทึกข้อมูลเรียบร้อยแล้ว!" });
-        // Optionally go back to menu after success
         setTimeout(() => setView("menu"), 1500);
       } else {
         setMessage({ type: "error", text: resData.message || "บันทึกไม่สำเร็จ" });
@@ -116,14 +68,11 @@ export default function Profile() {
     setIsSaving(false);
   };
 
-  if (isInitializing) {
+  if (isUserLoading) {
     return (
-      <div style={{ padding: "20px", minHeight: "100vh" }}>
-        <Script src="https://static.line-scdn.net/liff/edge/versions/2.22.1/sdk.js" onLoad={handleScriptLoad} />
-        <div className="loader-container">
-          <div className="loader"></div>
-          <h3 style={{ color: "var(--primary)" }}>กำลังโหลดข้อมูล...</h3>
-        </div>
+      <div className="loader-container">
+        <div className="loader"></div>
+        <h3 style={{ color: "var(--primary)" }}>กำลังโหลด...</h3>
       </div>
     );
   }
@@ -132,8 +81,6 @@ export default function Profile() {
 
   return (
     <div className="animate-fade-in">
-      <Script src="https://static.line-scdn.net/liff/edge/versions/2.22.1/sdk.js" onLoad={handleScriptLoad} />
-      
       {view === "menu" ? (
         <div className="animate-fade-in" style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "10px" }}>
             <h3 style={{ margin: "0 0 4px 6px", fontSize: "1.1rem", fontWeight: "800" }}>จัดการข้อมูล</h3>
@@ -166,7 +113,7 @@ export default function Profile() {
             )}
 
             <div style={{ padding: "10px", textAlign: "center", marginTop: "20px" }}>
-                 <p style={{ color: "#94a3b8", fontSize: "0.85rem" }}>เวอร์ชันแอป 1.2.0 (Redesign)</p>
+                 <p style={{ color: "#94a3b8", fontSize: "0.85rem" }}>เวอร์ชันแอป 1.3.0 (Optimized)</p>
             </div>
         </div>
       ) : (

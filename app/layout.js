@@ -1,5 +1,6 @@
 import "./globals.css";
 import ClientLayout from "@/components/ClientLayout";
+import { UserProvider } from "@/contexts/UserContext";
 
 export const metadata = {
   title: "GreenShare - ระบบจัดการวงแชร์พรีเมียม",
@@ -13,9 +14,11 @@ export default function RootLayout({ children }) {
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
       </head>
       <body>
-        <ClientLayout>
-          {children}
-        </ClientLayout>
+        <UserProvider>
+          <ClientLayout>
+            {children}
+          </ClientLayout>
+        </UserProvider>
       </body>
     </html>
   );

@@ -1,54 +1,12 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import Script from "next/script";
+import { useUser } from "@/contexts/UserContext";
 
 export default function ClientLayout({ children }) {
   const pathname = usePathname();
-  const router = useRouter();
-  const [profile, setProfile] = useState(null);
-  const [dbUser, setDbUser] = useState(null);
-
-  useEffect(() => {
-    if (typeof window !== "undefined" && window.liff) {
-      initLiff();
-    }
-  }, []);
-
-  const handleScriptLoad = () => {
-    if (window.liff) initLiff();
-  };
-
-  const initLiff = async () => {
-    try {
-      const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
-      await window.liff.init({ liffId });
-      if (window.liff.isLoggedIn()) {
-        const userProfile = await window.liff.getProfile();
-        setProfile(userProfile);
-        
-        // Fetch DB user for nickname (real name) label
-        const res = await fetch('/api/action', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              action: 'register',
-              name: userProfile.displayName,
-              nickname: userProfile.displayName,
-              line_id: userProfile.userId
-            })
-        });
-        const data = await res.json();
-        if (data.status === 'success') {
-            setDbUser(data);
-        }
-      }
-    } catch (err) {
-      console.error("LIFF init failed in ClientLayout", err);
-    }
-  };
+  const { profile, dbUser, isLoading } = useUser();
 
   // Format Header Name: Nickname (RealName)
   const headerName = dbUser 
@@ -65,13 +23,16 @@ export default function ClientLayout({ children }) {
     { label: "ตั้งค่า", icon: "⚙️", path: "/profile" },
   ];
 
+  if (isLoading && pathname !== '/') {
+    return (
+        <div className="loader-container">
+            <div className="loader"></div>
+        </div>
+    );
+  }
+
   return (
     <>
-      <Script 
-        src="https://static.line-scdn.net/liff/edge/versions/2.22.1/sdk.js" 
-        onLoad={handleScriptLoad}
-      />
-      
       {/* Top Header */}
       <header className="app-header">
         <div className="app-title" style={{ fontSize: "0.95rem", fontWeight: "700", display: "flex", alignItems: "center" }}>
