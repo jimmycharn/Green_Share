@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
 import Script from "next/script";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
@@ -41,6 +42,11 @@ export default function CircleDetail() {
     close_mode: "แอดมินปิดเอง",
     interest_method: "หักดอก"
   });
+  
+  // File Upload States
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [filePreview, setFilePreview] = useState(null);
+  const [uploadLoading, setUploadLoading] = useState(false);
   
   const isCircleAdmin = dbUser && circle && (['SUPERADMIN', 'ADMIN'].includes(dbUser.role) || dbUser.id === circle.creator_id);
 
@@ -179,10 +185,41 @@ export default function CircleDetail() {
     } catch { alert("การเชื่อมต่อขัดข้อง"); }
   };
 
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setSelectedFile(file);
+      setFilePreview(URL.createObjectURL(file));
+    }
+  };
+
   const handleUploadSlip = async (e) => {
     e.preventDefault();
     if (!uploadData.amount) return alert("กรุณาระบุยอดเงิน");
+    
+    let finalImageUrl = uploadData.image_url;
+    setUploadLoading(true);
+
     try {
+      // 1. Upload File to Storage if selected
+      if (selectedFile && paymentMode === 'TRANSFER') {
+        const fileExt = selectedFile.name.split('.').pop();
+        const fileName = `${circleId}/${Date.now()}.${fileExt}`;
+        
+        const { data: uploadRes, error: uploadError } = await supabase.storage
+          .from('slips')
+          .upload(fileName, selectedFile);
+          
+        if (uploadError) throw new Error("อัปโหลดรูปไม่สำเร็จ: " + uploadError.message);
+        
+        const { data: { publicUrl } } = supabase.storage
+          .from('slips')
+          .getPublicUrl(uploadRes.path);
+          
+        finalImageUrl = publicUrl;
+      }
+
+      // 2. Submit Action
       const res = await fetch('/api/action', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -193,18 +230,24 @@ export default function CircleDetail() {
           period: slipModal.period,
           amount: uploadData.amount,
           note: uploadData.note,
-          image_url: uploadData.image_url,
+          image_url: finalImageUrl,
           is_cash: paymentMode === 'CASH'
         })
       });
       const data = await res.json();
       if (data.status === 'success') {
         setUploadData({ amount: "", note: "", image_url: "" });
+        setSelectedFile(null);
+        setFilePreview(null);
         setSlipModal({ open: false, period: null });
         fetchCircleDetail();
         setMessage({ type: "success", text: "ส่งสลิปเรียบร้อย!" });
       } else alert(data.message);
-    } catch { alert("การเชื่อมต่อขัดข้อง"); }
+    } catch (err) { 
+      alert(err.message || "การเชื่อมต่อขัดข้อง"); 
+    } finally {
+      setUploadLoading(false);
+    }
   };
 
   const handleBidSubmit = async (e) => {
@@ -519,8 +562,8 @@ export default function CircleDetail() {
 
       {/* Modals - Placed OUTSIDE the animated content to fix fixed positioning */}
       {adminModal.open && (
-        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999, padding: "20px" }}>
-          <div className="glass-panel" style={{ width: "95%", maxWidth: "420px", padding: "30px", boxShadow: "0 20px 40px rgba(0,0,0,0.3)" }}>
+        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999, padding: "10px" }}>
+          <div className="glass-panel" style={{ width: "100%", maxWidth: "420px", padding: "24px 16px", boxShadow: "0 20px 40px rgba(0,0,0,0.3)" }}>
             <h3 style={{ textAlign: "center", marginBottom: "20px" }}>{adminModal.mode === 'JOIN' ? `📌 จองมือที่ ${adminModal.handNo}` : `🔄 โอนมือที่ ${adminModal.handNo}`}</h3>
             <select value={adminSelectedUserId} onChange={(e) => setAdminSelectedUserId(e.target.value)} className="glass-panel" style={{ width: "100%", padding: "14px", marginBottom: "24px" }}>
                <option value="">-- เลือกสมาชิก --</option>
@@ -539,8 +582,8 @@ export default function CircleDetail() {
       )}
 
       {slipModal.open && (
-        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999, padding: "20px" }}>
-          <div className="glass-panel" style={{ width: "95%", maxWidth: "480px", maxHeight: "90vh", overflowY: "auto", padding: "24px" }}>
+        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999, padding: "10px" }}>
+          <div className="glass-panel" style={{ width: "100%", maxWidth: "480px", maxHeight: "95vh", overflowY: "auto", padding: "24px 16px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
               <h3 style={{ margin: 0, display: "flex", alignItems: "center", gap: "8px" }}>
                  <span style={{ fontSize: "1.4rem" }}>💳</span> แจ้งชำระเงิน
@@ -586,16 +629,25 @@ export default function CircleDetail() {
 
             <form onSubmit={handleUploadSlip} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                 {paymentMode === "TRANSFER" && (
-                  <div style={{ border: "2px dashed #cbd5e1", borderRadius: "18px", padding: "20px", textAlign: "center", background: "#f8fafc" }}>
-                    <label style={{ cursor: "pointer", display: "block" }}>
-                      <div style={{ fontSize: "1.8rem", marginBottom: "8px" }}>📸</div>
-                      <div style={{ fontSize: "0.9rem", fontWeight: "700", color: "#475569" }}>แนบสลิปโอนเงิน</div>
+                  <div style={{ border: "2px dashed #cbd5e1", borderRadius: "18px", padding: "10px", textAlign: "center", background: "#f8fafc", minHeight: "150px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <label style={{ cursor: "pointer", display: "block", width: "100%" }}>
+                      {filePreview ? (
+                        <div style={{ position: "relative" }}>
+                          <img src={filePreview} alt="preview" style={{ width: "100%", maxHeight: "200px", objectFit: "contain", borderRadius: "12px" }} />
+                          <div style={{ marginTop: "10px", fontSize: "0.85rem", color: "var(--primary)", fontWeight: "700" }}>แตะเพื่อเปลี่ยนรูป</div>
+                        </div>
+                      ) : (
+                        <>
+                          <div style={{ fontSize: "2.4rem", marginBottom: "8px" }}>📸</div>
+                          <div style={{ fontSize: "1rem", fontWeight: "700", color: "#475569" }}>แตะเพื่อเลือกรูปสลิป</div>
+                          <div style={{ fontSize: "0.75rem", color: "#94a3b8", marginTop: "4px" }}>รองรับไฟล์ภาพ JPEG, PNG</div>
+                        </>
+                      )}
                       <input 
-                        type="text" 
-                        placeholder="ลิงก์ไฟล์สลิป (Demo)" 
-                        value={uploadData.image_url} 
-                        onChange={(e) => setUploadData({...uploadData, image_url: e.target.value})} 
-                        style={{ width: "100%", marginTop: "12px", padding: "10px", borderRadius: "10px", border: "1px solid #e2e8f0" }}
+                        type="file" 
+                        accept="image/*"
+                        onChange={handleFileChange}
+                        style={{ display: "none" }}
                       />
                     </label>
                   </div>
@@ -615,9 +667,10 @@ export default function CircleDetail() {
                 <button 
                   type="submit" 
                   className="btn-primary" 
-                  style={{ padding: "18px", fontSize: "1.1rem", fontWeight: "800", borderRadius: "20px", marginTop: "8px" }}
+                  disabled={uploadLoading || (paymentMode === 'TRANSFER' && !selectedFile)}
+                  style={{ padding: "18px", fontSize: "1.1rem", fontWeight: "800", borderRadius: "20px", marginTop: "8px", opacity: (uploadLoading || (paymentMode === 'TRANSFER' && !selectedFile)) ? 0.6 : 1 }}
                 >
-                  ✅ ยืนยันชำระเงิน
+                  {uploadLoading ? "⌛ กำลังดำเนินการ..." : "✅ ยืนยันชำระเงิน"}
                 </button>
             </form>
 
@@ -653,8 +706,8 @@ export default function CircleDetail() {
       )}
       {/* Bid Modal */}
       {bidModal.open && (
-        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999, padding: "20px" }}>
-          <div className="glass-panel" style={{ width: "95%", maxWidth: "400px", padding: "30px" }}>
+        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999, padding: "10px" }}>
+          <div className="glass-panel" style={{ width: "100%", maxWidth: "400px", padding: "24px 16px" }}>
             <h3 style={{ textAlign: "center", marginBottom: "10px" }}>🔨 ประมูล (เปีย) งวดที่ {bidModal.period}</h3>
             <p style={{ textAlign: "center", fontSize: "0.85rem", color: "#64748b", marginBottom: "24px" }}>ระบุจำนวนดอกเบี้ยที่คุณต้องการประมูล</p>
             <form onSubmit={handleBidSubmit}>
@@ -684,8 +737,8 @@ export default function CircleDetail() {
 
       {/* Config Modal (Matching User Image) */}
       {configModal.open && (
-        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999, padding: "20px" }}>
-          <div className="glass-panel" style={{ width: "95%", maxWidth: "480px", padding: "24px", maxHeight: "90vh", overflowY: "auto" }}>
+        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999, padding: "10px" }}>
+          <div className="glass-panel" style={{ width: "100%", maxWidth: "480px", padding: "24px 16px", maxHeight: "95vh", overflowY: "auto" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
                <h3 style={{ margin: 0 }}>⚙️ ตั้งค่า (เฉพาะงวด {configModal.period})</h3>
                <button onClick={() => setConfigModal({ open: false, period: null })} style={{ background: "none", border: "none", fontSize: "1.2rem" }}>✕</button>
