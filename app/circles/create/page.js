@@ -40,13 +40,12 @@ export default function CreateCircle() {
       await window.liff.init({ liffId });
       
       if (!window.liff.isLoggedIn()) {
-        router.push('/');
+        window.liff.login();
         return;
       }
       
       const userProfile = await window.liff.getProfile();
 
-      // Ensure user is registered and get DB data
       const houseParam = new URLSearchParams(window.location.search).get('house');
       const res = await fetch('/api/action', {
         method: 'POST',
@@ -85,7 +84,6 @@ export default function CreateCircle() {
     setIsSaving(true);
     setMessage({ type: "", text: "" });
 
-    // Calculate total amount assuming total_amount = amount_per_hand * total_hands (simplified logic, adjust as needed)
     const amountPerHand = parseFloat(formData.amount_per_hand);
     const totalHands = parseInt(formData.total_hands);
     const totalAmount = amountPerHand * totalHands;
@@ -115,14 +113,10 @@ export default function CreateCircle() {
       const resData = await res.json();
       
       if (resData.status === 'success') {
-        setMessage({ type: "success", text: "สร้างวงแชร์สำเร็จ! (ID: " + resData.id + ")" });
-        setFormData({
-          circle_name: "",
-          type: "ดอกหัก",
-          amount_per_hand: "",
-          total_hands: "",
-          line_group_url: ""
-        });
+        setMessage({ type: "success", text: "สร้างวงแชร์สำเร็จ! กำลังพาทีมไปดูวงใหม่..." });
+        setTimeout(() => {
+            router.push(`/circles/${resData.id}`);
+        }, 1500);
       } else {
         setMessage({ type: "error", text: resData.message || "สร้างล้มเหลว" });
       }
@@ -139,100 +133,113 @@ export default function CreateCircle() {
         <Script src="https://static.line-scdn.net/liff/edge/versions/2.22.1/sdk.js" onLoad={handleScriptLoad} />
         <div className="loader-container">
           <div className="loader"></div>
-          <h3 style={{ color: "var(--primary)" }}>กำลังตรวจสอบสิทธิ์...</h3>
+          <h3 style={{ color: "var(--primary)" }}>กำลังเตรียมความพร้อม...</h3>
         </div>
       </div>
     );
   }
 
   return (
-    <div style={{ padding: "24px 16px", minHeight: "100vh", maxWidth: "600px", margin: "0 auto" }}>
-      <div style={{ textAlign: "center", marginBottom: "24px" }}>
-        <h2 style={{ fontSize: "1.6rem", margin: 0, color: "var(--foreground)" }}>💰 ตั้งวงแชร์ใหม่</h2>
+    <div className="animate-fade-in">
+      <Script src="https://static.line-scdn.net/liff/edge/versions/2.22.1/sdk.js" onLoad={handleScriptLoad} />
+      
+      <div style={{ marginBottom: "24px" }}>
+        <h2 style={{ fontSize: "1.6rem", fontWeight: "800", margin: 0 }}>💰 ตั้งวงแชร์ใหม่</h2>
+        <p style={{ color: "#64748b", margin: "4px 0 0 0", fontSize: "0.9rem" }}>เริ่มต้นความรวยไปด้วยกัน เตรียมข้อมูลให้พร้อม</p>
       </div>
 
-      <div className="glass-panel" style={{ padding: "24px" }}>
+      <div className="glass-panel" style={{ padding: "28px 24px" }}>
         {message.text && (
-          <div style={{ padding: "12px", marginBottom: "20px", borderRadius: "8px", background: message.type === "success" ? "#dcfce7" : "#fee2e2", color: message.type === "success" ? "#166534" : "#991b1b", textAlign: "center", fontWeight: "600" }}>
+          <div style={{ padding: "14px", marginBottom: "24px", borderRadius: "12px", background: message.type === "success" ? "#dcfce7" : "#fee2e2", color: message.type === "success" ? "#166534" : "#991b1b", textAlign: "center", fontWeight: "700", fontSize: "0.9rem" }}>
             {message.text}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
           <div>
-            <label style={{ display: "block", marginBottom: "6px", fontWeight: "600", fontSize: "0.9rem", color: "#475569" }}>ชื่อวงแชร์</label>
+            <label style={{ display: "block", marginBottom: "8px", fontWeight: "700", fontSize: "0.85rem", color: "#64748b" }}>ชื่อวงแชร์</label>
             <input 
               type="text" 
               name="circle_name" 
               value={formData.circle_name} 
               onChange={handleChange} 
               required
-              style={{ width: "100%", padding: "12px", borderRadius: "10px", border: "1px solid #cbd5e1", fontSize: "1rem" }}
-              placeholder="e.g., วงรวยข้ามคืน"
+              className="glass-panel"
+              style={{ width: "100%", padding: "14px 16px", borderRadius: "14px", border: "1px solid #e2e8f0", fontSize: "1rem", background: "rgba(255,255,255,0.5)" }}
+              placeholder="เช่น วงรวยข้ามปี, เพื่อนรักหักเหลี่ยมโหด"
             />
           </div>
 
           <div>
-            <label style={{ display: "block", marginBottom: "6px", fontWeight: "600", fontSize: "0.9rem", color: "#475569" }}>ประเภทระบบดอก</label>
+            <label style={{ display: "block", marginBottom: "8px", fontWeight: "700", fontSize: "0.85rem", color: "#64748b" }}>ประเภทระบบดอก</label>
             <select 
               name="type" 
               value={formData.type} 
               onChange={handleChange}
-              style={{ width: "100%", padding: "12px", borderRadius: "10px", border: "1px solid #cbd5e1", fontSize: "1rem" }}
+              className="glass-panel"
+              style={{ width: "100%", padding: "14px 16px", borderRadius: "14px", border: "1px solid #e2e8f0", fontSize: "1rem", background: "rgba(255,255,255,0.5)", appearance: "none" }}
             >
               <option value="ดอกหัก">แบบดอกหัก (นิยม)</option>
               <option value="ดอกตาม">แบบดอกตาม</option>
             </select>
           </div>
 
-          <div style={{ display: "flex", gap: "12px" }}>
+          <div style={{ display: "flex", gap: "16px" }}>
             <div style={{ flex: 1 }}>
-              <label style={{ display: "block", marginBottom: "6px", fontWeight: "600", fontSize: "0.9rem", color: "#475569" }}>ส่งงวดละ (บาท)</label>
+              <label style={{ display: "block", marginBottom: "8px", fontWeight: "700", fontSize: "0.85rem", color: "#64748b" }}>ส่งงวดละ (บาท)</label>
               <input 
                 type="number" 
                 name="amount_per_hand" 
                 value={formData.amount_per_hand} 
                 onChange={handleChange} 
                 required
-                style={{ width: "100%", padding: "12px", borderRadius: "10px", border: "1px solid #cbd5e1", fontSize: "1rem" }}
+                className="glass-panel"
+                style={{ width: "100%", padding: "14px 16px", borderRadius: "14px", border: "1px solid #e2e8f0", fontSize: "1rem", background: "rgba(255,255,255,0.5)" }}
                 placeholder="1000"
               />
             </div>
             <div style={{ flex: 1 }}>
-              <label style={{ display: "block", marginBottom: "6px", fontWeight: "600", fontSize: "0.9rem", color: "#475569" }}>จำนวนมือทั้งหมด</label>
+              <label style={{ display: "block", marginBottom: "8px", fontWeight: "700", fontSize: "0.85rem", color: "#64748b" }}>จำนวนมือ</label>
               <input 
                 type="number" 
                 name="total_hands" 
                 value={formData.total_hands} 
                 onChange={handleChange} 
                 required
-                style={{ width: "100%", padding: "12px", borderRadius: "10px", border: "1px solid #cbd5e1", fontSize: "1rem" }}
+                className="glass-panel"
+                style={{ width: "100%", padding: "14px 16px", borderRadius: "14px", border: "1px solid #e2e8f0", fontSize: "1rem", background: "rgba(255,255,255,0.5)" }}
                 placeholder="10"
               />
             </div>
           </div>
 
           <div>
-            <label style={{ display: "block", marginBottom: "6px", fontWeight: "600", fontSize: "0.9rem", color: "#475569" }}>ลิงก์เข้ากลุ่มแชท LINE (กรุ๊ปคุยกันในวง)</label>
+            <label style={{ display: "block", marginBottom: "8px", fontWeight: "700", fontSize: "0.85rem", color: "#64748b" }}>ลิงก์กลุ่มแชท (LINE Group URL)</label>
             <input 
               type="url" 
               name="line_group_url" 
               value={formData.line_group_url} 
               onChange={handleChange} 
-              style={{ width: "100%", padding: "12px", borderRadius: "10px", border: "1px solid #cbd5e1", fontSize: "1rem" }}
+              className="glass-panel"
+              style={{ width: "100%", padding: "14px 16px", borderRadius: "14px", border: "1px solid #e2e8f0", fontSize: "1rem", background: "rgba(255,255,255,0.5)" }}
               placeholder="https://line.me/R/ti/g/..."
             />
-            <p style={{ fontSize: "0.8rem", color: "#64748b", marginTop: "6px" }}>* เอาลิงก์กลุ่มปกติของคุณมาแปะ ลูกวงจะกดเข้าทางนี้</p>
+            <p style={{ fontSize: "0.75rem", color: "#94a3b8", marginTop: "8px", fontStyle: "italic" }}>* ลูกวงจะกดเข้ากลุ่มแชทผ่านลิงก์ที่ระบุนี้</p>
           </div>
 
           <button 
             type="submit" 
             disabled={isSaving}
-            style={{ marginTop: "10px", padding: "16px", background: "var(--primary)", color: "white", border: "none", borderRadius: "12px", fontSize: "1.1rem", fontWeight: "bold", cursor: "pointer", boxShadow: "0 4px 12px rgba(16, 185, 129, 0.3)", opacity: isSaving ? 0.7 : 1 }}
+            className="btn-primary"
+            style={{ marginTop: "12px", padding: "18px", fontSize: "1.1rem" }}
           >
-            {isSaving ? "กำลังสร้างวงแชร์..." : "✨ ยืนยันสร้างวงแชร์"}
+            {isSaving ? "🔄 กำลังเนรมิตวงแชร์..." : "✨ ยืนยันเปิดวงใหม่"}
           </button>
         </form>
+      </div>
+
+      <div style={{ padding: "40px 20px", textAlign: "center" }}>
+          <p style={{ color: "#94a3b8", fontSize: "0.85rem" }}>เมื่อกดสร้างแล้ว จะไม่สามารถเปลี่ยน 'ประเภทเดี๋ยวดอก' ได้<br/>กรุณาตรวจสอบข้อมูลให้ถูกต้อง</p>
       </div>
     </div>
   );

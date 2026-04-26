@@ -41,7 +41,7 @@ export default function AdminDashboard() {
       await window.liff.init({ liffId });
 
       if (!window.liff.isLoggedIn()) {
-        router.push('/');
+        window.liff.login();
         return;
       }
 
@@ -125,7 +125,7 @@ export default function AdminDashboard() {
   };
 
   const handleBlock = async (houseId) => {
-    if (!confirm("บล็อคสมาชิกคนนี้?")) return;
+    if (!confirm("บล็อกสมาชิกคนนี้?")) return;
     try {
       const res = await fetch('/api/action', {
         method: 'POST',
@@ -229,7 +229,7 @@ export default function AdminDashboard() {
     return (
       <div style={{ padding: "20px", minHeight: "100vh" }}>
         <Script src="https://static.line-scdn.net/liff/edge/versions/2.22.1/sdk.js" onLoad={handleScriptLoad} />
-        <div className="loader-container"><div className="loader"></div><h3 style={{ color: "var(--primary)" }}>กำลังตรวจสอบสิทธิ์...</h3></div>
+        <div className="loader-container"><div className="loader"></div><h3 style={{ color: "var(--primary)" }}>กำลังตรวจสอบสิทธิ์ Admin...</h3></div>
       </div>
     );
   }
@@ -248,28 +248,31 @@ export default function AdminDashboard() {
 
   // ============ TAB CONTENT ============
   const renderPendingTab = () => (
-    <div>
-      {/* Invite Button */}
-      <button onClick={handleCopyInviteLink} style={{ width: "100%", padding: "14px", background: "var(--primary)", color: "white", border: "none", borderRadius: "10px", fontWeight: "bold", cursor: "pointer", marginBottom: "20px", fontSize: "1rem", boxShadow: "0 4px 12px rgba(16, 185, 129, 0.3)" }}>
-        🔗 คัดลอกลิงก์เชิญเข้าบ้าน
-      </button>
+    <div className="animate-fade-in">
+      <div className="glass-panel" style={{ textAlign: "center", marginBottom: "24px", padding: "24px", border: "1px dashed var(--primary)" }}>
+        <h4 style={{ margin: "0 0 12px 0" }}>ชวนสมาชิกใหม่</h4>
+        <p style={{ fontSize: "0.85rem", color: "#64748b", marginBottom: "20px" }}>ส่งลิงก์ให้สมาชิกเพื่อขอเข้าร่วมบ้านแชร์ของคุณ</p>
+        <button onClick={handleCopyInviteLink} className="btn-primary" style={{ width: "100%" }}>
+          🔗 คัดลอกลิงก์เชิญ
+        </button>
+      </div>
 
       {pendingMembers.length === 0 ? (
-        <div style={{ textAlign: "center", padding: "40px 20px", color: "#94a3b8" }}>
-          <div style={{ fontSize: "3rem", marginBottom: "12px" }}>✅</div>
-          <p>ไม่มีรายการรออนุมัติ</p>
+        <div className="glass-panel" style={{ textAlign: "center", padding: "60px 20px" }}>
+          <div style={{ fontSize: "3rem", marginBottom: "16px" }}>✅</div>
+          <h3 style={{ margin: 0, color: "#94a3b8" }}>ไม่มีรายการรออนุมัติ</h3>
         </div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
           {pendingMembers.map(h => (
-            <div key={h.id} className="glass-panel" style={{ padding: "14px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div key={h.id} className="glass-panel" style={{ padding: "20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div>
-                <strong style={{ display: "block", fontSize: "1.05rem" }}>{h.member?.name || "?"}</strong>
+                <strong style={{ display: "block", fontSize: "1.1rem" }}>{h.member?.name || "ไม่ระบุชื่อ"}</strong>
                 <span style={{ fontSize: "0.85rem", color: "#64748b" }}>📱 {h.member?.phone || "-"}</span>
               </div>
-              <div style={{ display: "flex", gap: "6px" }}>
-                <button onClick={() => handleApprove(h.id)} style={{ padding: "8px 14px", background: "#dcfce7", color: "#166534", border: "none", borderRadius: "6px", fontWeight: "bold", cursor: "pointer", fontSize: "0.85rem" }}>✅ รับ</button>
-                <button onClick={() => handleReject(h.id)} style={{ padding: "8px 14px", background: "#fee2e2", color: "#991b1b", border: "none", borderRadius: "6px", fontWeight: "bold", cursor: "pointer", fontSize: "0.85rem" }}>❌ ลบ</button>
+              <div style={{ display: "flex", gap: "10px" }}>
+                <button onClick={() => handleApprove(h.id)} className="badge badge-success" style={{ border: "none", cursor: "pointer", padding: "8px 16px" }}>อนุมัติ</button>
+                <button onClick={() => handleReject(h.id)} className="badge badge-danger" style={{ border: "none", cursor: "pointer", padding: "8px 16px" }}>ปฏิเสธ</button>
               </div>
             </div>
           ))}
@@ -279,72 +282,66 @@ export default function AdminDashboard() {
   );
 
   const renderRolesTab = () => (
-    <div>
-      {/* Search */}
-      <div style={{ position: "relative", marginBottom: "16px" }}>
-        <span style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", fontSize: "1.1rem", color: "#94a3b8" }}>🔍</span>
+    <div className="animate-fade-in">
+      <div style={{ position: "relative", marginBottom: "20px" }}>
         <input
-          type="text" placeholder="ค้นหาชื่อ..."
-          value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-          style={{ width: "100%", padding: "12px 12px 12px 40px", borderRadius: "10px", border: "1px solid #cbd5e1", fontSize: "1rem" }}
+          type="text" 
+          placeholder="🔍 ค้นหาสมาชิก (ชื่อ, เบอร์โทร)..."
+          value={searchQuery} 
+          onChange={e => setSearchQuery(e.target.value)}
+          className="glass-panel"
+          style={{ width: "100%", padding: "14px 20px", borderRadius: "16px", border: "1px solid #cbd5e1" }}
         />
       </div>
 
       {filteredMembers.length === 0 ? (
-        <div style={{ textAlign: "center", padding: "40px 20px", color: "#94a3b8" }}>
-          <p>ไม่มีสมาชิกในบ้าน</p>
+        <div className="glass-panel" style={{ textAlign: "center", padding: "40px", color: "#94a3b8" }}>
+          <p>ไม่พบสมาชิกตามเงื่อนไข</p>
         </div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
           {filteredMembers.map(h => {
-            const m = h.member;
-            if (!m) return null;
-            const assignedBank = h.bank;
-            const isBlocked = h.status === 'BLOCKED';
+             const m = h.member;
+             if (!m) return null;
+             const assignedBank = h.bank;
+             const isBlocked = h.status === 'BLOCKED';
 
-            return (
-              <div key={h.id} className="glass-panel" style={{ padding: "14px", opacity: isBlocked ? 0.5 : 1 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "10px" }}>
-                  <div>
-                    <strong style={{ fontSize: "1.05rem" }}>{m.name}</strong>
-                    {assignedBank && (
-                      <div style={{ fontSize: "0.8rem", color: "#64748b", marginTop: "2px" }}>
-                        🏦 {assignedBank.bank_name} | {assignedBank.account_no}
-                      </div>
-                    )}
-                    {!assignedBank && (
-                      <div style={{ fontSize: "0.8rem", color: "#94a3b8", marginTop: "2px" }}>
-                        ✅ ใช้บัญชีหลัก
-                      </div>
-                    )}
-                  </div>
-                  <span style={{ fontSize: "0.75rem", padding: "2px 8px", borderRadius: "4px", fontWeight: "bold", background: m.role === 'SUPERADMIN' ? '#fef3c7' : m.role === 'ADMIN' ? '#e0f2fe' : '#f1f5f9', color: m.role === 'SUPERADMIN' ? '#92400e' : m.role === 'ADMIN' ? '#0369a1' : '#475569' }}>
-                    {m.role}
-                  </span>
-                </div>
+             return (
+               <div key={h.id} className="glass-panel" style={{ padding: "20px", opacity: isBlocked ? 0.6 : 1, borderLeft: isBlocked ? "4px solid #ef4444" : "1px solid var(--glass-border)" }}>
+                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px" }}>
+                   <div>
+                     <strong style={{ fontSize: "1.1rem" }}>{m.name}</strong>
+                     <div style={{ fontSize: "0.75rem", color: "#64748b", marginTop: "4px" }}>
+                        {assignedBank ? `🏦 ${assignedBank.bank_name} (${assignedBank.account_no})` : "✅ ใช้บัญชีหลักของบ้าน"}
+                     </div>
+                   </div>
+                   <span className="badge" style={{ background: "var(--background)", color: "var(--primary)", border: "1px solid var(--primary)" }}>
+                     {m.role}
+                   </span>
+                 </div>
 
-                <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-                  <button onClick={() => setRoleModal({ open: true, member: m, newRole: m.role })} style={{ padding: "6px 12px", background: "#e0f2fe", color: "#0284c7", border: "none", borderRadius: "6px", fontWeight: "bold", cursor: "pointer", fontSize: "0.8rem" }}>
-                    👑 ตั้งยศ
-                  </button>
-                  <button onClick={() => setBankAssignModal({ open: true, houseId: h.id, currentBankId: h.assigned_bank_id || "", selectedBankId: h.assigned_bank_id || "" })} style={{ padding: "6px 12px", background: "#f3e8ff", color: "#7c3aed", border: "none", borderRadius: "6px", fontWeight: "bold", cursor: "pointer", fontSize: "0.8rem" }}>
-                    🏦 ตั้งบัญชี
-                  </button>
-                  {!isBlocked ? (
-                    <button onClick={() => handleBlock(h.id)} style={{ padding: "6px 12px", background: "#fee2e2", color: "#991b1b", border: "none", borderRadius: "6px", fontWeight: "bold", cursor: "pointer", fontSize: "0.8rem" }}>
-                      🚫 บล็อค
-                    </button>
-                  ) : (
-                    <button onClick={() => handleApprove(h.id)} style={{ padding: "6px 12px", background: "#dcfce7", color: "#166534", border: "none", borderRadius: "6px", fontWeight: "bold", cursor: "pointer", fontSize: "0.8rem" }}>
-                      🔓 ปลดบล็อค
-                    </button>
-                  )}
-                  <button onClick={() => handleRemove(h.id)} style={{ padding: "6px 12px", background: "#fef2f2", color: "#b91c1c", border: "none", borderRadius: "6px", fontWeight: "bold", cursor: "pointer", fontSize: "0.8rem" }}>
-                    🗑️ ลบ
-                  </button>
-                </div>
-              </div>
-            );
+                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                   <button onClick={() => setRoleModal({ open: true, member: m, newRole: m.role })} className="btn-primary" style={{ padding: "10px", fontSize: "0.75rem", background: "rgba(59, 130, 246, 0.1)", color: "#2563eb", boxShadow: "none" }}>
+                     👑 ปรับตำแหน่ง
+                   </button>
+                   <button onClick={() => setBankAssignModal({ open: true, houseId: h.id, currentBankId: h.assigned_bank_id || "", selectedBankId: h.assigned_bank_id || "" })} className="btn-primary" style={{ padding: "10px", fontSize: "0.75rem", background: "rgba(139, 92, 246, 0.1)", color: "#7c3aed", boxShadow: "none" }}>
+                     🏦 เลือกธนาคาร
+                   </button>
+                   {!isBlocked ? (
+                     <button onClick={() => handleBlock(h.id)} className="btn-primary" style={{ padding: "10px", fontSize: "0.75rem", background: "rgba(239, 68, 68, 0.1)", color: "#dc2626", boxShadow: "none" }}>
+                       🚫 บล็อก
+                     </button>
+                   ) : (
+                     <button onClick={() => handleApprove(h.id)} className="btn-primary" style={{ padding: "10px", fontSize: "0.75rem", background: "rgba(16, 185, 129, 0.1)", color: "#059669", boxShadow: "none" }}>
+                       🔓 ปลดล็อก
+                     </button>
+                   )}
+                   <button onClick={() => handleRemove(h.id)} className="btn-primary" style={{ padding: "10px", fontSize: "0.75rem", background: "#fef2f2", color: "#b91c1c", boxShadow: "none" }}>
+                     🗑️ ลบออก
+                   </button>
+                 </div>
+               </div>
+             );
           })}
         </div>
       )}
@@ -352,46 +349,47 @@ export default function AdminDashboard() {
   );
 
   const renderBanksTab = () => (
-    <div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-        <span style={{ fontSize: "0.95rem", color: "#64748b" }}>📋 รายการบัญชีธนาคาร</span>
-        <button onClick={() => setBankFormModal({ open: true, mode: "add", bankId: "", bank_name: "", account_no: "", account_name: "" })} style={{ padding: "8px 16px", background: "var(--primary)", color: "white", border: "none", borderRadius: "8px", fontWeight: "bold", cursor: "pointer", fontSize: "0.9rem" }}>
+    <div className="animate-fade-in">
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+        <h3 style={{ margin: 0, fontSize: "1.1rem" }}>บัญชีรับเงินของบ้าน</h3>
+        <button onClick={() => setBankFormModal({ open: true, mode: "add", bankId: "", bank_name: "", account_no: "", account_name: "" })} className="btn-primary" style={{ padding: "8px 16px", fontSize: "0.85rem" }}>
           + เพิ่มบัญชี
         </button>
       </div>
 
       {banks.length === 0 ? (
-        <div style={{ textAlign: "center", padding: "40px 20px", color: "#94a3b8" }}>
-          <div style={{ fontSize: "3rem", marginBottom: "12px" }}>🏦</div>
-          <p>ยังไม่มีบัญชี กดปุ่ม "เพิ่มบัญชี" ด้านบน</p>
+        <div className="glass-panel" style={{ textAlign: "center", padding: "60px 20px" }}>
+          <p style={{ color: "#94a3b8" }}>ยังไม่มีข้อมูลบัญชีธนาคาร</p>
         </div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
           {banks.map(b => (
-            <div key={b.id} className="glass-panel" style={{ padding: "14px", borderLeft: b.is_default ? "4px solid var(--primary)" : "4px solid transparent" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "10px" }}>
+            <div key={b.id} className="glass-panel" style={{ padding: "20px", borderLeft: b.is_default ? "6px solid var(--primary)" : "6px solid transparent" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px" }}>
                 <div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
-                    <strong style={{ fontSize: "1.05rem" }}>{b.bank_name}</strong>
-                    {b.is_default && <span style={{ fontSize: "0.7rem", padding: "2px 6px", borderRadius: "4px", background: "#dcfce7", color: "#166534", fontWeight: "bold" }}>✔ บัญชีหลัก</span>}
-                    <button onClick={() => { navigator.clipboard.writeText(`${b.bank_name}\n${b.account_no}\n${b.account_name}`); setMessage({ type: "success", text: "คัดลอกข้อมูลบัญชีแล้ว!" }); }} style={{ background: "none", border: "1px solid #cbd5e1", borderRadius: "4px", padding: "2px 6px", cursor: "pointer", fontSize: "0.75rem", color: "#64748b" }} title="คัดลอกข้อมูลบัญชี">📋</button>
-                  </div>
-                  <div style={{ fontSize: "0.95rem", color: "var(--primary)", fontFamily: "monospace" }}>{b.account_no}</div>
-                  <div style={{ fontSize: "0.85rem", color: "#64748b" }}>{b.account_name}</div>
+                   <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <strong style={{ fontSize: "1.1rem" }}>{b.bank_name}</strong>
+                      {b.is_default && <span className="badge badge-success" style={{ fontSize: "0.6rem" }}>หลัก</span>}
+                   </div>
+                   <div style={{ fontSize: "1.2rem", fontWeight: "700", color: "var(--primary)", margin: "4px 0" }}>{b.account_no}</div>
+                   <div style={{ fontSize: "0.9rem", color: "#64748b" }}>{b.account_name}</div>
                 </div>
+                <button onClick={() => { navigator.clipboard.writeText(`${b.bank_name}\n${b.account_no}\n${b.account_name}`); setMessage({ type: "success", text: "คัดลอกข้อมูลบัญชีแล้ว" }); }} className="glass-panel" style={{ padding: "10px", borderRadius: "12px", border: "1px solid #e2e8f0", cursor: "pointer" }}>
+                  📋
+                </button>
               </div>
 
-              <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+              <div style={{ display: "flex", gap: "8px" }}>
                 {!b.is_default && (
-                  <button onClick={() => handleSetDefault(b.id)} style={{ padding: "6px 12px", background: "#fef3c7", color: "#92400e", border: "none", borderRadius: "6px", fontWeight: "bold", cursor: "pointer", fontSize: "0.8rem" }}>
+                  <button onClick={() => handleSetDefault(b.id)} className="btn-primary" style={{ flex: 1, padding: "10px", fontSize: "0.75rem", background: "none", border: "1px solid var(--primary)", color: "var(--primary)", boxShadow: "none" }}>
                     ⭐ ตั้งเป็นหลัก
                   </button>
                 )}
-                <button onClick={() => setBankFormModal({ open: true, mode: "edit", bankId: b.id, bank_name: b.bank_name, account_no: b.account_no, account_name: b.account_name })} style={{ padding: "6px 12px", background: "#e0f2fe", color: "#0284c7", border: "none", borderRadius: "6px", fontWeight: "bold", cursor: "pointer", fontSize: "0.8rem" }}>
+                <button onClick={() => setBankFormModal({ open: true, mode: "edit", bankId: b.id, bank_name: b.bank_name, account_no: b.account_no, account_name: b.account_name })} className="btn-primary" style={{ flex: 1, padding: "10px", fontSize: "0.75rem", background: "rgba(59, 130, 246, 0.1)", color: "#2563eb", boxShadow: "none" }}>
                   ✏️ แก้ไข
                 </button>
-                <button onClick={() => handleDeleteBank(b.id)} style={{ padding: "6px 12px", background: "#fee2e2", color: "#991b1b", border: "none", borderRadius: "6px", fontWeight: "bold", cursor: "pointer", fontSize: "0.8rem" }}>
-                  🗑️ ลบ
+                <button onClick={() => handleDeleteBank(b.id)} className="btn-primary" style={{ padding: "10px", fontSize: "0.75rem", background: "#fef2f2", color: "#b91c1c", boxShadow: "none" }}>
+                  🗑️
                 </button>
               </div>
             </div>
@@ -401,104 +399,101 @@ export default function AdminDashboard() {
     </div>
   );
 
-  // ============ RENDER ============
   return (
-    <div style={{ padding: "24px 16px", minHeight: "100vh", maxWidth: "600px", margin: "0 auto" }}>
-      {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "6px" }}>
-        <span style={{ fontSize: "2rem" }}>🔧</span>
+    <div className="animate-fade-in" style={{ paddingBottom: "40px" }}>
+      <Script src="https://static.line-scdn.net/liff/edge/versions/2.22.1/sdk.js" onLoad={handleScriptLoad} />
+      
+      {/* Admin Header */}
+      <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "24px" }}>
+        <div style={{ width: "60px", height: "60px", borderRadius: "20px", background: "var(--primary-gradient)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "2rem", boxShadow: "0 8px 16px rgba(16, 185, 129, 0.2)" }}>
+           🛠️
+        </div>
         <div>
-          <h2 style={{ margin: 0, fontSize: "1.4rem", color: "var(--foreground)" }}>{dbUser?.name}</h2>
-          <div style={{ display: "flex", gap: "6px", marginTop: "4px" }}>
-            <span style={{ fontSize: "0.7rem", padding: "2px 8px", borderRadius: "4px", fontWeight: "bold", background: "#fef3c7", color: "#92400e" }}>{dbUser?.role}</span>
-            <span style={{ fontSize: "0.7rem", padding: "2px 8px", borderRadius: "4px", fontWeight: "bold", background: "#dcfce7", color: "#166534" }}>{dbUser?.member_status}</span>
-          </div>
+           <h2 style={{ fontSize: "1.5rem", fontWeight: "800", margin: 0 }}>แผงควบคุมแอดมิน</h2>
+           <div style={{ fontSize: "0.85rem", color: "#64748b" }}>จัดการสมาชิกและบัญชีธนาคารของบ้าน</div>
         </div>
       </div>
-      <p style={{ fontSize: "1.1rem", color: "#475569", marginBottom: "16px" }}>🔑 ผู้ดูแลระบบ</p>
 
-      {/* Message */}
       {message.text && (
-        <div style={{ padding: "12px", marginBottom: "16px", borderRadius: "8px", background: message.type === "success" ? "#dcfce7" : "#fee2e2", color: message.type === "success" ? "#166534" : "#991b1b", textAlign: "center", fontWeight: "600" }}>{message.text}</div>
+        <div style={{ padding: "12px", marginBottom: "24px", borderRadius: "12px", background: message.type === "success" ? "#dcfce7" : "#fee2e2", color: message.type === "success" ? "#166534" : "#991b1b", textAlign: "center", fontWeight: "600", fontSize: "0.85rem" }}>
+          {message.text}
+        </div>
       )}
 
-      {/* Tab Bar */}
-      <div style={{ display: "flex", borderRadius: "14px", overflow: "hidden", marginBottom: "20px", background: "linear-gradient(135deg, #8b5cf6, #a78bfa, #7c3aed)", padding: "6px" }}>
-        {[
-          { key: "pending", icon: "⏳", label: "รอ", sublabel: "อนุมัติ", count: pendingMembers.length },
-          { key: "roles", icon: "👥", label: "จัดการ", sublabel: "สิทธิ์" },
-          { key: "banks", icon: "🏦", label: "บัญชี", sublabel: "ธนาคาร" }
-        ].map(tab => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            style={{
-              flex: 1, padding: "12px 6px", border: "none", borderRadius: "10px", cursor: "pointer",
-              background: activeTab === tab.key ? "rgba(255,255,255,0.95)" : "transparent",
-              color: activeTab === tab.key ? "#6d28d9" : "rgba(255,255,255,0.9)",
-              fontWeight: "bold", textAlign: "center", transition: "all 0.2s ease", position: "relative",
-              fontSize: "0.85rem"
-            }}
-          >
-            <div style={{ fontSize: "1.3rem" }}>{tab.icon}</div>
-            <div>{tab.label}</div>
-            <div style={{ fontSize: "0.75rem", opacity: 0.8 }}>{tab.sublabel}</div>
-            {tab.count > 0 && (
-              <span style={{ position: "absolute", top: "4px", right: "8px", background: "#ef4444", color: "white", borderRadius: "50%", width: "18px", height: "18px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.65rem", fontWeight: "bold" }}>{tab.count}</span>
-            )}
-          </button>
-        ))}
+      {/* Modern Admin Navigation */}
+      <div className="glass-panel" style={{ display: "flex", gap: "6px", marginBottom: "24px", padding: "6px", borderRadius: "18px", background: "rgba(255,255,255,0.8)" }}>
+         {[
+           { id: "pending", label: "รออนุมัติ", icon: "⏳", count: pendingMembers.length },
+           { id: "roles", label: "สมาชิก", icon: "👥" },
+           { id: "banks", label: "ธนาคาร", icon: "🏦" }
+         ].map(tab => (
+           <button 
+             key={tab.id}
+             onClick={() => setActiveTab(tab.id)}
+             style={{ 
+               flex: 1, padding: "12px", borderRadius: "14px", border: "none", fontWeight: "700", cursor: "pointer", transition: "all 0.3s", 
+               background: activeTab === tab.id ? "var(--primary-gradient)" : "transparent", 
+               color: activeTab === tab.id ? "white" : "#64748b",
+               position: "relative"
+             }}
+           >
+             <span style={{ marginRight: "4px" }}>{tab.icon}</span> {tab.label}
+             {tab.count > 0 && <span style={{ position: "absolute", top: "5px", right: "5px", background: "#ef4444", color: "white", borderRadius: "50%", minWidth: "18px", height: "18px", fontSize: "0.65rem", display: "flex", alignItems: "center", justifyContent: "center" }}>{tab.count}</span>}
+           </button>
+         ))}
       </div>
 
-      {/* Tab Content */}
+      {/* Content Area */}
       {activeTab === "pending" && renderPendingTab()}
       {activeTab === "roles" && renderRolesTab()}
       {activeTab === "banks" && renderBanksTab()}
 
-      {/* ============ MODALS ============ */}
-
-      {/* Role Change Modal */}
+      {/* Modals */}
       {roleModal.open && (
-        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "20px" }}>
-          <div className="glass-panel" style={{ width: "100%", maxWidth: "380px", padding: "24px" }}>
-            <h3 style={{ marginTop: 0, marginBottom: "16px" }}>👑 ตั้งยศให้ {roleModal.member?.name}</h3>
-            <select value={roleModal.newRole} onChange={e => setRoleModal({ ...roleModal, newRole: e.target.value })} style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid #cbd5e1", marginBottom: "16px" }}>
+        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "20px" }}>
+          <div className="glass-panel animate-fade-in" style={{ width: "100%", maxWidth: "400px", padding: "30px" }}>
+            <h3 style={{ textAlign: "center", marginBottom: "20px" }}>👑 ปรับตำแหน่ง</h3>
+            <p style={{ textAlign: "center", color: "#64748b", fontSize: "0.9rem", marginBottom: "24px" }}>เลือกตำแหน่งใหม่ให้คุณ <strong>{roleModal.member?.name}</strong></p>
+            
+            <select value={roleModal.newRole} onChange={e => setRoleModal({ ...roleModal, newRole: e.target.value })} className="glass-panel" style={{ width: "100%", padding: "14px", marginBottom: "24px", border: "1px solid #e2e8f0" }}>
               {availableRoles.map(r => <option key={r} value={r}>{r}</option>)}
             </select>
+
             <div style={{ display: "flex", gap: "10px" }}>
-              <button onClick={() => setRoleModal({ open: false, member: null, newRole: "" })} style={{ flex: 1, padding: "12px", background: "#f1f5f9", color: "#475569", border: "none", borderRadius: "8px", fontWeight: "bold", cursor: "pointer" }}>ยกเลิก</button>
-              <button onClick={submitRoleChange} style={{ flex: 1, padding: "12px", background: "var(--primary)", color: "white", border: "none", borderRadius: "8px", fontWeight: "bold", cursor: "pointer" }}>ยืนยัน</button>
+              <button onClick={() => setRoleModal({ open: false, member: null, newRole: "" })} style={{ flex: 1, padding: "14px", borderRadius: "12px", border: "1px solid #e2e8f0", background: "none", fontWeight: "700" }}>ยกเลิก</button>
+              <button onClick={submitRoleChange} className="btn-primary" style={{ flex: 1 }}>ยืนยันเปลี่ยน</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Bank Assign Modal */}
       {bankAssignModal.open && (
-        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "20px" }}>
-          <div className="glass-panel" style={{ width: "100%", maxWidth: "380px", padding: "24px" }}>
-            <h3 style={{ marginTop: 0, marginBottom: "16px" }}>🏦 กำหนดบัญชีรับโอนให้สมาชิก</h3>
-            <select value={bankAssignModal.selectedBankId} onChange={e => setBankAssignModal({ ...bankAssignModal, selectedBankId: e.target.value })} style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid #cbd5e1", marginBottom: "16px" }}>
-              <option value="">-- ใช้บัญชีหลัก (Default) --</option>
-              {banks.map(b => <option key={b.id} value={b.id}>{b.bank_name} | {b.account_no} ({b.account_name})</option>)}
+        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "20px" }}>
+          <div className="glass-panel animate-fade-in" style={{ width: "100%", maxWidth: "400px", padding: "30px" }}>
+            <h3 style={{ textAlign: "center", marginBottom: "20px" }}>🏦 กำหนดบัญชีธนาคาร</h3>
+            <p style={{ textAlign: "center", color: "#64748b", fontSize: "0.9rem", marginBottom: "24px" }}>เลือกบัญชีที่จะให้สมาชิกคนนี้โอนเงินเข้า</p>
+            
+            <select value={bankAssignModal.selectedBankId} onChange={e => setBankAssignModal({ ...bankAssignModal, selectedBankId: e.target.value })} className="glass-panel" style={{ width: "100%", padding: "14px", marginBottom: "24px", border: "1px solid #e2e8f0" }}>
+              <option value="">-- ใช้บัญชีหลักของบ้าน --</option>
+              {banks.map(b => <option key={b.id} value={b.id}>{b.bank_name} | {b.account_no}</option>)}
             </select>
+
             <div style={{ display: "flex", gap: "10px" }}>
-              <button onClick={() => setBankAssignModal({ open: false, houseId: "", currentBankId: "", selectedBankId: "" })} style={{ flex: 1, padding: "12px", background: "#f1f5f9", color: "#475569", border: "none", borderRadius: "8px", fontWeight: "bold", cursor: "pointer" }}>ยกเลิก</button>
-              <button onClick={submitBankAssign} style={{ flex: 1, padding: "12px", background: "var(--primary)", color: "white", border: "none", borderRadius: "8px", fontWeight: "bold", cursor: "pointer" }}>ยืนยัน</button>
+              <button onClick={() => setBankAssignModal({ open: false, houseId: "", currentBankId: "", selectedBankId: "" })} style={{ flex: 1, padding: "14px", borderRadius: "12px", border: "1px solid #e2e8f0", background: "none", fontWeight: "700" }}>ยกเลิก</button>
+              <button onClick={submitBankAssign} className="btn-primary" style={{ flex: 1 }}>ยืนยัน</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Bank Form Modal (Add / Edit) */}
       {bankFormModal.open && (
-        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "20px" }}>
-          <div className="glass-panel" style={{ width: "100%", maxWidth: "400px", padding: "24px" }}>
-            <h3 style={{ marginTop: 0, marginBottom: "16px" }}>{bankFormModal.mode === 'add' ? '➕ เพิ่มบัญชีธนาคาร' : '✏️ แก้ไขบัญชีธนาคาร'}</h3>
-            <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "16px" }}>
+        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "20px" }}>
+          <div className="glass-panel animate-fade-in" style={{ width: "100%", maxWidth: "420px", padding: "30px" }}>
+            <h3 style={{ textAlign: "center", marginBottom: "24px" }}>{bankFormModal.mode === 'add' ? '➕ เพิ่มบัญชีใหม่' : '✏️ แก้ไขข้อมูลบัญชี'}</h3>
+            <div style={{ display: "flex", flexDirection: "column", gap: "16px", marginBottom: "24px" }}>
               <div>
-                <label style={{ display: "block", marginBottom: "4px", fontSize: "0.85rem", color: "#475569", fontWeight: "600" }}>ชื่อธนาคาร</label>
-                <select value={bankFormModal.bank_name} onChange={e => setBankFormModal({ ...bankFormModal, bank_name: e.target.value })} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", background: "white" }}>
+                <label style={{ display: "block", marginBottom: "6px", fontSize: "0.85rem", fontWeight: "700", color: "#64748b" }}>เลือกธนาคาร</label>
+                <select value={bankFormModal.bank_name} onChange={e => setBankFormModal({ ...bankFormModal, bank_name: e.target.value })} className="glass-panel" style={{ width: "100%", padding: "12px" }}>
                   <option value="">-- เลือกธนาคาร --</option>
                   <option value="กสิกรไทย (KBANK)">กสิกรไทย (KBANK)</option>
                   <option value="กรุงเทพ (BBL)">กรุงเทพ (BBL)</option>
@@ -508,28 +503,21 @@ export default function AdminDashboard() {
                   <option value="ทหารไทยธนชาต (TTB)">ทหารไทยธนชาต (TTB)</option>
                   <option value="ออมสิน (GSB)">ออมสิน (GSB)</option>
                   <option value="ธ.ก.ส. (BAAC)">ธ.ก.ส. (BAAC)</option>
-                  <option value="อิสลามแห่งประเทศไทย (ISBT)">อิสลามแห่งประเทศไทย (ISBT)</option>
-                  <option value="ซีไอเอ็มบี (CIMB)">ซีไอเอ็มบี (CIMB)</option>
-                  <option value="ยูโอบี (UOB)">ยูโอบี (UOB)</option>
-                  <option value="แลนด์ แอนด์ เฮ้าส์ (LHBANK)">แลนด์ แอนด์ เฮ้าส์ (LHBANK)</option>
-                  <option value="ทิสโก้ (TISCO)">ทิสโก้ (TISCO)</option>
-                  <option value="เกียรตินาคินภัทร (KKP)">เกียรตินาคินภัทร (KKP)</option>
-                  <option value="อาคารสงเคราะห์ (GHB)">อาคารสงเคราะห์ (GHB)</option>
                   <option value="พร้อมเพย์ (PromptPay)">พร้อมเพย์ (PromptPay)</option>
                 </select>
               </div>
               <div>
-                <label style={{ display: "block", marginBottom: "4px", fontSize: "0.85rem", color: "#475569", fontWeight: "600" }}>เลขบัญชี</label>
-                <input type="text" value={bankFormModal.account_no} onChange={e => setBankFormModal({ ...bankFormModal, account_no: e.target.value })} placeholder="123-4-56789-0" style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1" }} />
+                <label style={{ display: "block", marginBottom: "6px", fontSize: "0.85rem", fontWeight: "700", color: "#64748b" }}>เลขที่บัญชี</label>
+                <input type="text" value={bankFormModal.account_no} onChange={e => setBankFormModal({ ...bankFormModal, account_no: e.target.value })} placeholder="xxx-x-xxxxx-x" className="glass-panel" style={{ width: "100%", padding: "12px" }} />
               </div>
               <div>
-                <label style={{ display: "block", marginBottom: "4px", fontSize: "0.85rem", color: "#475569", fontWeight: "600" }}>ชื่อบัญชี</label>
-                <input type="text" value={bankFormModal.account_name} onChange={e => setBankFormModal({ ...bankFormModal, account_name: e.target.value })} placeholder="นายท้าว หลัก" style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1" }} />
+                <label style={{ display: "block", marginBottom: "6px", fontSize: "0.85rem", fontWeight: "700", color: "#64748b" }}>ชื่อบัญชี</label>
+                <input type="text" value={bankFormModal.account_name} onChange={e => setBankFormModal({ ...bankFormModal, account_name: e.target.value })} placeholder="นายใจดี มีสุข" className="glass-panel" style={{ width: "100%", padding: "12px" }} />
               </div>
             </div>
-            <div style={{ display: "flex", gap: "10px" }}>
-              <button onClick={() => setBankFormModal({ open: false, mode: "add", bankId: "", bank_name: "", account_no: "", account_name: "" })} style={{ flex: 1, padding: "12px", background: "#f1f5f9", color: "#475569", border: "none", borderRadius: "8px", fontWeight: "bold", cursor: "pointer" }}>ยกเลิก</button>
-              <button onClick={submitBankForm} style={{ flex: 1, padding: "12px", background: "var(--primary)", color: "white", border: "none", borderRadius: "8px", fontWeight: "bold", cursor: "pointer" }}>{bankFormModal.mode === 'add' ? 'เพิ่มบัญชี' : 'บันทึก'}</button>
+            <div style={{ display: "flex", gap: "12px" }}>
+              <button onClick={() => setBankFormModal({ open: false, mode: "add", bankId: "", bank_name: "", account_no: "", account_name: "" })} style={{ flex: 1, padding: "14px", borderRadius: "12px", border: "1px solid #e2e8f0", background: "none", fontWeight: "700" }}>ยกเลิก</button>
+              <button onClick={submitBankForm} className="btn-primary" style={{ flex: 1 }}>{bankFormModal.mode === 'add' ? 'เพิ่มบัญชี' : 'บันทึก'}</button>
             </div>
           </div>
         </div>

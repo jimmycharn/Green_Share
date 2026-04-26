@@ -108,52 +108,59 @@ export default function Members() {
   }
 
   return (
-    <div style={{ padding: "24px 16px", minHeight: "100vh", maxWidth: "600px", margin: "0 auto" }}>
-      <div style={{ textAlign: "center", marginBottom: "24px" }}>
-        <h2 style={{ fontSize: "1.6rem", margin: 0, color: "var(--foreground)" }}>👥 สมาชิกของบ้าน</h2>
-      </div>
-
+    <div className="animate-fade-in">
+      <Script src="https://static.line-scdn.net/liff/edge/versions/2.22.1/sdk.js" onLoad={handleScriptLoad} />
+      
       {message.text && (
-        <div style={{ padding: "12px", marginBottom: "20px", borderRadius: "8px", background: message.type === "success" ? "#dcfce7" : "#fee2e2", color: message.type === "success" ? "#166534" : "#991b1b", textAlign: "center", fontWeight: "600" }}>
+        <div style={{ padding: "12px", marginBottom: "20px", borderRadius: "12px", background: message.type === "success" ? "#dcfce7" : "#fee2e2", color: message.type === "success" ? "#166534" : "#991b1b", textAlign: "center", fontWeight: "600", fontSize: "0.9rem" }}>
           {message.text}
         </div>
       )}
 
       {/* Global Invite Section */}
-      <div className="glass-panel" style={{ textAlign: "center", marginBottom: "24px" }}>
-        <h3 style={{ marginBottom: "12px", fontSize: "1.2rem", color: "var(--primary)" }}>เพิ่มสมาชิกลงบ้านแชร์</h3>
-        <p style={{ color: "#64748b", fontSize: "0.9rem", marginBottom: "16px" }}>ส่งลิงก์ด้านล่างให้เพื่อนเพื่อดึงเข้าสู่ระบบบ้านแชร์</p>
+      <div className="glass-panel" style={{ textAlign: "center", marginBottom: "32px", border: "1px dashed var(--primary)" }}>
+        <div style={{ fontSize: "2rem", marginBottom: "12px" }}>🤝</div>
+        <h3 style={{ marginBottom: "8px", fontSize: "1.2rem", fontWeight: "700" }}>ชวนเพื่อนเข้าบ้าน</h3>
+        <p style={{ color: "#64748b", fontSize: "0.85rem", marginBottom: "20px", padding: "0 20px" }}>ส่งลิงก์ให้เพื่อนเพื่อเข้าร่วมเป็นสมาชิกในบ้านแชร์ของคุณ</p>
         <button 
           onClick={handleCopyInviteLink}
-          style={{ padding: "16px", background: "var(--primary)", color: "white", border: "none", borderRadius: "12px", fontSize: "1.1rem", fontWeight: "bold", cursor: "pointer", boxShadow: "0 4px 12px rgba(16, 185, 129, 0.3)", width: "100%" }}
+          className="btn-primary"
+          style={{ width: "100%" }}
         >
-          🔗 คัดลอกลิงก์เชิญเข้าบ้านแชร์
+          🔗 คัดลอกลิงก์เชิญ
         </button>
       </div>
 
-      <h3 style={{ fontSize: "1.1rem", marginBottom: "16px", color: "#475569" }}>รายชื่อสมาชิกทั้งหมด ({members.length})</h3>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+        <h3 style={{ fontSize: "1.1rem", margin: 0, fontWeight: "700" }}>สมาชิกทั้งหมด ({members.length})</h3>
+        <div style={{ fontSize: "0.85rem", color: "#94a3b8" }}>เรียงตามล่าสุด</div>
+      </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
         {members.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "20px", color: "#64748b" }}>ยังไม่มีสมาชิก...</div>
+          <div className="glass-panel" style={{ textAlign: "center", padding: "40px", color: "#94a3b8" }}>
+            ยังไม่มีสมาชิกในบ้านนี้
+          </div>
         ) : (
           members.map(m => (
-            <div key={m.id} className="glass-panel" style={{ padding: "12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div>
-                <strong style={{ fontSize: "1.1rem", display: "block" }}>{m.name}</strong>
-                <span style={{ fontSize: "0.85rem", color: "#64748b" }}>เบอร์: {m.phone || "-"}</span>
+            <div key={m.id} className="glass-panel" style={{ padding: "16px", display: "flex", alignItems: "center", gap: "16px" }}>
+              <div style={{ width: "45px", height: "45px", borderRadius: "12px", background: "var(--background)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.2rem", border: "1px solid var(--glass-border)" }}>
+                👤
               </div>
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "6px" }}>
-                <span className={m.status === 'ACTIVE' ? "badge badge-active" : "badge badge-admin"} style={{ fontSize: "0.7rem", padding: "2px 6px" }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: "700", fontSize: "1rem" }}>{m.name}</div>
+                <div style={{ fontSize: "0.8rem", color: "#64748b" }}>📞 {m.phone || "ไม่ระบุเบอร์"}</div>
+              </div>
+              <div style={{ textAlign: "right" }}>
+                <span className={m.status === 'ACTIVE' ? "badge badge-success" : "badge-warning"} style={{ fontSize: "0.65rem" }}>
                   {m.status}
                 </span>
-                <span style={{ fontSize: "0.8rem", color: "#cbd5e1" }}>{m.role}</span>
+                <div style={{ fontSize: "0.75rem", color: "#94a3b8", marginTop: "4px", fontWeight: "600" }}>{m.role}</div>
               </div>
             </div>
           ))
         )}
       </div>
-
     </div>
   );
 }

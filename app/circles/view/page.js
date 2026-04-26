@@ -100,48 +100,50 @@ export default function ViewCircles() {
   );
 
   return (
-    <div style={{ padding: "24px 16px", minHeight: "100vh", maxWidth: "600px", margin: "0 auto" }}>
-      {/* Header */}
-      <div style={{ textAlign: "center", marginBottom: "16px" }}>
-        <h2 style={{ fontSize: "1.6rem", margin: "0 0 12px 0", color: "var(--foreground)" }}>📊 วงแชร์ทั้งหมด</h2>
-        <div style={{ display: "flex", justifyContent: "flex-end" }}>
-          <Link 
-            href="/circles/create" 
-            style={{ padding: "8px 16px", background: "rgba(239, 68, 68, 0.1)", color: "#ef4444", borderRadius: "10px", fontWeight: "bold", textDecoration: "none" }}
-          >
-            + สร้างวงแชร์
-          </Link>
-        </div>
+    <div className="animate-fade-in">
+      <Script src="https://static.line-scdn.net/liff/edge/versions/2.22.1/sdk.js" onLoad={handleScriptLoad} />
+
+      {/* Header & Quick Action */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
+        <h2 style={{ fontSize: "1.5rem", fontWeight: "700", margin: 0 }}>วงแชร์ของคุณ</h2>
+        <Link 
+          href="/circles/create" 
+          className="btn-primary"
+          style={{ padding: "10px 16px", fontSize: "0.9rem" }}
+        >
+          + สร้างวงใหม่
+        </Link>
       </div>
 
-      {/* Tabs */}
-      <div style={{ display: "flex", gap: "8px", marginBottom: "20px", padding: "4px", background: "rgba(0,0,0,0.05)", borderRadius: "12px" }}>
+      {/* Modern Tabs */}
+      <div className="glass-panel" style={{ display: "flex", gap: "8px", marginBottom: "24px", padding: "6px", borderRadius: "18px" }}>
         <button 
           onClick={() => setActiveTab("OPEN")}
-          style={{ flex: 1, padding: "10px", borderRadius: "8px", border: "none", fontWeight: "bold", cursor: "pointer", transition: "all 0.2s", background: activeTab === "OPEN" ? "white" : "transparent", color: activeTab === "OPEN" ? "var(--primary)" : "#64748b", boxShadow: activeTab === "OPEN" ? "0 2px 8px rgba(0,0,0,0.05)" : "none" }}
+          style={{ flex: 1, padding: "12px", borderRadius: "14px", border: "none", fontWeight: "700", cursor: "pointer", transition: "all 0.3s", background: activeTab === "OPEN" ? "var(--primary-gradient)" : "transparent", color: activeTab === "OPEN" ? "white" : "#64748b" }}
         >
           กำลังเปิดอยู่
         </button>
         <button 
           onClick={() => setActiveTab("CLOSED")}
-          style={{ flex: 1, padding: "10px", borderRadius: "8px", border: "none", fontWeight: "bold", cursor: "pointer", transition: "all 0.2s", background: activeTab === "CLOSED" ? "white" : "transparent", color: activeTab === "CLOSED" ? "var(--foreground)" : "#64748b", boxShadow: activeTab === "CLOSED" ? "0 2px 8px rgba(0,0,0,0.05)" : "none" }}
+          style={{ flex: 1, padding: "12px", borderRadius: "14px", border: "none", fontWeight: "700", cursor: "pointer", transition: "all 0.3s", background: activeTab === "CLOSED" ? "var(--primary-gradient)" : "transparent", color: activeTab === "CLOSED" ? "white" : "#64748b" }}
         >
-          ปิดไปแล้ว
+          สรุปยอดแล้ว
         </button>
       </div>
 
       {message && (
-        <div style={{ padding: "12px", marginBottom: "20px", borderRadius: "8px", background: "#fee2e2", color: "#991b1b", textAlign: "center", fontWeight: "600" }}>
+        <div style={{ padding: "12px", marginBottom: "20px", borderRadius: "12px", background: "#fee2e2", color: "#991b1b", textAlign: "center", fontWeight: "600", fontSize: "0.9rem" }}>
           {message}
         </div>
       )}
 
-      {/* Circle List */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+      {/* Circle List Cards */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "16px", paddingBottom: "20px" }}>
         {filteredCircles.length === 0 && !message ? (
-          <div style={{ textAlign: "center", padding: "40px 20px", background: "white", borderRadius: "16px", boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}>
-            <span style={{ fontSize: "3rem", display: "block", marginBottom: "10px" }}>📭</span>
-            <h3 style={{ color: "#64748b" }}>ยังไม่มีวงแชร์ที่{activeTab === "OPEN" ? "เปิดให้เล่น" : "ปิดไปแล้ว"}</h3>
+          <div className="glass-panel" style={{ textAlign: "center", padding: "60px 20px" }}>
+            <span style={{ fontSize: "3rem", display: "block", marginBottom: "16px" }}>📭</span>
+            <h3 style={{ color: "#94a3b8", fontWeight: "600" }}>ยังไม่มีวงแชร์ในหมวดนี้</h3>
+            <p style={{ fontSize: "0.9rem", color: "#64748b" }}>คุณสามารถสร้างวงแชร์ใหม่ได้ที่ปุ่มด้านบน</p>
           </div>
         ) : (
           filteredCircles.map((circle) => (
@@ -149,17 +151,30 @@ export default function ViewCircles() {
               href={`/circles/${circle.id}`} 
               key={circle.id}
               className="glass-panel"
-              style={{ display: "flex", justifyContent: "space-between", alignItems: "center", textDecoration: "none", color: "inherit", transition: "transform 0.2s" }}
+              style={{ display: "flex", justifyContent: "space-between", alignItems: "center", textDecoration: "none", color: "inherit", padding: "20px" }}
             >
-              <div>
-                <h3 style={{ fontSize: "1.2rem", margin: "0 0 6px 0", color: activeTab === "CLOSED" ? "#64748b" : "var(--primary)" }}>{circle.name}</h3>
-                <div style={{ fontSize: "0.85rem", color: "#64748b", display: "flex", gap: "10px", flexWrap: "wrap" }}>
-                  <span style={{ background: "#f1f5f9", padding: "2px 8px", borderRadius: "6px" }}>{circle.type}</span>
-                  <span style={{ background: "#f1f5f9", padding: "2px 8px", borderRadius: "6px" }}>ส่ง {circle.amount_per_hand} บ.</span>
-                  <span style={{ background: "#f1f5f9", padding: "2px 8px", borderRadius: "6px" }}>{circle.total_hands} มือ</span>
+              <div style={{ flex: 1 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
+                    <h3 style={{ fontSize: "1.1rem", margin: 0, fontWeight: "700" }}>{circle.name}</h3>
+                    <span className={circle.status === 'ACTIVE' ? "badge badge-success" : "badge-warning"} style={{ fontSize: "0.6rem" }}>
+                        {circle.status}
+                    </span>
+                </div>
+                <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+                  <div style={{ fontSize: "0.85rem", color: "#64748b", display: "flex", alignItems: "center", gap: "4px" }}>
+                    🏷️ {circle.type}
+                  </div>
+                  <div style={{ fontSize: "0.85rem", color: "var(--primary)", fontWeight: "600", display: "flex", alignItems: "center", gap: "4px" }}>
+                    💰 {circle.amount_per_hand} บ.
+                  </div>
+                  <div style={{ fontSize: "0.85rem", color: "#64748b", display: "flex", alignItems: "center", gap: "4px" }}>
+                    🔢 {circle.total_hands} มือ
+                  </div>
                 </div>
               </div>
-              <div style={{ fontSize: "1.5rem", color: "#cbd5e1" }}>›</div>
+              <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", color: "#94a3b8", fontSize: "0.8rem" }}>
+                ❯
+              </div>
             </Link>
           ))
         )}

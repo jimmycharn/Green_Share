@@ -96,23 +96,29 @@ export default function Home() {
 
   if (needsLogin) {
     return (
-      <div style={{ padding: "20px", textAlign: "center", minHeight: "100vh", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-        <h2 style={{ marginBottom: "20px", color: "var(--foreground)" }}>ยินดีต้อนรับสู่ Green Share</h2>
-        <p style={{ marginBottom: "30px", color: "#64748b" }}>กรุณาเข้าสู่ระบบผ่านแอป LINE เพื่อดำเนินการต่อ</p>
-        <button 
-          onClick={handleLoginClick} 
-          style={{ padding: "16px 32px", fontSize: "18px", background: "#00B900", color: "#fff", border: "none", borderRadius: "12px", cursor: "pointer", fontWeight: "bold", width: "100%", maxWidth: "300px", margin: "0 auto", boxShadow: "0 4px 14px rgba(0, 185, 0, 0.4)" }}
-        >
-          💬 เข้าสู่ระบบด้วย LINE
-        </button>
+      <div style={{ padding: "40px 20px", textAlign: "center", minHeight: "80vh", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
+        <div className="glass-panel" style={{ padding: "40px 24px", width: "100%", maxWidth: "400px" }}>
+          <div style={{ fontSize: "4rem", marginBottom: "20px" }}>🌿</div>
+          <h2 style={{ marginBottom: "12px", fontSize: "1.8rem" }}>GreenShare</h2>
+          <p style={{ marginBottom: "32px", color: "#64748b", lineHeight: "1.6" }}>ระบบจัดการวงแชร์พรีเมียม<br/>ใช้งานง่าย ปลอดภัย ตรวจสอบได้</p>
+          <button 
+            onClick={handleLoginClick} 
+            className="btn-primary"
+            style={{ width: "100%", fontSize: "1.1rem", background: "#00B900" }}
+          >
+            💬 เข้าสู่ระบบด้วย LINE
+          </button>
+        </div>
       </div>
     );
   }
 
   if (!profile) {
     return (
-      <div style={{ padding: "20px", textAlign: "center" }}>
-        <h3 style={{ color: "var(--danger)" }}>{status}</h3>
+      <div style={{ padding: "40px 20px", textAlign: "center" }}>
+        <div className="glass-panel">
+          <h3 style={{ color: "var(--danger)", margin: 0 }}>{status}</h3>
+        </div>
       </div>
     );
   }
@@ -120,46 +126,58 @@ export default function Home() {
   const isAdmin = dbUser?.role === 'SUPERADMIN' || dbUser?.role === 'ADMIN';
 
   return (
-    <div style={{ padding: "24px 16px", minHeight: "100vh", maxWidth: "600px", margin: "0 auto" }}>
-      {/* Header Profile Section */}
-      <div className="glass-panel" style={{ textAlign: "center", marginBottom: "32px" }}>
-        <div style={{ position: "relative", display: "inline-block" }}>
-          <img 
-            src={profile.pictureUrl} 
-            alt="Profile" 
-            style={{ width: "90px", height: "90px", borderRadius: "50%", border: "4px solid white", boxShadow: "0 4px 12px rgba(0,0,0,0.1)", objectFit: "cover" }} 
-          />
-        </div>
-        <h2 style={{ marginTop: "12px", fontSize: "1.5rem", fontWeight: "600" }}>{profile.displayName}</h2>
+    <div className="animate-fade-in">
+      <Script 
+        src="https://static.line-scdn.net/liff/edge/versions/2.22.1/sdk.js" 
+        onLoad={handleScriptLoad}
+      />
+
+      {/* Hero Wallet Card */}
+      <div className="stat-card">
+        <div style={{ opacity: 0.8, fontSize: "0.9rem", marginBottom: "4px" }}>ยินดีต้อนรับกลับมา 👋</div>
+        <div style={{ fontSize: "1.6rem", fontWeight: "700", marginBottom: "20px" }}>{profile.displayName}</div>
         
-        <div className="badge-collection">
-          {isAdmin && <span className="badge badge-admin">SUPERADMIN</span>}
-          <span className="badge badge-active">{dbUser?.member_status || "ACTIVE"}</span>
+        <div style={{ background: "rgba(255,255,255,0.2)", height: "1px", width: "100%", marginBottom: "20px" }}></div>
+        
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
+          <div>
+            <div style={{ opacity: 0.8, fontSize: "0.8rem", textTransform: "uppercase" }}>สถานะสมาชิก</div>
+            <div style={{ fontSize: "1.2rem", fontWeight: "600" }}>{isAdmin ? "ผู้ดูแลระบบ" : "สมาชิกทั่วไป"}</div>
+          </div>
+          <Link href="/profile" style={{ color: "white", textDecoration: "none", fontSize: "0.9rem", fontWeight: "600", border: "1px solid rgba(255,255,255,0.4)", padding: "6px 12px", borderRadius: "10px" }}>
+            จัดการโปรไฟล์
+          </Link>
         </div>
       </div>
 
-      <h3 style={{ fontSize: "1.2rem", marginBottom: "16px", paddingLeft: "4px", color: "#475569" }}>เมนูหลัก</h3>
-      
-      {/* Main Action Grid */}
-      <div className="dashboard-grid">
-        <Link href="/circles/view" className="btn-dashboard btn-blue" style={{ gridColumn: "span 2" }}>
-          <span className="icon">📊</span>
-          <span>วงแชร์</span>
+      {/* Main Actions Summary */}
+      <h3 style={{ fontSize: "1.1rem", marginBottom: "16px", fontWeight: "700" }}>เมนูแนะนำ</h3>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "32px" }}>
+        <Link href="/circles/view" className="glass-panel" style={{ textDecoration: "none", color: "inherit", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }}>
+          <div style={{ fontSize: "2rem" }}>📊</div>
+          <div style={{ fontWeight: "700" }}>วงแชร์ทั้งหมด</div>
         </Link>
-        <Link href="/members" className="btn-dashboard btn-green">
-          <span className="icon">👥</span>
-          <span>สมาชิก</span>
+        <Link href="/circles/create" className="glass-panel" style={{ textDecoration: "none", color: "inherit", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }}>
+          <div style={{ fontSize: "2rem" }}>➕</div>
+          <div style={{ fontWeight: "700" }}>เปิดวงใหม่</div>
         </Link>
-        <Link href="/profile" className="btn-dashboard btn-orange" style={{ gridColumn: isAdmin ? "span 1" : "span 2" }}>
-          <span className="icon">📝</span>
-          <span>แก้ไขข้อมูล</span>
-        </Link>
-        {isAdmin && (
-          <Link href="/admin" className="btn-dashboard btn-purple" style={{ gridColumn: "span 2" }}>
-            <span className="icon">🔧</span>
-            <span>ระบบหลังบ้าน</span>
-          </Link>
-        )}
+      </div>
+
+      {/* Recent Circles Section (Mockup / Future API Integration) */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+        <h3 style={{ fontSize: "1.1rem", margin: 0, fontWeight: "700" }}>วงแชร์ที่เล่นอยู่</h3>
+        <Link href="/circles/view" style={{ fontSize: "0.9rem", color: "var(--primary)", fontWeight: "600", textDecoration: "none" }}>ดูทั้งหมด</Link>
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+        {/* Placeholder for real circles */}
+        <div className="glass-panel" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div>
+            <div style={{ fontWeight: "700", fontSize: "1rem" }}>กำลังโหลดข้อมูลวงแชร์...</div>
+            <div style={{ fontSize: "0.85rem", color: "#64748b" }}>แตะเพื่อดูรายละเอียด</div>
+          </div>
+          <div style={{ fontSize: "1.2rem" }}>❯</div>
+        </div>
       </div>
     </div>
   );

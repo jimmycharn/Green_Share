@@ -129,79 +129,100 @@ export default function Profile() {
   }
 
   return (
-    <div style={{ padding: "24px 16px", minHeight: "100vh", maxWidth: "600px", margin: "0 auto" }}>
-      <div style={{ textAlign: "center", marginBottom: "24px" }}>
-        <h2 style={{ fontSize: "1.6rem", margin: 0, color: "var(--foreground)" }}>📝 ข้อมูลส่วนตัว</h2>
+    <div className="animate-fade-in">
+      <Script src="https://static.line-scdn.net/liff/edge/versions/2.22.1/sdk.js" onLoad={handleScriptLoad} />
+      
+      <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "24px" }}>
+        <img 
+          src={profile?.pictureUrl} 
+          alt="Profile" 
+          style={{ width: "60px", height: "60px", borderRadius: "20px", border: "2px solid white", boxShadow: "0 4px 10px rgba(0,0,0,0.1)" }} 
+        />
+        <div>
+          <h2 style={{ fontSize: "1.4rem", fontWeight: "700", margin: 0 }}>{profile?.displayName}</h2>
+          <div style={{ fontSize: "0.85rem", color: "#64748b" }}>จัดการข้อมูลส่วนตัวของคุณ</div>
+        </div>
       </div>
 
       <div className="glass-panel" style={{ padding: "24px" }}>
         {message.text && (
-          <div style={{ padding: "12px", marginBottom: "20px", borderRadius: "8px", background: message.type === "success" ? "#dcfce7" : "#fee2e2", color: message.type === "success" ? "#166534" : "#991b1b", textAlign: "center", fontWeight: "600" }}>
+          <div style={{ padding: "12px", marginBottom: "20px", borderRadius: "12px", background: message.type === "success" ? "#dcfce7" : "#fee2e2", color: message.type === "success" ? "#166534" : "#991b1b", textAlign: "center", fontWeight: "600", fontSize: "0.9rem" }}>
             {message.text}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
           <div>
-            <label style={{ display: "block", marginBottom: "6px", fontWeight: "600", fontSize: "0.9rem", color: "#475569" }}>ชื่อ-นามสกุลจริง</label>
+            <label style={{ display: "block", marginBottom: "8px", fontWeight: "700", fontSize: "0.85rem", color: "#64748b" }}>ชื่อ-นามสกุลจริง</label>
             <input 
               type="text" 
               name="name" 
               value={formData.name} 
               onChange={handleChange} 
               required
-              style={{ width: "100%", padding: "12px", borderRadius: "10px", border: "1px solid #cbd5e1", fontSize: "1rem" }}
+              className="glass-panel"
+              style={{ width: "100%", padding: "12px 16px", borderRadius: "14px", border: "1px solid #e2e8f0", fontSize: "1rem", background: "rgba(255,255,255,0.5)" }}
               placeholder="นายใจดี มีเงินแบ่ง"
             />
           </div>
 
           <div>
-            <label style={{ display: "block", marginBottom: "6px", fontWeight: "600", fontSize: "0.9rem", color: "#475569" }}>ชื่อเล่น</label>
+            <label style={{ display: "block", marginBottom: "8px", fontWeight: "700", fontSize: "0.85rem", color: "#64748b" }}>ชื่อเล่น</label>
             <input 
               type="text" 
               name="nickname" 
               value={formData.nickname} 
               onChange={handleChange} 
               required
-              style={{ width: "100%", padding: "12px", borderRadius: "10px", border: "1px solid #cbd5e1", fontSize: "1rem" }}
+              className="glass-panel"
+              style={{ width: "100%", padding: "12px 16px", borderRadius: "14px", border: "1px solid #e2e8f0", fontSize: "1rem", background: "rgba(255,255,255,0.5)" }}
               placeholder="พี่ใจดี"
             />
           </div>
 
           <div>
-            <label style={{ display: "block", marginBottom: "6px", fontWeight: "600", fontSize: "0.9rem", color: "#475569" }}>เบอร์โทรศัพท์ (ใส่ตัวเลขติดกัน)</label>
+            <label style={{ display: "block", marginBottom: "8px", fontWeight: "700", fontSize: "0.85rem", color: "#64748b" }}>เบอร์โทรศัพท์</label>
             <input 
               type="tel" 
               name="phone" 
               value={formData.phone} 
               onChange={handleChange} 
               required
-              style={{ width: "100%", padding: "12px", borderRadius: "10px", border: "1px solid #cbd5e1", fontSize: "1rem" }}
-              placeholder="0801234567"
+              className="glass-panel"
+              style={{ width: "100%", padding: "12px 16px", borderRadius: "14px", border: "1px solid #e2e8f0", fontSize: "1rem", background: "rgba(255,255,255,0.5)" }}
+              placeholder="080xxxxxxx"
             />
           </div>
 
           <div>
-            <label style={{ display: "block", marginBottom: "6px", fontWeight: "600", fontSize: "0.9rem", color: "#475569" }}>เลขบัญชีธนาคาร (ย่อธนาคาร - เลข - ชื่อ)</label>
+            <label style={{ display: "block", marginBottom: "8px", fontWeight: "700", fontSize: "0.85rem", color: "#64748b" }}>ข้อมูลธนาคารสำหรับรับเงิน</label>
             <textarea 
               name="bank_account" 
               value={formData.bank_account} 
               onChange={handleChange} 
               rows="3"
               required
-              style={{ width: "100%", padding: "12px", borderRadius: "10px", border: "1px solid #cbd5e1", fontSize: "1rem", resize: "vertical" }}
-              placeholder="KBANK 012-3-45678-9 นายใจดี มีเงินแบ่ง"
+              className="glass-panel"
+              style={{ width: "100%", padding: "12px 16px", borderRadius: "14px", border: "1px solid #e2e8f0", fontSize: "1rem", background: "rgba(255,255,255,0.5)", resize: "none" }}
+              placeholder="ระบุ: ธนาคาร - เลขบัญชี - ชื่อบัญชี"
             ></textarea>
           </div>
 
           <button 
             type="submit" 
             disabled={isSaving}
-            style={{ marginTop: "10px", padding: "16px", background: "var(--primary)", color: "white", border: "none", borderRadius: "12px", fontSize: "1.1rem", fontWeight: "bold", cursor: "pointer", boxShadow: "0 4px 12px rgba(16, 185, 129, 0.3)", opacity: isSaving ? 0.7 : 1 }}
+            className="btn-primary"
+            style={{ marginTop: "10px" }}
           >
             {isSaving ? "กำลังบันทึก..." : "💾 บันทึกข้อมูล"}
           </button>
         </form>
+      </div>
+
+      <div style={{ marginTop: "32px", paddingBottom: "20px" }}>
+        <button onClick={() => window.location.href = '/admin'} style={{ background: "none", border: "none", color: "#94a3b8", fontSize: "0.85rem", textDecoration: "underline", cursor: "pointer", width: "100%" }}>
+          ⚙️ การจัดการขั้นสูง (สำหรับแอดมิน)
+        </button>
       </div>
     </div>
   );
