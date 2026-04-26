@@ -116,7 +116,7 @@ export default function Home() {
 
   const isAdmin = dbUser?.role === 'SUPERADMIN' || dbUser?.role === 'ADMIN';
   const newCircles = circles.filter(c => c.status === 'OPEN').slice(0, 5);
-  const activeCircles = circles.filter(c => c.status === 'ACTIVE').slice(0, 5);
+  const joinedCircles = circles.filter(c => c.is_participant && (c.status === 'ACTIVE' || c.status === 'OPEN')).slice(0, 5);
 
   return (
     <div className="animate-fade-in">
@@ -171,12 +171,12 @@ export default function Home() {
       <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
         {isLoadingCircles ? (
            <div className="glass-panel" style={{ padding: "20px", textAlign: "center", color: "#94a3b8" }}>กำลังโหลด...</div>
-        ) : activeCircles.length === 0 ? (
+        ) : joinedCircles.length === 0 ? (
            <div className="glass-panel" style={{ padding: "30px 20px", textAlign: "center", color: "#94a3b8" }}>
               <p style={{ margin: 0, fontSize: "0.9rem" }}>คุณยังไม่มีวงแชร์ที่กำลังเล่นอยู่</p>
            </div>
         ) : (
-           activeCircles.map(circle => (
+           joinedCircles.map(circle => (
             <Link 
               href={`/circles/${circle.id}`} 
               key={circle.id}

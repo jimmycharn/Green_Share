@@ -94,25 +94,18 @@ export default function ViewCircles() {
     );
   }
 
-  // Filter circles based on active tab
+  // Filter circles based on active tab and participation
   const filteredCircles = circles.filter(c => 
-    activeTab === "OPEN" ? (c.status === "OPEN" || c.status === "ACTIVE") : (c.status === "CLOSED" || c.status === "DEAD")
+    c.is_participant && (activeTab === "OPEN" ? (c.status === "OPEN" || c.status === "ACTIVE") : (c.status === "CLOSED" || c.status === "DEAD"))
   );
 
   return (
     <div className="animate-fade-in">
       <Script src="https://static.line-scdn.net/liff/edge/versions/2.22.1/sdk.js" onLoad={handleScriptLoad} />
 
-      {/* Header & Quick Action */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
+      {/* Header */}
+      <div style={{ marginBottom: "24px" }}>
         <h2 style={{ fontSize: "1.5rem", fontWeight: "700", margin: 0 }}>วงแชร์ของคุณ</h2>
-        <Link 
-          href="/circles/create" 
-          className="btn-primary"
-          style={{ padding: "10px 16px", fontSize: "0.9rem" }}
-        >
-          + สร้างวงใหม่
-        </Link>
       </div>
 
       {/* Modern Tabs */}
