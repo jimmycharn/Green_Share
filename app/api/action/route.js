@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { registerMember, updateProfile } from '@/lib/controllers/member';
+import { registerMember, updateProfile, getMembers } from '@/lib/controllers/member';
 import { createCircle, getCircles, getCircleDetail, joinCircle, submitBid, uploadSlip, randomSelectBidder } from '@/lib/controllers/circle';
 import { manageSlot, approvePayment } from '@/lib/controllers/admin';
 
@@ -15,6 +15,7 @@ export async function POST(req) {
     // --- Member Routes ---
     if (action === 'register') return NextResponse.json(await registerMember(data));
     if (action === 'update_profile') return NextResponse.json(await updateProfile(data));
+    if (action === 'get_members') return NextResponse.json(await getMembers(data));
 
     // --- Circle Routes ---
     if (action === 'create_circle') return NextResponse.json(await createCircle(data));

@@ -145,12 +145,16 @@ export default function Home() {
           <span className="icon">📊</span>
           <span>วงแชร์</span>
         </Link>
+        <Link href="/members" className="btn-dashboard btn-green">
+          <span className="icon">👥</span>
+          <span>สมาชิก</span>
+        </Link>
         <Link href="/profile" className="btn-dashboard btn-orange" style={{ gridColumn: isAdmin ? "span 1" : "span 2" }}>
           <span className="icon">📝</span>
           <span>แก้ไขข้อมูล</span>
         </Link>
         {isAdmin && (
-          <Link href="/admin" className="btn-dashboard btn-purple">
+          <Link href="/admin" className="btn-dashboard btn-purple" style={{ gridColumn: "span 2" }}>
             <span className="icon">🔧</span>
             <span>ระบบหลังบ้าน</span>
           </Link>

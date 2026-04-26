@@ -163,28 +163,42 @@ export default function CircleDetail() {
 
       {/* Circle Info */}
       <div className="glass-panel" style={{ marginBottom: "24px", display: "flex", flexDirection: "column", gap: "10px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <span style={{ color: "#64748b" }}>ประเภท:</span>
           <strong>{circle.type}</strong>
         </div>
-        <div style={{ display: "flex", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <span style={{ color: "#64748b" }}>ส่งงวดละ:</span>
           <strong>{circle.amount_per_hand} บาท</strong>
         </div>
-        <div style={{ display: "flex", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <span style={{ color: "#64748b" }}>ยอดรับรวม:</span>
           <strong>{circle.total_amount} บาท</strong>
         </div>
-        <div style={{ display: "flex", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <span style={{ color: "#64748b" }}>สถานะ:</span>
           <span className="badge badge-active">{circle.status}</span>
         </div>
         
-        {circle.line_group_url && (
-          <a href={circle.line_group_url} target="_blank" rel="noreferrer" style={{ marginTop: "12px", padding: "12px", background: "#00B900", color: "white", textAlign: "center", borderRadius: "8px", fontWeight: "bold", textDecoration: "none" }}>
-            💬 กดเข้ากลุ่มแชท LINE ของวงนี้
-          </a>
-        )}
+        <div style={{ display: "flex", gap: "10px", marginTop: "12px" }}>
+          <button 
+            onClick={() => {
+              const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
+              const link = `https://liff.line.me/${liffId}/circles/${circle.id}`;
+              navigator.clipboard.writeText(link);
+              setMessage({ type: "success", text: "คัดลอกลิงก์สำเร็จ ส่งใน LINE ได้เลย!" });
+            }}
+            style={{ flex: 1, padding: "12px", background: "white", color: "var(--primary)", border: "2px solid var(--primary)", textAlign: "center", borderRadius: "8px", fontWeight: "bold", cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", gap: "6px" }}
+          >
+            📋 ก็อปลิงก์เชิญเพื่อน
+          </button>
+          
+          {circle.line_group_url && (
+            <a href={circle.line_group_url} target="_blank" rel="noreferrer" style={{ flex: 1, padding: "12px", background: "#00B900", color: "white", textAlign: "center", borderRadius: "8px", fontWeight: "bold", textDecoration: "none", display: "flex", justifyContent: "center", alignItems: "center", gap: "6px" }}>
+              💬 เข้ากลุ่มแชท
+            </a>
+          )}
+        </div>
       </div>
 
       {/* Join Hand Form */}
