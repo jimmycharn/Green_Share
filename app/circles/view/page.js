@@ -100,17 +100,16 @@ export default function ViewCircles() {
   return (
     <div style={{ padding: "24px 16px", minHeight: "100vh", maxWidth: "600px", margin: "0 auto" }}>
       {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", marginBottom: "16px" }}>
-        <Link href="/" style={{ padding: "8px 12px", background: "white", borderRadius: "10px", boxShadow: "0 2px 8px rgba(0,0,0,0.05)", fontWeight: "bold", color: "var(--foreground)" }}>
-          ← กลับ
-        </Link>
-        <h2 style={{ flex: 1, textAlign: "center", fontSize: "1.4rem", margin: 0 }}>📊 วงแชร์ทั้งหมด</h2>
-        <Link 
-          href="/circles/create" 
-          style={{ padding: "8px 12px", background: "rgba(239, 68, 68, 0.1)", color: "#ef4444", borderRadius: "10px", fontWeight: "bold", textDecoration: "none" }}
-        >
-          + สร้างวงแชร์
-        </Link>
+      <div style={{ textAlign: "center", marginBottom: "16px" }}>
+        <h2 style={{ fontSize: "1.6rem", margin: "0 0 12px 0", color: "var(--foreground)" }}>📊 วงแชร์ทั้งหมด</h2>
+        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+          <Link 
+            href="/circles/create" 
+            style={{ padding: "8px 16px", background: "rgba(239, 68, 68, 0.1)", color: "#ef4444", borderRadius: "10px", fontWeight: "bold", textDecoration: "none" }}
+          >
+            + สร้างวงแชร์
+          </Link>
+        </div>
       </div>
 
       {/* Tabs */}
