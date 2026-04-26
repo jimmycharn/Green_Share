@@ -497,7 +497,25 @@ export default function AdminDashboard() {
             <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "16px" }}>
               <div>
                 <label style={{ display: "block", marginBottom: "4px", fontSize: "0.85rem", color: "#475569", fontWeight: "600" }}>ชื่อธนาคาร</label>
-                <input type="text" value={bankFormModal.bank_name} onChange={e => setBankFormModal({ ...bankFormModal, bank_name: e.target.value })} placeholder="เช่น กสิกร, ไทยพาณิชย์" style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1" }} />
+                <select value={bankFormModal.bank_name} onChange={e => setBankFormModal({ ...bankFormModal, bank_name: e.target.value })} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", background: "white" }}>
+                  <option value="">-- เลือกธนาคาร --</option>
+                  <option value="กสิกรไทย (KBANK)">กสิกรไทย (KBANK)</option>
+                  <option value="กรุงเทพ (BBL)">กรุงเทพ (BBL)</option>
+                  <option value="กรุงไทย (KTB)">กรุงไทย (KTB)</option>
+                  <option value="ไทยพาณิชย์ (SCB)">ไทยพาณิชย์ (SCB)</option>
+                  <option value="กรุงศรี (BAY)">กรุงศรี (BAY)</option>
+                  <option value="ทหารไทยธนชาต (TTB)">ทหารไทยธนชาต (TTB)</option>
+                  <option value="ออมสิน (GSB)">ออมสิน (GSB)</option>
+                  <option value="ธ.ก.ส. (BAAC)">ธ.ก.ส. (BAAC)</option>
+                  <option value="อิสลามแห่งประเทศไทย (ISBT)">อิสลามแห่งประเทศไทย (ISBT)</option>
+                  <option value="ซีไอเอ็มบี (CIMB)">ซีไอเอ็มบี (CIMB)</option>
+                  <option value="ยูโอบี (UOB)">ยูโอบี (UOB)</option>
+                  <option value="แลนด์ แอนด์ เฮ้าส์ (LHBANK)">แลนด์ แอนด์ เฮ้าส์ (LHBANK)</option>
+                  <option value="ทิสโก้ (TISCO)">ทิสโก้ (TISCO)</option>
+                  <option value="เกียรตินาคินภัทร (KKP)">เกียรตินาคินภัทร (KKP)</option>
+                  <option value="อาคารสงเคราะห์ (GHB)">อาคารสงเคราะห์ (GHB)</option>
+                  <option value="พร้อมเพย์ (PromptPay)">พร้อมเพย์ (PromptPay)</option>
+                </select>
               </div>
               <div>
                 <label style={{ display: "block", marginBottom: "4px", fontSize: "0.85rem", color: "#475569", fontWeight: "600" }}>เลขบัญชี</label>
