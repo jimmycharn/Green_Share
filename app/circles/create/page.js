@@ -158,32 +158,32 @@ export default function CreateCircle() {
       {/* Header Layout from Image 2 */}
       <div style={{ 
         background: "linear-gradient(to right, #48bb78, #38a169)", 
-        padding: "30px 24px", 
-        borderRadius: "0 0 30px 30px",
+        padding: "30px 20px", 
+        borderRadius: "30px 30px 0 0",
         display: "flex",
         alignItems: "center",
-        gap: "20px",
+        gap: "16px",
         boxShadow: "0 4px 15px rgba(56, 161, 105, 0.2)",
-        marginBottom: "20px"
+        marginTop: "10px"
       }}>
         <div style={{ 
           background: "rgba(255, 255, 255, 0.2)", 
-          padding: "15px", 
-          borderRadius: "18px",
+          padding: "12px", 
+          borderRadius: "16px",
           display: "flex",
           alignItems: "center",
           justifyContent: "center"
         }}>
-          <span style={{ fontSize: "2rem" }}>👥</span>
+          <span style={{ fontSize: "1.8rem" }}>👥</span>
         </div>
         <div>
-          <h2 style={{ fontSize: "1.5rem", fontWeight: "800", margin: 0, color: "white" }}>รายละเอียดวงแชร์</h2>
-          <p style={{ color: "rgba(255, 255, 255, 0.9)", margin: "4px 0 0 0", fontSize: "0.95rem" }}>กรอกข้อมูลให้ครบถ้วน</p>
+          <h2 style={{ fontSize: "1.4rem", fontWeight: "800", margin: 0, color: "white" }}>รายละเอียดวงแชร์</h2>
+          <p style={{ color: "rgba(255, 255, 255, 0.9)", margin: "2px 0 0 0", fontSize: "0.9rem" }}>กรอกข้อมูลให้ครบถ้วน</p>
         </div>
       </div>
 
-      <div style={{ padding: "0 16px 40px 16px" }}>
-        <div className="glass-panel" style={{ padding: "28px 24px", boxShadow: "0 10px 25px rgba(0,0,0,0.05)" }}>
+      <div style={{ padding: "0 0 40px 0" }}>
+        <div className="glass-panel" style={{ padding: "24px 16px", borderRadius: "0 0 30px 30px", boxShadow: "0 10px 25px rgba(0,0,0,0.05)" }}>
           {message.text && (
             <div style={{ padding: "14px", marginBottom: "24px", borderRadius: "12px", background: message.type === "success" ? "#dcfce7" : "#fee2e2", color: message.type === "success" ? "#166534" : "#991b1b", textAlign: "center", fontWeight: "700", fontSize: "0.9rem" }}>
               {message.text}
