@@ -37,6 +37,7 @@ export default function ViewCircles() {
       const userProfile = await window.liff.getProfile();
 
       // Ensure user is registered before giving them access
+      const houseParam = new URLSearchParams(window.location.search).get('house');
       const regRes = await fetch('/api/action', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -45,6 +46,7 @@ export default function ViewCircles() {
           name: userProfile.displayName,
           nickname: userProfile.displayName,
           line_id: userProfile.userId,
+          house: houseParam
         })
       });
       const dbUser = await regRes.json();

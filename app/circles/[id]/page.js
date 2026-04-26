@@ -59,6 +59,7 @@ export default function CircleDetail() {
       
       const userProfile = await window.liff.getProfile();
 
+      const houseParam = new URLSearchParams(window.location.search).get('house');
       const regRes = await fetch('/api/action', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -67,6 +68,7 @@ export default function CircleDetail() {
           name: userProfile.displayName,
           nickname: userProfile.displayName,
           line_id: userProfile.userId,
+          house: houseParam
         })
       });
       const user = await regRes.json();

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { registerMember, updateProfile, getMembers } from '@/lib/controllers/member';
 import { createCircle, getCircles, getCircleDetail, joinCircle, submitBid, uploadSlip, randomSelectBidder, startCircle, cancelHand, changeHandOwner } from '@/lib/controllers/circle';
-import { manageSlot, approvePayment } from '@/lib/controllers/admin';
+import { manageSlot, approvePayment, getAdminDashboard, approveHouseMember, removeHouseMember, updateMemberRole, assignMemberBank, transferMember, addBank, editBank, deleteBank, setDefaultBank } from '@/lib/controllers/admin';
 
 export async function POST(req) {
   try {
@@ -29,11 +29,21 @@ export async function POST(req) {
     if (action === 'cancel_hand') return NextResponse.json(await cancelHand(data));
     if (action === 'change_hand_owner') return NextResponse.json(await changeHandOwner(data));
 
-    // --- Admin Routes ---
+    // --- Admin Dashboard Routes ---
+    if (action === 'get_admin_dashboard') return NextResponse.json(await getAdminDashboard(data));
+    if (action === 'approve_house_member') return NextResponse.json(await approveHouseMember(data));
+    if (action === 'remove_house_member') return NextResponse.json(await removeHouseMember(data));
+    if (action === 'update_member_role') return NextResponse.json(await updateMemberRole(data));
+    if (action === 'assign_member_bank') return NextResponse.json(await assignMemberBank(data));
+    if (action === 'transfer_member') return NextResponse.json(await transferMember(data));
+    if (action === 'add_bank') return NextResponse.json(await addBank(data));
+    if (action === 'edit_bank') return NextResponse.json(await editBank(data));
+    if (action === 'delete_bank') return NextResponse.json(await deleteBank(data));
+    if (action === 'set_default_bank') return NextResponse.json(await setDefaultBank(data));
+
+    // --- Legacy Admin ---
     if (action === 'manage_slot') return NextResponse.json(await manageSlot(data));
     if (action === 'approve_payment') return NextResponse.json(await approvePayment(data));
-
-    // TODO: Implement other actions as needed (get_pending_members, admin_pay_winner, etc.)
 
     return NextResponse.json({ status: 'error', message: 'Unknown action: ' + action }, { status: 400 });
   } catch (error) {

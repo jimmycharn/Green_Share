@@ -45,7 +45,7 @@ export default function Home() {
       const userProfile = await window.liff.getProfile();
       setProfile(userProfile);
 
-      // Auto-register member
+      const houseParam = new URLSearchParams(window.location.search).get('house');
       const res = await fetch('/api/action', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -55,7 +55,8 @@ export default function Home() {
           nickname: userProfile.displayName, // fallback
           line_id: userProfile.userId,
           phone: '', 
-          bank_account: ''
+          bank_account: '',
+          house: houseParam
         })
       });
       const resData = await res.json();

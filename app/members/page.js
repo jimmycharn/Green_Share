@@ -36,6 +36,7 @@ export default function Members() {
       
       const userProfile = await window.liff.getProfile();
 
+      const houseParam = new URLSearchParams(window.location.search).get('house');
       const regRes = await fetch('/api/action', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -44,6 +45,7 @@ export default function Members() {
           name: userProfile.displayName,
           nickname: userProfile.displayName,
           line_id: userProfile.userId,
+          house: houseParam
         })
       });
       const user = await regRes.json();
@@ -88,7 +90,7 @@ export default function Members() {
 
   const handleCopyInviteLink = () => {
     const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
-    const link = `https://liff.line.me/${liffId}`;
+    const link = `https://liff.line.me/${liffId}?house=${dbUser.id}`;
     navigator.clipboard.writeText(link);
     setMessage({ type: "success", text: "คัดลอกลิงก์สำเร็จ ส่งชวนเพื่อนในไลน์ได้เลย!" });
   };
