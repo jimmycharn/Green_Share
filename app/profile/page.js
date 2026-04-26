@@ -136,6 +136,7 @@ export default function Profile() {
       
       {view === "menu" ? (
         <div className="animate-fade-in" style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "10px" }}>
+            <h3 style={{ margin: "0 0 4px 6px", fontSize: "1.1rem", fontWeight: "800" }}>จัดการข้อมูล</h3>
             <button 
                 onClick={() => setView("edit")}
                 className="glass-panel" 
@@ -145,7 +146,7 @@ export default function Profile() {
                     textAlign: "left", fontSize: "1.1rem", fontWeight: "700" 
                 }}
             >
-                <span>จัดการข้อมูล</span>
+                <span>จัดการโปรไฟล์</span>
                 <span style={{ fontSize: "1.2rem", color: "#94a3b8" }}>❯</span>
             </button>
 
