@@ -13,10 +13,17 @@ export default function CreateCircle() {
   const [formData, setFormData] = useState({
     circle_name: "",
     type: "ประมูล (เปียแข่งดอก)",
+    interest_method: "หักดอก",
     amount_per_hand: "",
     total_hands: "",
     line_group_url: "",
-    start_date: new Date().toISOString().split('T')[0]
+    start_date: new Date().toISOString().split('T')[0],
+    bid_start_time: "12:00",
+    bid_end_time: "18:00",
+    min_bid: "0",
+    max_bid: "1000",
+    notify_hours: "24",
+    close_mode: "แอดมินปิดเอง"
   });
   
   const [message, setMessage] = useState({ type: "", text: "" });
@@ -68,7 +75,14 @@ export default function CreateCircle() {
           total_hands: totalHands,
           total_amount: totalAmount,
           line_group_url: formData.line_group_url,
-          start_date: formData.start_date
+          start_date: formData.start_date,
+          interest_method: formData.interest_method,
+          bid_start_time: formData.bid_start_time,
+          bid_end_time: formData.bid_end_time,
+          min_bid: formData.min_bid,
+          max_bid: formData.max_bid,
+          notify_hours: formData.notify_hours,
+          close_mode: formData.close_mode
         })
       });
       
@@ -213,18 +227,77 @@ export default function CreateCircle() {
               </div>
             </div>
 
-            <div>
-              <label style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px", fontWeight: "700", fontSize: "0.9rem", color: "#334155" }}>
-                <span style={{ fontSize: "1.1rem" }}>📅</span> วันที่เริ่มต้น
-              </label>
-              <input 
-                type="date" 
-                name="start_date" 
-                value={formData.start_date} 
-                onChange={handleChange} 
-                className="input-glow"
-                style={{ width: "100%", padding: "16px", borderRadius: "18px", border: "1.5px solid #edf2f7", fontSize: "1rem", backgroundColor: "white", outline: "none" }}
-              />
+            <div style={{ display: "flex", gap: "16px" }}>
+              <div style={{ flex: 1 }}>
+                <label style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px", fontWeight: "700", fontSize: "0.9rem", color: "#334155" }}>
+                  <span style={{ fontSize: "1.1rem" }}>📅</span> วันที่เริ่มต้น
+                </label>
+                <input 
+                  type="date" 
+                  name="start_date" 
+                  value={formData.start_date} 
+                  onChange={handleChange} 
+                  className="input-glow"
+                  style={{ width: "100%", padding: "16px", borderRadius: "18px", border: "1.5px solid #edf2f7", fontSize: "1rem", backgroundColor: "white", outline: "none" }}
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px", fontWeight: "700", fontSize: "0.9rem", color: "#334155" }}>
+                  <span style={{ fontSize: "1.1rem" }}>✂️</span> วิธีคิดดอก
+                </label>
+                <select 
+                  name="interest_method" 
+                  value={formData.interest_method} 
+                  onChange={handleChange}
+                  className="input-glow"
+                  style={{ width: "100%", padding: "16px", borderRadius: "18px", border: "1.5px solid #edf2f7", fontSize: "1rem", backgroundColor: "white", outline: "none" }}
+                >
+                  <option value="หักดอก">หักดอก (Interest Deduct)</option>
+                  <option value="ไม่หักดอก">ไม่หักดอก (Interest Add)</option>
+                </select>
+              </div>
+            </div>
+
+            <div style={{ padding: "20px", borderRadius: "24px", background: "#f1f5f9", border: "1px solid #e2e8f0" }}>
+              <h4 style={{ margin: "0 0 16px 0", fontSize: "1rem", color: "#475569", display: "flex", alignItems: "center", gap: "8px" }}>
+                <span>⚙️</span> ตั้งค่าการประมูลพื้นฐาน
+              </h4>
+              
+              <div style={{ display: "flex", gap: "16px", marginBottom: "20px" }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: "block", marginBottom: "8px", fontSize: "0.8rem", fontWeight: "700", color: "#64748b" }}>⏰ เวลาเปิดประมูล</label>
+                  <input type="time" name="bid_start_time" value={formData.bid_start_time} onChange={handleChange} className="input-glow" style={{ width: "100%", padding: "12px", borderRadius: "14px", border: "1.5px solid #edf2f7" }} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: "block", marginBottom: "8px", fontSize: "0.8rem", fontWeight: "700", color: "#64748b" }}>⏰ เวลาปิดประมูล</label>
+                  <input type="time" name="bid_end_time" value={formData.bid_end_time} onChange={handleChange} className="input-glow" style={{ width: "100%", padding: "12px", borderRadius: "14px", border: "1.5px solid #edf2f7" }} />
+                </div>
+              </div>
+
+              <div style={{ display: "flex", gap: "16px", marginBottom: "20px" }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: "block", marginBottom: "8px", fontSize: "0.8rem", fontWeight: "700", color: "#64748b" }}>💰 ดอกต่ำสุด</label>
+                  <input type="number" name="min_bid" value={formData.min_bid} onChange={handleChange} className="input-glow" style={{ width: "100%", padding: "12px", borderRadius: "14px", border: "1.5px solid #edf2f7" }} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: "block", marginBottom: "8px", fontSize: "0.8rem", fontWeight: "700", color: "#64748b" }}>💰 ดอกสูงสุด</label>
+                  <input type="number" name="max_bid" value={formData.max_bid} onChange={handleChange} className="input-glow" style={{ width: "100%", padding: "12px", borderRadius: "14px", border: "1.5px solid #edf2f7" }} />
+                </div>
+              </div>
+
+              <div style={{ display: "flex", gap: "16px" }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: "block", marginBottom: "8px", fontSize: "0.8rem", fontWeight: "700", color: "#64748b" }}>🔔 แจ้งเตือนก่อน (ชม.)</label>
+                  <input type="number" name="notify_hours" value={formData.notify_hours} onChange={handleChange} className="input-glow" style={{ width: "100%", padding: "12px", borderRadius: "14px", border: "1.5px solid #edf2f7" }} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: "block", marginBottom: "8px", fontSize: "0.8rem", fontWeight: "700", color: "#64748b" }}>🔒 โหมดปิดงวด</label>
+                  <select name="close_mode" value={formData.close_mode} onChange={handleChange} className="input-glow" style={{ width: "100%", padding: "12px", borderRadius: "14px", border: "1.5px solid #edf2f7" }}>
+                    <option value="แอดมินปิดเอง">แอดมินปิดเอง</option>
+                    <option value="ปิดอัตโนมัติ">ปิดอัตโนมัติ</option>
+                  </select>
+                </div>
+              </div>
             </div>
 
             <div>
