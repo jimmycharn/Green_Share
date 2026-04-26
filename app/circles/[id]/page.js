@@ -19,7 +19,7 @@ export default function CircleDetail() {
   const [bids, setBids] = useState([]);
   const [slips, setSlips] = useState([]);
   const [message, setMessage] = useState({ type: "", text: "" });
-  const [activeTab, setActiveTab] = useState("timeline"); // "timeline" or "members"
+  const [activeTab, setActiveTab] = useState(""); // Will be set after fetch
   
   // Hand Management States
   const [allMembers, setAllMembers] = useState([]);
@@ -81,6 +81,15 @@ export default function CircleDetail() {
       setBids(data.bids || []);
       setSlips(data.slips || []);
       setMyBank(data.myBank);
+      
+      // Conditional Default Tab
+      if (!activeTab) {
+        if (data.circle.status === 'ACTIVE') {
+          setActiveTab("timeline");
+        } else {
+          setActiveTab("members");
+        }
+      }
     } else {
       setMessage({ type: "error", text: data.message || "ไม่พบวงแชร์นี้" });
     }
@@ -373,7 +382,7 @@ export default function CircleDetail() {
           </button>
         </div>
 
-        {activeTab === "members" ? (
+        {activeTab === "members" && (
           <div className="animate-fade-in">
             {isCircleAdmin && circle.status === 'OPEN' && (
               <div className="glass-panel" style={{ marginBottom: "20px", textAlign: "center", border: "1px dashed var(--primary)" }}>
@@ -402,7 +411,9 @@ export default function CircleDetail() {
               })}
             </div>
           </div>
-        ) : (
+        )}
+
+        {activeTab === "timeline" && (
           <div className="animate-fade-in" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
             {totalHandsArray.map(period => {
               const winnerBid = bids.filter(b => b.period === period).sort((a,b) => b.bid_amount - a.bid_amount)[0];
