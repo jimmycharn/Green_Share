@@ -10,6 +10,7 @@ export default function ViewCircles() {
   const [isInitializing, setIsInitializing] = useState(true);
   const [circles, setCircles] = useState([]);
   const [message, setMessage] = useState("");
+  const [activeTab, setActiveTab] = useState("OPEN"); // OPEN or CLOSED
 
   useEffect(() => {
     if (typeof window !== "undefined" && window.liff) {
@@ -91,13 +92,41 @@ export default function ViewCircles() {
     );
   }
 
+  // Filter circles based on active tab
+  const filteredCircles = circles.filter(c => 
+    activeTab === "OPEN" ? (c.status === "OPEN" || c.status === "ACTIVE") : (c.status === "CLOSED" || c.status === "DEAD")
+  );
+
   return (
     <div style={{ padding: "24px 16px", minHeight: "100vh", maxWidth: "600px", margin: "0 auto" }}>
-      <div style={{ display: "flex", alignItems: "center", marginBottom: "24px" }}>
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "center", marginBottom: "16px" }}>
         <Link href="/" style={{ padding: "8px 12px", background: "white", borderRadius: "10px", boxShadow: "0 2px 8px rgba(0,0,0,0.05)", fontWeight: "bold", color: "var(--foreground)" }}>
           ← กลับ
         </Link>
-        <h2 style={{ flex: 1, textAlign: "center", fontSize: "1.4rem", margin: 0, paddingRight: "40px" }}>📊 วงแชร์ทั้งหมด</h2>
+        <h2 style={{ flex: 1, textAlign: "center", fontSize: "1.4rem", margin: 0 }}>📊 วงแชร์ทั้งหมด</h2>
+        <Link 
+          href="/circles/create" 
+          style={{ padding: "8px 12px", background: "rgba(239, 68, 68, 0.1)", color: "#ef4444", borderRadius: "10px", fontWeight: "bold", textDecoration: "none" }}
+        >
+          + สร้างวงแชร์
+        </Link>
+      </div>
+
+      {/* Tabs */}
+      <div style={{ display: "flex", gap: "8px", marginBottom: "20px", padding: "4px", background: "rgba(0,0,0,0.05)", borderRadius: "12px" }}>
+        <button 
+          onClick={() => setActiveTab("OPEN")}
+          style={{ flex: 1, padding: "10px", borderRadius: "8px", border: "none", fontWeight: "bold", cursor: "pointer", transition: "all 0.2s", background: activeTab === "OPEN" ? "white" : "transparent", color: activeTab === "OPEN" ? "var(--primary)" : "#64748b", boxShadow: activeTab === "OPEN" ? "0 2px 8px rgba(0,0,0,0.05)" : "none" }}
+        >
+          กำลังเปิดอยู่
+        </button>
+        <button 
+          onClick={() => setActiveTab("CLOSED")}
+          style={{ flex: 1, padding: "10px", borderRadius: "8px", border: "none", fontWeight: "bold", cursor: "pointer", transition: "all 0.2s", background: activeTab === "CLOSED" ? "white" : "transparent", color: activeTab === "CLOSED" ? "var(--foreground)" : "#64748b", boxShadow: activeTab === "CLOSED" ? "0 2px 8px rgba(0,0,0,0.05)" : "none" }}
+        >
+          ปิดไปแล้ว
+        </button>
       </div>
 
       {message && (
@@ -106,14 +135,15 @@ export default function ViewCircles() {
         </div>
       )}
 
+      {/* Circle List */}
       <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-        {circles.length === 0 && !message ? (
+        {filteredCircles.length === 0 && !message ? (
           <div style={{ textAlign: "center", padding: "40px 20px", background: "white", borderRadius: "16px", boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}>
             <span style={{ fontSize: "3rem", display: "block", marginBottom: "10px" }}>📭</span>
-            <h3 style={{ color: "#64748b" }}>ยังไม่มีวงแชร์ที่เปิดให้เล่น</h3>
+            <h3 style={{ color: "#64748b" }}>ยังไม่มีวงแชร์ที่{activeTab === "OPEN" ? "เปิดให้เล่น" : "ปิดไปแล้ว"}</h3>
           </div>
         ) : (
-          circles.map((circle) => (
+          filteredCircles.map((circle) => (
             <Link 
               href={`/circles/${circle.id}`} 
               key={circle.id}
@@ -121,7 +151,7 @@ export default function ViewCircles() {
               style={{ display: "flex", justifyContent: "space-between", alignItems: "center", textDecoration: "none", color: "inherit", transition: "transform 0.2s" }}
             >
               <div>
-                <h3 style={{ fontSize: "1.2rem", margin: "0 0 6px 0", color: "var(--primary)" }}>{circle.name}</h3>
+                <h3 style={{ fontSize: "1.2rem", margin: "0 0 6px 0", color: activeTab === "CLOSED" ? "#64748b" : "var(--primary)" }}>{circle.name}</h3>
                 <div style={{ fontSize: "0.85rem", color: "#64748b", display: "flex", gap: "10px", flexWrap: "wrap" }}>
                   <span style={{ background: "#f1f5f9", padding: "2px 8px", borderRadius: "6px" }}>{circle.type}</span>
                   <span style={{ background: "#f1f5f9", padding: "2px 8px", borderRadius: "6px" }}>ส่ง {circle.amount_per_hand} บ.</span>

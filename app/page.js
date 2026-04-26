@@ -141,15 +141,11 @@ export default function Home() {
       
       {/* Main Action Grid */}
       <div className="dashboard-grid">
-        <Link href="/circles/create" className="btn-dashboard btn-green">
-          <span className="icon">💰</span>
-          <span>ตั้งวงแชร์</span>
-        </Link>
-        <Link href="/circles/view" className="btn-dashboard btn-blue">
+        <Link href="/circles/view" className="btn-dashboard btn-blue" style={{ gridColumn: "span 2" }}>
           <span className="icon">📊</span>
-          <span>ดูวงแชร์</span>
+          <span>วงแชร์</span>
         </Link>
-        <Link href="/profile" className="btn-dashboard btn-orange">
+        <Link href="/profile" className="btn-dashboard btn-orange" style={{ gridColumn: isAdmin ? "span 1" : "span 2" }}>
           <span className="icon">📝</span>
           <span>แก้ไขข้อมูล</span>
         </Link>
