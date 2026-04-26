@@ -74,7 +74,7 @@ export default function ClientLayout({ children }) {
       
       {/* Top Header */}
       <header className="app-header">
-        <div className="app-title" style={{ fontSize: "0.95rem", fontWeight: "700", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "180px" }}>
+        <div className="app-title" style={{ fontSize: "0.95rem", fontWeight: "700", display: "flex", alignItems: "center" }}>
             {headerName}
         </div>
         

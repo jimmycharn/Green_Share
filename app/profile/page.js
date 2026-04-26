@@ -134,22 +134,8 @@ export default function Profile() {
     <div className="animate-fade-in">
       <Script src="https://static.line-scdn.net/liff/edge/versions/2.22.1/sdk.js" onLoad={handleScriptLoad} />
       
-      <div style={{ display: "flex", alignItems: "center", gap: "15px", marginBottom: "30px" }}>
-        <img 
-          src={profile?.pictureUrl} 
-          alt="Profile" 
-          style={{ width: "70px", height: "70px", borderRadius: "22px", border: "2px solid white", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }} 
-        />
-        <div>
-          <h2 style={{ fontSize: "1.5rem", fontWeight: "800", margin: 0 }}>
-            {dbUser ? (dbUser.nickname && dbUser.name && dbUser.nickname !== dbUser.name ? `${dbUser.nickname} (${dbUser.name})` : (dbUser.nickname || dbUser.name)) : profile?.displayName}
-          </h2>
-          <div style={{ fontSize: "0.9rem", color: "#64748b" }}>จัดการข้อมูลส่วนตัวของคุณ</div>
-        </div>
-      </div>
-
       {view === "menu" ? (
-        <div className="animate-fade-in" style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+        <div className="animate-fade-in" style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "10px" }}>
             <button 
                 onClick={() => setView("edit")}
                 className="glass-panel" 
@@ -159,7 +145,7 @@ export default function Profile() {
                     textAlign: "left", fontSize: "1.1rem", fontWeight: "700" 
                 }}
             >
-                <span>จัดการโปรไฟล์</span>
+                <span>จัดการข้อมูล</span>
                 <span style={{ fontSize: "1.2rem", color: "#94a3b8" }}>❯</span>
             </button>
 

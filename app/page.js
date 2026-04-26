@@ -132,22 +132,10 @@ export default function Home() {
         onLoad={handleScriptLoad}
       />
 
-      {/* Hero Wallet Card */}
-      <div className="stat-card">
-        <div style={{ opacity: 0.8, fontSize: "0.9rem", marginBottom: "4px" }}>ยินดีต้อนรับกลับมา 👋</div>
-        <div style={{ fontSize: "1.6rem", fontWeight: "700", marginBottom: "20px" }}>{profile.displayName}</div>
-        
-        <div style={{ background: "rgba(255,255,255,0.2)", height: "1px", width: "100%", marginBottom: "20px" }}></div>
-        
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
-          <div>
-            <div style={{ opacity: 0.8, fontSize: "0.8rem", textTransform: "uppercase" }}>สถานะสมาชิก</div>
-            <div style={{ fontSize: "1.2rem", fontWeight: "600" }}>{isAdmin ? "ผู้ดูแลระบบ" : "สมาชิกทั่วไป"}</div>
-          </div>
-          <Link href="/profile" style={{ color: "white", textDecoration: "none", fontSize: "0.9rem", fontWeight: "600", border: "1px solid rgba(255,255,255,0.4)", padding: "6px 12px", borderRadius: "10px" }}>
-            จัดการโปรไฟล์
-          </Link>
-        </div>
+      {/* Welcome Message */}
+      <div style={{ marginBottom: "24px", marginTop: "10px" }}>
+        <h2 style={{ fontSize: "1.5rem", fontWeight: "800", margin: 0 }}>สวัสดีครับ! 🌿</h2>
+        <p style={{ color: "#64748b", margin: "4px 0 0 0", fontSize: "0.9rem" }}>วันนี้มีอะไรให้ช่วยจัดการไหมครับ?</p>
       </div>
 
       {/* Main Actions Summary */}
