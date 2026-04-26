@@ -14,11 +14,16 @@ export default function CircleDetail() {
   const [dbUser, setDbUser] = useState(null);
   const [circle, setCircle] = useState(null);
   const [players, setPlayers] = useState([]);
+  const [bids, setBids] = useState([]);
+  const [slips, setSlips] = useState([]);
   const [message, setMessage] = useState({ type: "", text: "" });
+  const [activeTab, setActiveTab] = useState("members"); // "members" or "timeline"
   
   // Hand Management States
   const [allMembers, setAllMembers] = useState([]);
   const [adminModal, setAdminModal] = useState({ open: false, mode: "", handNo: "" });
+  const [slipModal, setSlipModal] = useState({ open: false, period: null });
+  const [uploadData, setUploadData] = useState({ amount: "", note: "", image_url: "" });
   const [adminSelectedUserId, setAdminSelectedUserId] = useState("");
   
   const isCircleAdmin = dbUser && circle && (['SUPERADMIN', 'ADMIN'].includes(dbUser.role) || dbUser.id === circle.creator_id);
@@ -97,6 +102,8 @@ export default function CircleDetail() {
     if (resData.status === 'success') {
       setCircle(resData.circle);
       setPlayers(resData.players || []);
+      setBids(resData.bids || []);
+      setSlips(resData.slips || []);
     } else {
       setMessage({ type: "error", text: resData.message || "ไม่พบวงแชร์นี้" });
     }
@@ -197,6 +204,48 @@ export default function CircleDetail() {
     }
   };
 
+  const handleVerifySlip = async (slipId) => {
+    if (!confirm("ยืนยันการอนุมัติสลิปนี้?")) return;
+    try {
+      const res = await fetch('/api/action', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'verify_slip', slip_id: slipId, caller_role: dbUser.role })
+      });
+      const data = await res.json();
+      if (data.status === 'success') {
+        fetchCircleDetail();
+      } else alert(data.message);
+    } catch { alert("การเชื่อมต่อขัดข้อง"); }
+  };
+
+  const handleUploadSlip = async (e) => {
+    e.preventDefault();
+    if (!uploadData.amount) return alert("กรุณาระบุยอดเงิน");
+    try {
+      const res = await fetch('/api/action', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          action: 'upload_slip', 
+          circle_id: circleId, 
+          member_id: dbUser.id,
+          period: slipModal.period,
+          amount: uploadData.amount,
+          note: uploadData.note,
+          image_url: uploadData.image_url
+        })
+      });
+      const data = await res.json();
+      if (data.status === 'success') {
+        setUploadData({ amount: "", note: "", image_url: "" });
+        setSlipModal({ open: false, period: null });
+        fetchCircleDetail();
+        setMessage({ type: "success", text: "ส่งสลิปเรียบร้อย!" });
+      } else alert(data.message);
+    } catch { alert("การเชื่อมต่อขัดข้อง"); }
+  };
+
   if (isInitializing) {
     return (
       <div style={{ padding: "20px", minHeight: "100vh" }}>
@@ -247,48 +296,135 @@ export default function CircleDetail() {
         </div>
       </div>
 
-      {/* Players List */}
-      <div className="glass-panel">
-        <h3 style={{ fontSize: "1.1rem", marginBottom: "12px" }}>👥 รายชื่อคนเล่น ({players.length}/{circle.total_hands})</h3>
-        {circle.status === 'OPEN' && <p style={{ fontSize: "0.85rem", color: "#64748b", marginBottom: "16px", fontStyle: "italic" }}>💡 แตะที่ช่อง "ว่าง" เพื่อจองมือแชร์</p>}
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-          {totalHandsArray.map(hand => {
-            const player = players.find(p => p.hand_no === hand);
-            const isEmpty = !player;
-            const canClickToJoin = isEmpty && circle.status === 'OPEN';
-            
-            let controls = null;
-            if (player) {
-              if (circle.status === 'OPEN' && (isCircleAdmin || player.member_id === dbUser.id)) {
-                controls = <button onClick={(e) => handleCancelHand(e, hand)} style={{ background: "#fee2e2", color: "#991b1b", border: "none", padding: "6px 10px", borderRadius: "4px", fontSize: "0.8rem", cursor: "pointer", fontWeight: "bold" }}>❌ ยกเลิก</button>;
-              } else if (circle.status === 'ACTIVE' && isCircleAdmin) {
-                controls = <button onClick={(e) => openAdminChangeModal(e, hand)} style={{ background: "#e0f2fe", color: "#0284c7", border: "none", padding: "6px 10px", borderRadius: "4px", fontSize: "0.8rem", cursor: "pointer", fontWeight: "bold" }}>🔄 เปลี่ยนมือ</button>;
+      {/* Tabs */}
+      <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
+        <button 
+          onClick={() => setActiveTab("members")} 
+          style={{ flex: 1, padding: "10px", borderRadius: "10px", border: "none", background: activeTab === "members" ? "var(--primary)" : "white", color: activeTab === "members" ? "white" : "#64748b", fontWeight: "bold", cursor: "pointer", boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}
+        >
+          👥 รายชื่อคนเล่น
+        </button>
+        <button 
+          onClick={() => setActiveTab("timeline")} 
+          disabled={circle.status === 'OPEN'}
+          style={{ flex: 1, padding: "10px", borderRadius: "10px", border: "none", background: activeTab === "timeline" ? "var(--primary)" : "white", color: activeTab === "timeline" ? "white" : "#64748b", fontWeight: "bold", cursor: "pointer", boxShadow: "0 2px 8px rgba(0,0,0,0.05)", opacity: circle.status === 'OPEN' ? 0.5 : 1 }}
+        >
+          📊 ติดตามงวดแชร์
+        </button>
+      </div>
+
+      {/* Players List Tab */}
+      {activeTab === "members" && (
+        <div className="glass-panel" style={{ marginBottom: "24px" }}>
+          <h3 style={{ fontSize: "1.1rem", marginBottom: "12px" }}>👥 รายชื่อคนเล่น ({players.length}/{circle.total_hands})</h3>
+          {circle.status === 'OPEN' && <p style={{ fontSize: "0.85rem", color: "#64748b", marginBottom: "16px", fontStyle: "italic" }}>💡 แตะที่ช่อง "ว่าง" เพื่อจองมือแชร์</p>}
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            {totalHandsArray.map(hand => {
+              const player = players.find(p => p.hand_no === hand);
+              const isEmpty = !player;
+              const canClickToJoin = isEmpty && circle.status === 'OPEN';
+              
+              let controls = null;
+              if (player) {
+                if (circle.status === 'OPEN' && (isCircleAdmin || player.member_id === dbUser.id)) {
+                  controls = <button onClick={(e) => handleCancelHand(e, hand)} style={{ background: "#fee2e2", color: "#991b1b", border: "none", padding: "6px 10px", borderRadius: "4px", fontSize: "0.8rem", cursor: "pointer", fontWeight: "bold" }}>❌ ยกเลิก</button>;
+                } else if (circle.status === 'ACTIVE' && isCircleAdmin) {
+                  controls = <button onClick={(e) => openAdminChangeModal(e, hand)} style={{ background: "#e0f2fe", color: "#0284c7", border: "none", padding: "6px 10px", borderRadius: "4px", fontSize: "0.8rem", cursor: "pointer", fontWeight: "bold" }}>🔄 เปลี่ยนมือ</button>;
+                }
               }
-            }
+
+              return (
+                <div 
+                  key={hand} 
+                  onClick={() => canClickToJoin ? handleEmptyHandClick(hand) : null}
+                  style={{ 
+                    display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px", 
+                    background: player ? "rgba(16, 185, 129, 0.1)" : (canClickToJoin ? "#fff" : "#f1f5f9"), 
+                    borderRadius: "8px", border: "1px solid", 
+                    borderColor: player ? "rgba(16, 185, 129, 0.3)" : (canClickToJoin ? "#cbd5e1" : "transparent"),
+                    cursor: canClickToJoin ? "pointer" : "default",
+                    transition: "all 0.2s ease"
+                  }}
+                >
+                  <div>
+                    <span style={{ fontWeight: "bold", color: player ? "var(--primary)" : "#64748b", display: "inline-block", width: "60px" }}>มือที่ {hand}</span>
+                    <span style={{ color: player ? "var(--foreground)" : "#94a3b8" }}>{player ? player.member_name : (canClickToJoin ? "👉 กดที่นี่เพื่อจอง" : "ว่าง")}</span>
+                  </div>
+                  {controls && <div>{controls}</div>}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Timeline Tab */}
+      {activeTab === "timeline" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          {Array.from({ length: circle.current_period }, (_, i) => circle.current_period - i).map(period => {
+            const winnerBid = bids.filter(b => b.period === period).sort((a,b) => b.bid_amount - a.bid_amount)[0];
+            const winner = winnerBid ? players.find(p => p.member_id === winnerBid.member_id) : null;
+            const handSlips = slips.filter(s => s.period === period);
+            const isCurrent = period === circle.current_period;
 
             return (
-              <div 
-                key={hand} 
-                onClick={() => canClickToJoin ? handleEmptyHandClick(hand) : null}
-                style={{ 
-                  display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px", 
-                  background: player ? "rgba(16, 185, 129, 0.1)" : (canClickToJoin ? "#fff" : "#f1f5f9"), 
-                  borderRadius: "8px", border: "1px solid", 
-                  borderColor: player ? "rgba(16, 185, 129, 0.3)" : (canClickToJoin ? "#cbd5e1" : "transparent"),
-                  cursor: canClickToJoin ? "pointer" : "default",
-                  transition: "all 0.2s ease"
-                }}
-              >
-                <div>
-                  <span style={{ fontWeight: "bold", color: player ? "var(--primary)" : "#64748b", display: "inline-block", width: "60px" }}>มือที่ {hand}</span>
-                  <span style={{ color: player ? "var(--foreground)" : "#94a3b8" }}>{player ? player.member_name : (canClickToJoin ? "👉 กดที่นี่เพื่อจอง" : "ว่าง")}</span>
+              <div key={period} className="glass-panel" style={{ borderLeft: isCurrent ? "5px solid var(--primary)" : "5px solid #cbd5e1" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px" }}>
+                  <div>
+                    <h4 style={{ margin: "0 0 4px 0", color: isCurrent ? "var(--primary)" : "var(--foreground)" }}>งวดที่ {period}</h4>
+                    {winner ? (
+                      <div style={{ fontSize: "0.9rem", color: "#475569" }}>
+                        🏆 เปียได้: <span style={{ fontWeight: "bold", color: "#f59e0b" }}>{winner.member_name}</span> (+ {winnerBid.bid_amount} บาท)
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: "0.85rem", color: "#64748b", fontStyle: "italic" }}>รอยืนยันผู้เปียได้...</div>
+                    )}
+                  </div>
+                  {isCurrent && <span className="badge badge-active">งวดล่าสุด</span>}
                 </div>
-                {controls && <div>{controls}</div>}
+
+                <div style={{ background: "rgba(0,0,0,0.03)", borderRadius: "10px", padding: "12px" }}>
+                  <div style={{ fontSize: "0.8rem", color: "#64748b", marginBottom: "8px", fontWeight: "bold" }}>สถานะการจ่ายเงิน:</div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(80px, 1fr))", gap: "8px" }}>
+                    {players.map(player => {
+                      const slip = handSlips.find(s => s.member_id === player.member_id);
+                      const isPaid = slip?.status === 'APPROVED';
+                      const isPending = slip?.status === 'PENDING';
+
+                      return (
+                        <div key={player.id} style={{ textAlign: "center" }}>
+                          <div style={{ 
+                            width: "24px", height: "24px", borderRadius: "50%", margin: "0 auto 4px auto", 
+                            background: isPaid ? "#10b981" : (isPending ? "#f59e0b" : "#e2e8f0"),
+                            display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: "14px"
+                          }}>
+                            {isPaid ? "✓" : (isPending ? "⏳" : "")}
+                          </div>
+                          <div style={{ fontSize: "0.7rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{player.member_name}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+                
+                <div style={{ marginTop: "12px", display: "flex", gap: "8px" }}>
+                   <button 
+                    onClick={() => setSlipModal({ open: true, period: period })}
+                    style={{ flex: 1, padding: "8px", borderRadius: "8px", border: "1px solid var(--primary)", background: "white", color: "var(--primary)", fontSize: "0.85rem", fontWeight: "bold", cursor: "pointer" }}
+                   >
+                     {isCurrent ? "🧾 ส่งสลิป" : "👁️ ดูหลักฐาน"}
+                   </button>
+                   {isCircleAdmin && isCurrent && (
+                     <button style={{ flex: 1, padding: "8px", borderRadius: "8px", border: "none", background: "var(--primary)", color: "white", fontSize: "0.85rem", fontWeight: "bold", cursor: "pointer" }}>
+                       📢 แจ้งเตือนบอท
+                     </button>
+                   )}
+                </div>
               </div>
             );
           })}
         </div>
-      </div>
+      )}
 
       {/* Admin Action Modal for Join / Change */}
       {adminModal.open && (
@@ -323,6 +459,87 @@ export default function CircleDetail() {
                 ยืนยัน{adminModal.mode === 'JOIN' ? "จอง" : "โอน"}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Slip Management Modal */}
+      {slipModal.open && (
+        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "20px" }}>
+          <div className="glass-panel" style={{ width: "100%", maxWidth: "500px", maxHeight: "90vh", overflowY: "auto", padding: "24px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+              <h3 style={{ margin: 0 }}>🧾 งวดที่ {slipModal.period}</h3>
+              <button onClick={() => setSlipModal({ open: false, period: null })} style={{ background: "none", border: "none", fontSize: "1.5rem", cursor: "pointer" }}>×</button>
+            </div>
+
+            {/* List of Slips for this period */}
+            <div style={{ marginBottom: "20px" }}>
+              <h4 style={{ fontSize: "0.9rem", color: "#64748b", borderBottom: "1px solid #e2e8f0", paddingBottom: "8px" }}>สลิปที่ส่งแล้ว</h4>
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "10px" }}>
+                {slips.filter(s => s.period === slipModal.period).length === 0 && <p style={{ fontSize: "0.85rem", color: "#94a3b8", textAlign: "center" }}>ยังไม่มีการส่งสลิป</p>}
+                {slips.filter(s => s.period === slipModal.period).map(slip => {
+                  const member = players.find(p => p.member_id === slip.member_id);
+                  return (
+                    <div key={slip.id} style={{ display: "flex", gap: "12px", background: "#f8fafc", padding: "10px", borderRadius: "10px", alignItems: "center" }}>
+                      <img src={slip.image_url} alt="Slip" style={{ width: "50px", height: "50px", borderRadius: "6px", objectFit: "cover", cursor: "pointer" }} onClick={() => window.open(slip.image_url)} />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: "bold", fontSize: "0.9rem" }}>{member?.member_name || "Unknown"}</div>
+                        <div style={{ fontSize: "0.8rem", color: "var(--primary)", fontWeight: "bold" }}>{slip.amount} บาท</div>
+                      </div>
+                      <div>
+                        {slip.status === 'APPROVED' ? (
+                          <span style={{ fontSize: "0.75rem", color: "#10b981", fontWeight: "bold" }}>✅ อนุมัติแล้ว</span>
+                        ) : (
+                          isCircleAdmin ? (
+                            <button onClick={() => handleVerifySlip(slip.id)} style={{ padding: "6px 12px", background: "var(--primary)", color: "white", border: "none", borderRadius: "6px", fontSize: "0.75rem", fontWeight: "bold", cursor: "pointer" }}>อนุมัติ</button>
+                          ) : (
+                            <span style={{ fontSize: "0.75rem", color: "#f59e0b", fontWeight: "bold" }}>⏳ รอยืนยัน</span>
+                          )
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Upload Form */}
+            <form onSubmit={handleUploadSlip} style={{ borderTop: "2px dashed #e2e8f0", paddingTop: "20px" }}>
+              <h4 style={{ fontSize: "0.9rem", color: "#64748b", marginBottom: "12px" }}>📤 ส่งสลิปใหม่</h4>
+              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                <div>
+                  <label style={{ display: "block", fontSize: "0.8rem", color: "#64748b", marginBottom: "4px" }}>ระบุยอดเงิน</label>
+                  <input 
+                    type="number" 
+                    placeholder="ตัวอย่าง: 1000"
+                    value={uploadData.amount}
+                    onChange={(e) => setUploadData({...uploadData, amount: e.target.value})}
+                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1" }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: "0.8rem", color: "#64748b", marginBottom: "4px" }}>ลิงก์รูปภาพสลิป (URL)</label>
+                  <input 
+                    type="text" 
+                    placeholder="https://..."
+                    value={uploadData.image_url}
+                    onChange={(e) => setUploadData({...uploadData, image_url: e.target.value})}
+                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1" }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: "0.8rem", color: "#64748b", marginBottom: "4px" }}>หมายเหตุ (ถ้ามี)</label>
+                  <input 
+                    type="text" 
+                    placeholder="โอนจากกรุงไทย / จ่ายสด"
+                    value={uploadData.note}
+                    onChange={(e) => setUploadData({...uploadData, note: e.target.value})}
+                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1" }}
+                  />
+                </div>
+                <button type="submit" style={{ width: "100%", padding: "12px", background: "var(--primary)", color: "white", border: "none", borderRadius: "10px", fontWeight: "bold", cursor: "pointer", marginTop: "8px" }}>ยืนยันการส่งสลิป</button>
+              </div>
+            </form>
           </div>
         </div>
       )}
