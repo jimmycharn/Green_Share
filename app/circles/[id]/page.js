@@ -19,7 +19,7 @@ export default function CircleDetail() {
   const [bids, setBids] = useState([]);
   const [slips, setSlips] = useState([]);
   const [message, setMessage] = useState({ type: "", text: "" });
-  const [activeTab, setActiveTab] = useState("members"); // "members" or "timeline"
+  const [activeTab, setActiveTab] = useState("timeline"); // "timeline" or "members"
   
   // Hand Management States
   const [allMembers, setAllMembers] = useState([]);
@@ -359,17 +359,17 @@ export default function CircleDetail() {
         {/* Modern Tabs */}
         <div className="glass-panel" style={{ display: "flex", gap: "8px", marginBottom: "24px", padding: "6px", borderRadius: "18px" }}>
           <button 
-            onClick={() => setActiveTab("members")} 
-            style={{ flex: 1, padding: "12px", borderRadius: "14px", border: "none", fontWeight: "700", cursor: "pointer", transition: "all 0.3s", background: activeTab === "members" ? "var(--primary-gradient)" : "transparent", color: activeTab === "members" ? "white" : "#64748b" }}
-          >
-            👥 รายชื่อคนเล่น
-          </button>
-          <button 
             onClick={() => setActiveTab("timeline")} 
             disabled={circle.status === 'OPEN'}
             style={{ flex: 1, padding: "12px", borderRadius: "14px", border: "none", fontWeight: "700", cursor: "pointer", transition: "all 0.3s", background: activeTab === "timeline" ? "var(--primary-gradient)" : "transparent", color: activeTab === "timeline" ? "white" : "#64748b", opacity: circle.status === 'OPEN' ? 0.5 : 1 }}
           >
             📊 ติดตามงวด
+          </button>
+          <button 
+            onClick={() => setActiveTab("members")} 
+            style={{ flex: 1, padding: "12px", borderRadius: "14px", border: "none", fontWeight: "700", cursor: "pointer", transition: "all 0.3s", background: activeTab === "members" ? "var(--primary-gradient)" : "transparent", color: activeTab === "members" ? "white" : "#64748b" }}
+          >
+            👥 สมาชิกวงแชร์
           </button>
         </div>
 
