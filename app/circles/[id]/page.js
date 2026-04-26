@@ -446,7 +446,7 @@ export default function CircleDetail() {
 
       {/* Modals */}
       {adminModal.open && (
-        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)", display: "flex", alignItems: "flex-start", justifyContent: "center", zIndex: 2000, padding: "20px", paddingTop: "80px", overflowY: "auto" }}>
+        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2000, padding: "20px", overflowY: "auto" }}>
           <div className="glass-panel animate-fade-in" style={{ width: "95%", maxWidth: "420px", padding: "30px", boxShadow: "0 20px 40px rgba(0,0,0,0.3)" }}>
             <h3 style={{ marginTop: 0, marginBottom: "12px", textAlign: "center" }}>
                 {adminModal.mode === 'JOIN' ? `📌 จองมือที่ ${adminModal.handNo}` : `🔄 โอนมือที่ ${adminModal.handNo}`}
@@ -477,8 +477,8 @@ export default function CircleDetail() {
       )}
 
       {slipModal.open && (
-        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)", display: "flex", alignItems: "flex-start", justifyContent: "center", zIndex: 2000, padding: "20px", paddingTop: "60px", overflowY: "auto" }}>
-          <div className="glass-panel animate-fade-in" style={{ width: "95%", maxWidth: "480px", maxHeight: "none", position: "relative", marginBottom: "40px" }}>
+        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2000, padding: "20px", overflowY: "auto" }}>
+          <div className="glass-panel animate-fade-in" style={{ width: "95%", maxWidth: "480px", maxHeight: "90vh", overflowY: "auto", position: "relative" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px", position: "sticky", top: 0, background: "var(--glass-bg)", padding: "10px 0", zIndex: 10 }}>
               <h3 style={{ margin: 0 }}>📊 ตรวจสอบงวดที่ {slipModal.period}</h3>
               <button onClick={() => setSlipModal({ open: false, period: null })} style={{ background: "none", border: "none", fontSize: "1.5rem", cursor: "pointer" }}>✕</button>
