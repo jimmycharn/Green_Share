@@ -584,7 +584,21 @@ export default function CircleDetail() {
       {slipModal.open && (
         <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999, padding: "10px" }}>
           <div className="glass-panel" style={{ width: "100%", maxWidth: "480px", maxHeight: "95vh", overflowY: "auto", padding: "24px 16px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
+            {/* Sticky Header with Different Color */}
+            <div style={{ 
+                position: "sticky", 
+                top: "-24px", 
+                left: 0, 
+                right: 0, 
+                zIndex: 100, 
+                background: "#f8fafc", 
+                margin: "-24px -16px 30px -16px", 
+                padding: "20px 16px", 
+                display: "flex", 
+                justifyContent: "space-between", 
+                alignItems: "center", 
+                borderBottom: "1px solid #e2e8f0" 
+            }}>
               <h3 style={{ margin: 0, display: "flex", alignItems: "center", gap: "8px" }}>
                  <span style={{ fontSize: "1.4rem" }}>💳</span> แจ้งชำระเงิน
               </h3>
@@ -592,7 +606,7 @@ export default function CircleDetail() {
             </div>
 
             {/* Money Bag Icon */}
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: "24px" }}>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: "30px" }}>
                 <div style={{ width: "90px", height: "90px", borderRadius: "50%", background: "#10b981", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "16px", boxShadow: "0 8px 16px rgba(16, 185, 129, 0.2)" }}>
                    <span style={{ fontSize: "2.4rem" }}>💰</span>
                 </div>
@@ -674,33 +688,6 @@ export default function CircleDetail() {
                 </button>
             </form>
 
-            <div style={{ marginTop: "24px", paddingTop: "20px", borderTop: "1px solid #f1f5f9" }}>
-                <div style={{ fontSize: "0.85rem", fontWeight: "700", color: "#64748b", marginBottom: "12px" }}>ประวัติชำระเงินงวดนี้:</div>
-                {slips.filter(s => s.period === slipModal.period).length === 0 ? (
-                    <div style={{ padding: "20px", textAlign: "center", color: "#94a3b8", fontSize: "0.85rem", fontStyle: "italic" }}>ยังไม่มีข้อมูลการชำระเงิน</div>
-                ) : (
-                    slips.filter(s => s.period === slipModal.period).map(slip => {
-                        const member = players.find(p => p.member_id === slip.member_id);
-                        return (
-                            <div key={slip.id} style={{ display: "flex", gap: "12px", padding: "12px", border: "1px solid #f1f5f9", borderRadius: "16px", marginBottom: "10px", alignItems: "center" }}>
-                                <div onClick={() => window.open(slip.image_url)} style={{ width: "40px", height: "40px", borderRadius: "10px", overflow: "hidden", background: "#f1f5f9" }}>
-                                   {slip.is_cash ? <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>💵</div> : <img src={slip.image_url} style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
-                                </div>
-                                <div style={{ flex: 1 }}>
-                                    <div style={{ fontWeight: "700", fontSize: "0.85rem" }}>{member?.member_name}</div>
-                                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                                       <span style={{ color: "var(--primary)", fontWeight: "800", fontSize: "0.9rem" }}>{slip.amount.toLocaleString()} ฿</span>
-                                       {slip.status === 'APPROVED' && <span style={{ fontSize: "0.7rem", color: "#166534" }}>✅</span>}
-                                    </div>
-                                </div>
-                                {isCircleAdmin && slip.status === 'PENDING' && (
-                                    <button onClick={() => handleVerifySlip(slip.id)} className="badge badge-success" style={{ border: "none", cursor: "pointer" }}>อนุมัติ</button>
-                                )}
-                            </div>
-                        );
-                    })
-                )}
-            </div>
           </div>
         </div>
       )}
