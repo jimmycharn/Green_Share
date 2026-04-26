@@ -145,11 +145,8 @@ export default function CreateCircle() {
 
   return (
     <div style={{ padding: "24px 16px", minHeight: "100vh", maxWidth: "600px", margin: "0 auto" }}>
-      <div style={{ display: "flex", alignItems: "center", marginBottom: "24px" }}>
-        <Link href="/" style={{ padding: "8px 12px", background: "white", borderRadius: "10px", boxShadow: "0 2px 8px rgba(0,0,0,0.05)", fontWeight: "bold", color: "var(--foreground)" }}>
-          ← กลับ
-        </Link>
-        <h2 style={{ flex: 1, textAlign: "center", fontSize: "1.4rem", margin: 0, paddingRight: "40px" }}>💰 ตั้งวงแชร์ใหม่</h2>
+      <div style={{ textAlign: "center", marginBottom: "24px" }}>
+        <h2 style={{ fontSize: "1.6rem", margin: 0, color: "var(--foreground)" }}>💰 ตั้งวงแชร์ใหม่</h2>
       </div>
 
       <div className="glass-panel" style={{ padding: "24px" }}>
