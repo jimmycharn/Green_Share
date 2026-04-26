@@ -22,6 +22,21 @@ export default function CircleDetail() {
   const [changeHandNo, setChangeHandNo] = useState("");
   const [allMembers, setAllMembers] = useState([]);
   const [selectedNewMemberId, setSelectedNewMemberId] = useState("");
+  const [targetMemberId, setTargetMemberId] = useState(""); // For proxy joining
+  
+  const isCircleAdmin = dbUser && circle && (['SUPERADMIN', 'ADMIN'].includes(dbUser.role) || dbUser.id === circle.creator_id);
+
+  useEffect(() => {
+    if (isCircleAdmin && allMembers.length === 0) {
+      fetch('/api/action', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get_members', member_id: dbUser.id })
+      }).then(res => res.json()).then(data => {
+        if (data.status === 'success') setAllMembers(data.members);
+      }).catch(err => console.log(err));
+    }
+  }, [isCircleAdmin, dbUser, allMembers.length]);
 
   useEffect(() => {
     if (typeof window !== "undefined" && window.liff) {
@@ -111,7 +126,7 @@ export default function CircleDetail() {
           action: 'join_circle',
           circle_id: circleId,
           hand_no: selectedHand,
-          member_id: dbUser.id
+          member_id: targetMemberId || dbUser.id
         })
       });
       
@@ -218,7 +233,6 @@ export default function CircleDetail() {
     );
   }
 
-  const isCircleAdmin = dbUser && (['SUPERADMIN', 'ADMIN'].includes(dbUser.role) || dbUser.id === circle.creator_id);
   const occupiedHands = players.map(p => p.hand_no);
   const totalHandsArray = Array.from({ length: circle.total_hands }, (_, i) => i + 1);
 
@@ -287,29 +301,45 @@ export default function CircleDetail() {
       {circle.status === 'OPEN' && (
         <div className="glass-panel" style={{ marginBottom: "24px" }}>
           <h3 style={{ fontSize: "1.1rem", marginBottom: "12px" }}>✋ จองมือแชร์</h3>
-          <div style={{ display: "flex", gap: "12px" }}>
-            <select 
-              value={selectedHand} 
-              onChange={(e) => setSelectedHand(e.target.value)}
-              style={{ flex: 1, padding: "12px", borderRadius: "8px", border: "1px solid #cbd5e1" }}
-            >
-              <option value="">-- เลือกมือที่ว่าง --</option>
-              {totalHandsArray.map(hand => {
-                const isOccupied = occupiedHands.includes(hand);
-                return (
-                  <option key={hand} value={hand} disabled={isOccupied}>
-                    มือที่ {hand} {isOccupied ? "(จองแล้ว)" : ""}
-                  </option>
-                );
-              })}
-            </select>
-            <button 
-              onClick={handleJoin}
-              disabled={!selectedHand}
-              style={{ padding: "0 20px", background: "var(--primary)", color: "white", border: "none", borderRadius: "8px", fontWeight: "bold", opacity: !selectedHand ? 0.5 : 1 }}
-            >
-              ยืนยันจอง
-            </button>
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            
+            {isCircleAdmin && (
+              <select 
+                value={targetMemberId} 
+                onChange={(e) => setTargetMemberId(e.target.value)}
+                style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid #cbd5e1" }}
+              >
+                <option value="">-- จองเป็นชื่อตัวเอง (ท้าวแชร์) --</option>
+                {allMembers.map(m => (
+                  <option key={m.id} value={m.id}>จองสิทธิ์แทน: {m.name}</option>
+                ))}
+              </select>
+            )}
+
+            <div style={{ display: "flex", gap: "12px" }}>
+              <select 
+                value={selectedHand} 
+                onChange={(e) => setSelectedHand(e.target.value)}
+                style={{ flex: 1, padding: "12px", borderRadius: "8px", border: "1px solid #cbd5e1" }}
+              >
+                <option value="">-- เลือกมือที่ว่าง --</option>
+                {totalHandsArray.map(hand => {
+                  const isOccupied = occupiedHands.includes(hand);
+                  return (
+                    <option key={hand} value={hand} disabled={isOccupied}>
+                      มือที่ {hand} {isOccupied ? "(จองแล้ว)" : ""}
+                    </option>
+                  );
+                })}
+              </select>
+              <button 
+                onClick={handleJoin}
+                disabled={!selectedHand}
+                style={{ padding: "0 20px", background: "var(--primary)", color: "white", border: "none", borderRadius: "8px", fontWeight: "bold", opacity: !selectedHand ? 0.5 : 1 }}
+              >
+                ยืนยันจอง
+              </button>
+            </div>
           </div>
         </div>
       )}
