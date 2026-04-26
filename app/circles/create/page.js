@@ -1,15 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Script from "next/script";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useUser } from "@/contexts/UserContext";
 
 export default function CreateCircle() {
   const router = useRouter();
-  const [isInitializing, setIsInitializing] = useState(true);
+  const { dbUser, isLoading: isUserLoading } = useUser();
   const [isSaving, setIsSaving] = useState(false);
-  const [dbUser, setDbUser] = useState(null);
   
   // Form State
   const [formData, setFormData] = useState({
@@ -34,65 +32,17 @@ export default function CreateCircle() {
     }
   }, [formData.amount_per_hand, formData.total_hands]);
 
-  useEffect(() => {
-    if (typeof window !== "undefined" && window.liff) {
-      initLiff();
-    }
-  }, []);
-
-  const handleScriptLoad = () => {
-    if (window.liff) {
-      initLiff();
-    }
-  };
-
-  const initLiff = async () => {
-    try {
-      const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
-      await window.liff.init({ liffId });
-      
-      if (!window.liff.isLoggedIn()) {
-        window.liff.login();
-        return;
-      }
-      
-      const userProfile = await window.liff.getProfile();
-
-      const houseParam = new URLSearchParams(window.location.search).get('house');
-      const res = await fetch('/api/action', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'register',
-          name: userProfile.displayName,
-          nickname: userProfile.displayName,
-          line_id: userProfile.userId,
-          phone: '', 
-          bank_account: '',
-          house: houseParam
-        })
-      });
-      const resData = await res.json();
-      
-      if (resData.status === 'success') {
-        setDbUser(resData);
-      } else {
-        setMessage({ type: "error", text: "ไม่สามารถดึงข้อมูลสมาชิกได้" });
-      }
-      
-      setIsInitializing(false);
-    } catch (err) {
-      setMessage({ type: "error", text: "การเชื่อมต่อ LIFF ขัดข้อง" });
-      setIsInitializing(false);
-    }
-  };
-
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!dbUser) {
+      setMessage({ type: "error", text: "กรุณารอข้อมูลสมาชิกโหลดสักครู่..." });
+      return;
+    }
+    
     setIsSaving(true);
     setMessage({ type: "", text: "" });
 
@@ -139,22 +89,8 @@ export default function CreateCircle() {
     setIsSaving(false);
   };
 
-  if (isInitializing) {
-    return (
-      <div style={{ padding: "20px", minHeight: "100vh" }}>
-        <Script src="https://static.line-scdn.net/liff/edge/versions/2.22.1/sdk.js" onLoad={handleScriptLoad} />
-        <div className="loader-container">
-          <div className="loader"></div>
-          <h3 style={{ color: "var(--primary)" }}>กำลังเตรียมความพร้อม...</h3>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="animate-fade-in" style={{ backgroundColor: "#f8fafc", minHeight: "100vh" }}>
-      <Script src="https://static.line-scdn.net/liff/edge/versions/2.22.1/sdk.js" onLoad={handleScriptLoad} />
-      
       {/* Header Layout from Image 2 */}
       <div style={{ 
         background: "linear-gradient(to right, #48bb78, #38a169)", 
@@ -177,8 +113,8 @@ export default function CreateCircle() {
           <span style={{ fontSize: "1.8rem" }}>👥</span>
         </div>
         <div>
-          <h2 style={{ fontSize: "1.4rem", fontWeight: "800", margin: 0, color: "white" }}>รายละเอียดวงแชร์</h2>
-          <p style={{ color: "rgba(255, 255, 255, 0.9)", margin: "2px 0 0 0", fontSize: "0.9rem" }}>กรอกข้อมูลให้ครบถ้วน</p>
+          <h2 style={{ fontSize: "1.4rem", fontWeight: "800", margin: 0, color: "white" }}>✨ ข้อมูลวงแชร์พรีเมียม ✨</h2>
+          <p style={{ color: "rgba(255, 255, 255, 0.9)", margin: "2px 0 0 0", fontSize: "0.95rem" }}>กรอกรายละเอียดให้ครบถ้วนเพื่อเริ่มวงใหม่</p>
         </div>
       </div>
 

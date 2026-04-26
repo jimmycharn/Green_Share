@@ -23,13 +23,7 @@ export default function ClientLayout({ children }) {
     { label: "ตั้งค่า", icon: "⚙️", path: "/profile" },
   ];
 
-  if (isLoading && pathname !== '/') {
-    return (
-        <div className="loader-container">
-            <div className="loader"></div>
-        </div>
-    );
-  }
+  // Removed global loading to prevent flicker
 
   return (
     <>
