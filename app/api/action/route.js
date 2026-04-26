@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { registerMember, updateProfile, getMembers } from '@/lib/controllers/member';
-import { createCircle, getCircles, getCircleDetail, joinCircle, submitBid, uploadSlip, randomSelectBidder } from '@/lib/controllers/circle';
+import { createCircle, getCircles, getCircleDetail, joinCircle, submitBid, uploadSlip, randomSelectBidder, startCircle, cancelHand, changeHandOwner } from '@/lib/controllers/circle';
 import { manageSlot, approvePayment } from '@/lib/controllers/admin';
 
 export async function POST(req) {
@@ -25,6 +25,9 @@ export async function POST(req) {
     if (action === 'submit_bid') return NextResponse.json(await submitBid(data));
     if (action === 'upload_slip') return NextResponse.json(await uploadSlip(data));
     if (action === 'random_select_bidder') return NextResponse.json(await randomSelectBidder(data));
+    if (action === 'start_circle') return NextResponse.json(await startCircle(data));
+    if (action === 'cancel_hand') return NextResponse.json(await cancelHand(data));
+    if (action === 'change_hand_owner') return NextResponse.json(await changeHandOwner(data));
 
     // --- Admin Routes ---
     if (action === 'manage_slot') return NextResponse.json(await manageSlot(data));
