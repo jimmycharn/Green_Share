@@ -30,6 +30,8 @@ export default function CircleDetail() {
   const [bidModal, setBidModal] = useState({ open: false, period: null });
   const [configModal, setConfigModal] = useState({ open: false, period: null });
   const [bidAmount, setBidAmount] = useState("");
+  const [paymentMode, setPaymentMode] = useState("TRANSFER");
+  const [myBank, setMyBank] = useState(null);
   const [settingsData, setSettingsData] = useState({
     bid_start_time: "12:00",
     bid_end_time: "18:00",
@@ -64,16 +66,17 @@ export default function CircleDetail() {
     const res = await fetch('/api/action', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'get_circle_detail', circle_id: circleId })
+      body: JSON.stringify({ action: 'get_circle_detail', circle_id: circleId, member_id: dbUser?.id })
     });
-    const resData = await res.json();
-    if (resData.status === 'success') {
-      setCircle(resData.circle);
-      setPlayers(resData.players || []);
-      setBids(resData.bids || []);
-      setSlips(resData.slips || []);
+    const data = await res.json();
+    if (data.status === 'success') {
+      setCircle(data.circle);
+      setPlayers(data.players || []);
+      setBids(data.bids || []);
+      setSlips(data.slips || []);
+      setMyBank(data.myBank);
     } else {
-      setMessage({ type: "error", text: resData.message || "ไม่พบวงแชร์นี้" });
+      setMessage({ type: "error", text: data.message || "ไม่พบวงแชร์นี้" });
     }
     setIsInitializing(false);
   };
@@ -190,7 +193,8 @@ export default function CircleDetail() {
           period: slipModal.period,
           amount: uploadData.amount,
           note: uploadData.note,
-          image_url: uploadData.image_url
+          image_url: uploadData.image_url,
+          is_cash: paymentMode === 'CASH'
         })
       });
       const data = await res.json();
@@ -246,6 +250,25 @@ export default function CircleDetail() {
     setExpandedPeriod(expandedPeriod === period ? null : period);
   };
 
+  const getRequiredAmount = (period) => {
+    if (!circle || !dbUser) return 0;
+    const userWinningBid = bids.find(b => b.member_id === dbUser.id && b.period < period);
+    
+    if (!userWinningBid) {
+        return circle.amount_per_hand;
+    } else {
+        if (circle.interest_method === 'หักดอก') {
+            return circle.amount_per_hand;
+        } else {
+            return circle.amount_per_hand + userWinningBid.bid_amount;
+        }
+    }
+  };
+
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text);
+    alert("คัดลอกเลขบัญชีแล้ว!");
+  };
   if (isUserLoading || isInitializing) {
     return (
       <div className="loader-container">
@@ -428,7 +451,17 @@ export default function CircleDetail() {
                       {isCurrent && (
                         <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
                           <button onClick={() => setBidModal({ open: true, period })} className="btn-primary" style={{ flex: 1, padding: "10px", fontSize: "0.9rem" }}>🔨 ประมูล (เปีย)</button>
-                          <button onClick={() => setSlipModal({ open: true, period })} className="btn-primary" style={{ flex: 1, padding: "10px", fontSize: "0.9rem", background: "var(--secondary)" }}>📤 ส่งสลิป</button>
+                          <button 
+                            onClick={() => { 
+                              const amt = getRequiredAmount(period); 
+                              setUploadData({...uploadData, amount: amt}); 
+                              setSlipModal({ open: true, period }); 
+                            }} 
+                            className="btn-primary" 
+                            style={{ flex: 1, padding: "10px", fontSize: "0.9rem", background: "var(--secondary)" }}
+                          >
+                            📤 ชำระเงิน
+                          </button>
                         </div>
                       )}
 
@@ -507,31 +540,114 @@ export default function CircleDetail() {
 
       {slipModal.open && (
         <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999, padding: "20px" }}>
-          <div className="glass-panel" style={{ width: "95%", maxWidth: "480px", maxHeight: "90vh", overflowY: "auto" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "20px" }}>
-              <h3 style={{ margin: 0 }}>📊 งวดที่ {slipModal.period}</h3>
-              <button onClick={() => setSlipModal({ open: false })} style={{ background: "none", border: "none", fontSize: "1.5rem" }}>✕</button>
+          <div className="glass-panel" style={{ width: "95%", maxWidth: "480px", maxHeight: "90vh", overflowY: "auto", padding: "24px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
+              <h3 style={{ margin: 0, display: "flex", alignItems: "center", gap: "8px" }}>
+                 <span style={{ fontSize: "1.4rem" }}>💳</span> แจ้งชำระเงิน
+              </h3>
+              <button onClick={() => setSlipModal({ open: false })} style={{ background: "none", border: "none", fontSize: "1.5rem", color: "#94a3b8" }}>✕</button>
             </div>
-            {slips.filter(s => s.period === slipModal.period).map(slip => {
-                const member = players.find(p => p.member_id === slip.member_id);
-                return (
-                    <div key={slip.id} style={{ display: "flex", gap: "12px", padding: "12px", border: "1px solid #e2e8f0", borderRadius: "12px", marginBottom: "10px" }}>
-                        <div onClick={() => window.open(slip.image_url)} style={{ width: "50px", height: "50px", borderRadius: "8px", overflow: "hidden" }}><img src={slip.image_url} style={{ width: "100%", height: "100%", objectFit: "cover" }} /></div>
-                        <div style={{ flex: 1 }}>
-                            <div style={{ fontWeight: "700" }}>{member?.member_name}</div>
-                            <div style={{ color: "var(--primary)", fontWeight: "700" }}>{slip.amount.toLocaleString()} ฿</div>
-                        </div>
-                        {isCircleAdmin && slip.status === 'PENDING' && <button onClick={() => handleVerifySlip(slip.id)} className="badge badge-success" style={{ border: "none" }}>อนุมัติ</button>}
-                    </div>
-                );
-            })}
-            {slipModal.period === circle.current_period && (
-                <form onSubmit={handleUploadSlip} style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "20px", borderTop: "1px solid #e2e8f0", paddingTop: "20px" }}>
-                    <input type="number" placeholder="ยอดเงิน" value={uploadData.amount} onChange={(e) => setUploadData({...uploadData, amount: e.target.value})} required className="glass-panel" style={{ width: "100%", padding: "12px" }} />
-                    <input type="text" placeholder="ลิงก์สลิป" value={uploadData.image_url} onChange={(e) => setUploadData({...uploadData, image_url: e.target.value})} required className="glass-panel" style={{ width: "100%", padding: "12px" }} />
-                    <button type="submit" className="btn-primary">ส่งสลิป</button>
-                </form>
+
+            {/* Money Bag Icon */}
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: "24px" }}>
+                <div style={{ width: "90px", height: "90px", borderRadius: "50%", background: "#10b981", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "16px", boxShadow: "0 8px 16px rgba(16, 185, 129, 0.2)" }}>
+                   <span style={{ fontSize: "2.4rem" }}>💰</span>
+                </div>
+                <div style={{ fontSize: "2.4rem", fontWeight: "800", color: "#10b981" }}>{uploadData.amount?.toLocaleString()}</div>
+                <div style={{ fontSize: "1rem", color: "#64748b", fontWeight: "500" }}>บาท</div>
+            </div>
+
+            {/* Mode Switcher */}
+            <div style={{ display: "flex", gap: "10px", marginBottom: "24px" }}>
+              <button 
+                onClick={() => setPaymentMode("TRANSFER")} 
+                style={{ flex: 1, padding: "14px", borderRadius: "18px", border: "none", fontWeight: "700", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", background: paymentMode === "TRANSFER" ? "#10b981" : "#f1f5f9", color: paymentMode === "TRANSFER" ? "white" : "#64748b", transition: "all 0.2s" }}
+              >
+                📱 โอนเงิน
+              </button>
+              <button 
+                onClick={() => setPaymentMode("CASH")} 
+                style={{ flex: 1, padding: "14px", borderRadius: "18px", border: "none", fontWeight: "700", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", background: paymentMode === "CASH" ? "#64748b" : "#f1f5f9", color: paymentMode === "CASH" ? "white" : "#64748b", transition: "all 0.2s" }}
+              >
+                💵 เงินสด
+              </button>
+            </div>
+
+            {paymentMode === "TRANSFER" && myBank && (
+                <div style={{ background: "#f8fafc", padding: "16px", borderRadius: "20px", marginBottom: "24px", border: "1px solid #e2e8f0", position: "relative" }}>
+                   <div style={{ fontSize: "0.75rem", color: "#64748b", marginBottom: "6px", fontWeight: "600" }}>โอนเข้าบัญชีแอดมิน:</div>
+                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                      <span style={{ fontWeight: "800", fontSize: "1.05rem", color: "#1e293b" }}>{myBank.bank_name} {myBank.account_no}</span>
+                      <button onClick={() => copyToClipboard(myBank.account_no)} style={{ background: "#10b981", color: "white", border: "none", padding: "6px 12px", borderRadius: "8px", fontSize: "0.75rem", fontWeight: "700" }}>คัดลอก</button>
+                   </div>
+                   <div style={{ fontSize: "0.9rem", color: "#475569" }}>{myBank.account_name}</div>
+                </div>
             )}
+
+            <form onSubmit={handleUploadSlip} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                {paymentMode === "TRANSFER" && (
+                  <div style={{ border: "2px dashed #cbd5e1", borderRadius: "18px", padding: "20px", textAlign: "center", background: "#f8fafc" }}>
+                    <label style={{ cursor: "pointer", display: "block" }}>
+                      <div style={{ fontSize: "1.8rem", marginBottom: "8px" }}>📸</div>
+                      <div style={{ fontSize: "0.9rem", fontWeight: "700", color: "#475569" }}>แนบสลิปโอนเงิน</div>
+                      <input 
+                        type="text" 
+                        placeholder="ลิงก์ไฟล์สลิป (Demo)" 
+                        value={uploadData.image_url} 
+                        onChange={(e) => setUploadData({...uploadData, image_url: e.target.value})} 
+                        style={{ width: "100%", marginTop: "12px", padding: "10px", borderRadius: "10px", border: "1px solid #e2e8f0" }}
+                      />
+                    </label>
+                  </div>
+                )}
+                
+                <div style={{ position: "relative" }}>
+                  <span style={{ position: "absolute", left: "16px", top: "16px" }}>✍️</span>
+                  <input 
+                    type="text" 
+                    placeholder="บันทึกช่วยจำ (ถ้ามี)" 
+                    value={uploadData.note} 
+                    onChange={(e) => setUploadData({...uploadData, note: e.target.value})} 
+                    style={{ width: "100%", padding: "16px 16px 16px 44px", borderRadius: "18px", border: "1.5px solid #edf2f7", fontSize: "1rem", outline: "none" }}
+                  />
+                </div>
+
+                <button 
+                  type="submit" 
+                  className="btn-primary" 
+                  style={{ padding: "18px", fontSize: "1.1rem", fontWeight: "800", borderRadius: "20px", marginTop: "8px" }}
+                >
+                  ✅ ยืนยันชำระเงิน
+                </button>
+            </form>
+
+            <div style={{ marginTop: "24px", paddingTop: "20px", borderTop: "1px solid #f1f5f9" }}>
+                <div style={{ fontSize: "0.85rem", fontWeight: "700", color: "#64748b", marginBottom: "12px" }}>ประวัติชำระเงินงวดนี้:</div>
+                {slips.filter(s => s.period === slipModal.period).length === 0 ? (
+                    <div style={{ padding: "20px", textAlign: "center", color: "#94a3b8", fontSize: "0.85rem", fontStyle: "italic" }}>ยังไม่มีข้อมูลการชำระเงิน</div>
+                ) : (
+                    slips.filter(s => s.period === slipModal.period).map(slip => {
+                        const member = players.find(p => p.member_id === slip.member_id);
+                        return (
+                            <div key={slip.id} style={{ display: "flex", gap: "12px", padding: "12px", border: "1px solid #f1f5f9", borderRadius: "16px", marginBottom: "10px", alignItems: "center" }}>
+                                <div onClick={() => window.open(slip.image_url)} style={{ width: "40px", height: "40px", borderRadius: "10px", overflow: "hidden", background: "#f1f5f9" }}>
+                                   {slip.is_cash ? <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>💵</div> : <img src={slip.image_url} style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
+                                </div>
+                                <div style={{ flex: 1 }}>
+                                    <div style={{ fontWeight: "700", fontSize: "0.85rem" }}>{member?.member_name}</div>
+                                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                       <span style={{ color: "var(--primary)", fontWeight: "800", fontSize: "0.9rem" }}>{slip.amount.toLocaleString()} ฿</span>
+                                       {slip.status === 'APPROVED' && <span style={{ fontSize: "0.7rem", color: "#166534" }}>✅</span>}
+                                    </div>
+                                </div>
+                                {isCircleAdmin && slip.status === 'PENDING' && (
+                                    <button onClick={() => handleVerifySlip(slip.id)} className="badge badge-success" style={{ border: "none", cursor: "pointer" }}>อนุมัติ</button>
+                                )}
+                            </div>
+                        );
+                    })
+                )}
+            </div>
           </div>
         </div>
       )}
