@@ -90,7 +90,8 @@ export default function Profile() {
                 style={{ 
                     width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", 
                     padding: "20px 24px", border: "1px solid var(--glass-border)", cursor: "pointer",
-                    textAlign: "left", fontSize: "1.1rem", fontWeight: "700" 
+                    textAlign: "left", fontSize: "1.1rem", fontWeight: "700", fontFamily: "inherit",
+                    color: "inherit"
                 }}
             >
                 <span>จัดการโปรไฟล์</span>
