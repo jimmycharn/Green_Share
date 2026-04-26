@@ -101,3 +101,25 @@ CREATE TABLE public.admin_payments (
 
 -- Security: Set RLS (Row Level Security) if needed or keep it open if using Service Role Key on backend
 -- For simplicity, since the backend API routes will use supabaseAdmin (Service Role), RLS is bypassed there.
+
+-- 7. Admin Bank Accounts
+CREATE TABLE public.banks (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    member_id TEXT REFERENCES public.members(id) ON DELETE CASCADE,
+    bank_name TEXT NOT NULL,
+    account_no TEXT NOT NULL,
+    account_name TEXT NOT NULL,
+    is_default BOOLEAN DEFAULT false,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+);
+
+-- 8. Member Houses (Many-to-Many Registry)
+CREATE TABLE public.member_houses (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    member_id TEXT REFERENCES public.members(id) ON DELETE CASCADE,
+    admin_id TEXT REFERENCES public.members(id) ON DELETE CASCADE,
+    status TEXT DEFAULT 'PENDING',
+    assigned_bank_id UUID REFERENCES public.banks(id) ON DELETE SET NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    UNIQUE(member_id, admin_id)
+);
