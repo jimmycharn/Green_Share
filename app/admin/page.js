@@ -374,6 +374,7 @@ export default function AdminDashboard() {
                   <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
                     <strong style={{ fontSize: "1.05rem" }}>{b.bank_name}</strong>
                     {b.is_default && <span style={{ fontSize: "0.7rem", padding: "2px 6px", borderRadius: "4px", background: "#dcfce7", color: "#166534", fontWeight: "bold" }}>✔ บัญชีหลัก</span>}
+                    <button onClick={() => { navigator.clipboard.writeText(`${b.bank_name}\n${b.account_no}\n${b.account_name}`); setMessage({ type: "success", text: "คัดลอกข้อมูลบัญชีแล้ว!" }); }} style={{ background: "none", border: "1px solid #cbd5e1", borderRadius: "4px", padding: "2px 6px", cursor: "pointer", fontSize: "0.75rem", color: "#64748b" }} title="คัดลอกข้อมูลบัญชี">📋</button>
                   </div>
                   <div style={{ fontSize: "0.95rem", color: "var(--primary)", fontFamily: "monospace" }}>{b.account_no}</div>
                   <div style={{ fontSize: "0.85rem", color: "#64748b" }}>{b.account_name}</div>
