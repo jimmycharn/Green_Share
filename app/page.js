@@ -114,7 +114,9 @@ export default function Home() {
     );
   }
 
-  const activeCircles = circles.filter(c => c.status === 'OPEN' || c.status === 'ACTIVE').slice(0, 3);
+  const isAdmin = dbUser?.role === 'SUPERADMIN' || dbUser?.role === 'ADMIN';
+  const newCircles = circles.filter(c => c.status === 'OPEN').slice(0, 5);
+  const activeCircles = circles.filter(c => c.status === 'ACTIVE').slice(0, 5);
 
   return (
     <div className="animate-fade-in">
@@ -125,32 +127,53 @@ export default function Home() {
         <p style={{ color: "#64748b", margin: "4px 0 0 0", fontSize: "0.9rem" }}>วันนี้มีอะไรให้ช่วยจัดการไหมครับ?</p>
       </div>
 
-      <h3 style={{ fontSize: "1.1rem", marginBottom: "16px", fontWeight: "700" }}>เมนูแนะนำ</h3>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "32px" }}>
-        <Link href="/circles/view" className="glass-panel" style={{ textDecoration: "none", color: "inherit", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }}>
-          <div style={{ fontSize: "2rem" }}>📊</div>
-          <div style={{ fontWeight: "700" }}>วงแชร์ทั้งหมด</div>
-        </Link>
-        <Link href="/circles/create" className="glass-panel" style={{ textDecoration: "none", color: "inherit", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }}>
-          <div style={{ fontSize: "2rem" }}>➕</div>
-          <div style={{ fontWeight: "700" }}>เปิดวงใหม่</div>
-        </Link>
+      {/* New Circles Section */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+        <h3 style={{ fontSize: "1.1rem", margin: 0, fontWeight: "700" }}>วงแชร์เปิดใหม่</h3>
+        {isAdmin && (
+            <Link href="/circles/create" style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.9rem", color: "white", background: "var(--primary-gradient)", padding: "6px 14px", borderRadius: "12px", textDecoration: "none", fontWeight: "700", boxShadow: "0 4px 10px rgba(16, 185, 129, 0.2)" }}>
+                <span>+</span> เปิดวงใหม่
+            </Link>
+        )}
       </div>
 
+      <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "32px" }}>
+        {isLoadingCircles ? (
+           <div className="glass-panel" style={{ padding: "20px", textAlign: "center", color: "#94a3b8" }}>กำลังโหลด...</div>
+        ) : newCircles.length === 0 ? (
+           <div className="glass-panel" style={{ padding: "24px", textAlign: "center", color: "#94a3b8", fontSize: "0.9rem" }}>
+              ยังไม่มีวงแชร์เปิดใหม่ในขณะนี้
+           </div>
+        ) : (
+           newCircles.map(circle => (
+            <Link 
+              href={`/circles/${circle.id}`} 
+              key={circle.id}
+              className="glass-panel"
+              style={{ display: "flex", justifyContent: "space-between", alignItems: "center", textDecoration: "none", color: "inherit", padding: "16px 20px", border: "1px solid rgba(16, 185, 129, 0.1)" }}
+            >
+              <div>
+                <div style={{ fontWeight: "700", fontSize: "1rem" }}>{circle.name}</div>
+                <div style={{ fontSize: "0.8rem", color: "#64748b", marginTop: "2px" }}>💰 ส่งงวดละ {circle.amount_per_hand.toLocaleString()} ฿</div>
+              </div>
+              <div style={{ color: "#94a3b8" }}>❯</div>
+            </Link>
+           ))
+        )}
+      </div>
+
+      {/* Playing Circles Section */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
         <h3 style={{ fontSize: "1.1rem", margin: 0, fontWeight: "700" }}>วงแชร์ที่เล่นอยู่</h3>
-        <Link href="/circles/view" style={{ fontSize: "0.9rem", color: "var(--primary)", fontWeight: "600", textDecoration: "none" }}>ดูทั้งหมด</Link>
+        <Link href="/circles/view" style={{ fontSize: "0.85rem", color: "var(--primary)", fontWeight: "600", textDecoration: "none" }}>ดูทั้งหมด</Link>
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
         {isLoadingCircles ? (
-           <div className="glass-panel" style={{ padding: "20px", textAlign: "center", color: "#94a3b8" }}>
-              กำลังโหลดข้อมูล...
-           </div>
+           <div className="glass-panel" style={{ padding: "20px", textAlign: "center", color: "#94a3b8" }}>กำลังโหลด...</div>
         ) : activeCircles.length === 0 ? (
            <div className="glass-panel" style={{ padding: "30px 20px", textAlign: "center", color: "#94a3b8" }}>
-              <p style={{ margin: 0 }}>คุณยังไม่มีวงแชร์ที่กำลังเล่นอยู่</p>
-              <Link href="/circles/view" style={{ fontSize: "0.8rem", color: "var(--primary)", textDecoration: "underline" }}>ไปหาห้องร่วมสนุกกัน!</Link>
+              <p style={{ margin: 0, fontSize: "0.9rem" }}>คุณยังไม่มีวงแชร์ที่กำลังเล่นอยู่</p>
            </div>
         ) : (
            activeCircles.map(circle => (
@@ -163,7 +186,7 @@ export default function Home() {
               <div>
                 <div style={{ fontWeight: "700", fontSize: "1rem", display: "flex", alignItems: "center", gap: "6px" }}>
                     {circle.name}
-                    <span className="badge" style={{ fontSize: "0.55rem", padding: "2px 6px" }}>{circle.status}</span>
+                    <span className="badge badge-success" style={{ fontSize: "0.55rem", padding: "2px 6px" }}>{circle.status}</span>
                 </div>
                 <div style={{ fontSize: "0.8rem", color: "#64748b", marginTop: "2px" }}>💰 ส่งงวดละ {circle.amount_per_hand.toLocaleString()} ฿</div>
               </div>

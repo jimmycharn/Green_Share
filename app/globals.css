@@ -77,16 +77,14 @@ html, body {
   left: 0;
   right: 0;
   height: 70px;
-  background: var(--glass-bg);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
+  background: white; /* Solid background as requested */
   border-bottom: 1px solid var(--glass-border);
   z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 20px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
 .app-title {
@@ -94,16 +92,17 @@ html, body {
   font-weight: 800;
   background: var(--primary-gradient);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 /* Bottom Navigation */
 .bottom-nav {
   position: fixed;
-  bottom: 20px;
-  left: 20px;
-  right: 20px;
-  height: 70px;
+  bottom: 12px; /* Smaller bottom margin */
+  left: 8px;   /* Smaller side margin */
+  right: 8px;  /* Smaller side margin */
+  height: 72px;
   background: var(--glass-bg);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
@@ -113,7 +112,7 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: space-around;
-  box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.12);
 }
 
 .nav-item {
