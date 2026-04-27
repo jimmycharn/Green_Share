@@ -96,9 +96,11 @@ export default function CreateCircle() {
             router.push(`/circles/${resData.id}`);
         }, 1500);
       } else {
+        alert("🚨 สร้างวงแชร์ไม่สำเร็จ: " + (resData.message || "ไม่สามารถระบุสาเหตุได้"));
         setMessage({ type: "error", text: resData.message || "สร้างล้มเหลว" });
       }
     } catch (error) {
+      alert("⚠️ ปัญหาการเชื่อมต่อ: " + error.message);
       setMessage({ type: "error", text: "มีปัญหาขณะส่งข้อมูล กรุณาลองใหม่" });
     }
     
