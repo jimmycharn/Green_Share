@@ -852,7 +852,7 @@ export default function CircleDetail() {
                             const status = handStatus[p.hand_no];
                             const isDead = status === 'DEAD';
                             const isActive = status === 'ACTIVE';
-                            const isWinner = p.member_id === winnerMemberId && biddingIsClosed;
+                            const isWinner = p.member_id === winnerMemberId && isActive && biddingIsClosed;
 
                             // Net Amount Calculation for winner: (Total Hands * Amount Per Hand) - (My Bid Amount)
                             // This depends on the circle rules, but usually:
