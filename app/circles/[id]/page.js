@@ -1167,9 +1167,24 @@ export default function CircleDetail() {
       {configModal.open && (
         <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999, padding: "10px" }}>
           <div className="glass-panel" style={{ width: "100%", maxWidth: "480px", padding: "24px 16px", maxHeight: "95vh", overflowY: "auto" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-               <h3 style={{ margin: 0 }}>⚙️ ตั้งค่า: {configModal.period ? `(งวด ${configModal.period})` : (configModal.mode === 'EDIT_CIRCLE' ? 'แก้ไขข้อมูลวงแชร์' : circle.name)}</h3>
-               <button onClick={() => setConfigModal({ open: false, period: null })} style={{ background: "none", border: "none", fontSize: "1.2rem" }}>✕</button>
+            <div style={{ 
+                position: "sticky", 
+                top: "-24px", 
+                left: 0, 
+                right: 0, 
+                zIndex: 100, 
+                background: "#f8fafc", 
+                margin: "-24px -16px 30px -16px", 
+                padding: "20px 16px", 
+                display: "flex", 
+                justifyContent: "space-between", 
+                alignItems: "center", 
+                borderBottom: "1px solid #e2e8f0" 
+            }}>
+               <h3 style={{ margin: 0, display: "flex", alignItems: "center", gap: "8px" }}>
+                  <span style={{ fontSize: "1.2rem" }}>⚙️</span> ตั้งค่า: {configModal.period ? `(งวด ${configModal.period})` : (configModal.mode === 'EDIT_CIRCLE' ? 'แก้ไขข้อมูลวงแชร์' : circle.name)}
+               </h3>
+               <button onClick={() => setConfigModal({ open: false, period: null })} style={{ background: "none", border: "none", fontSize: "1.5rem", color: "#94a3b8", cursor: "pointer" }}>✕</button>
             </div>
             
             <form onSubmit={handleUpdateSettings} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
