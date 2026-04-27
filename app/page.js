@@ -32,6 +32,26 @@ export default function Home() {
     setIsLoadingCircles(false);
   };
 
+  const handleDeleteCircle = async (e, circleId, circleName) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!confirm(`คุณต้องการลบวงแชร์ "${circleName}" ใช่หรือไม่? การลบนี้ไม่สามารถย้อนกลับได้และข้อมูลทั้งหมดจะหายไป`)) return;
+
+    try {
+      const res = await fetch('/api/action', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'delete_circle', circle_id: circleId, caller_role: dbUser.role })
+      });
+      const data = await res.json();
+      if (data.status === 'success') {
+        fetchCircles(dbUser.id);
+      } else alert(data.message);
+    } catch {
+      alert("การเชื่อมต่อขัดข้อง");
+    }
+  };
+
   const handleLoginClick = () => {
     if (liff) liff.login();
   };
@@ -95,7 +115,17 @@ export default function Home() {
               style={{ display: "flex", justifyContent: "space-between", alignItems: "center", textDecoration: "none", color: "inherit", padding: "16px 20px", border: "1px solid rgba(16, 185, 129, 0.1)" }}
             >
               <div>
-                <div style={{ fontWeight: "700", fontSize: "1rem" }}>{circle.name}</div>
+                <div style={{ fontWeight: "700", fontSize: "1rem", display: "flex", alignItems: "center", gap: "8px" }}>
+                    {circle.name}
+                    {isAdmin && (
+                        <button 
+                          onClick={(e) => handleDeleteCircle(e, circle.id, circle.name)}
+                          style={{ background: "none", border: "none", padding: "2px 6px", cursor: "pointer", fontSize: "1rem", opacity: 0.6 }}
+                        >
+                           🗑️
+                        </button>
+                    )}
+                </div>
                 <div style={{ fontSize: "0.8rem", color: "#64748b", marginTop: "2px" }}>💰 ส่งงวดละ {circle.amount_per_hand.toLocaleString()} ฿</div>
               </div>
               <div style={{ color: "#94a3b8" }}>❯</div>
@@ -129,6 +159,14 @@ export default function Home() {
                 <div style={{ fontWeight: "700", fontSize: "1rem", display: "flex", alignItems: "center", gap: "6px" }}>
                     {circle.name}
                     <span className="badge badge-success" style={{ fontSize: "0.55rem", padding: "2px 6px" }}>{circle.status}</span>
+                    {isAdmin && (
+                        <button 
+                          onClick={(e) => handleDeleteCircle(e, circle.id, circle.name)}
+                          style={{ background: "none", border: "none", padding: "2px 6px", cursor: "pointer", fontSize: "1rem", opacity: 0.6 }}
+                        >
+                           🗑️
+                        </button>
+                    )}
                 </div>
                 <div style={{ fontSize: "0.8rem", color: "#64748b", marginTop: "2px" }}>💰 ส่งงวดละ {circle.amount_per_hand.toLocaleString()} ฿</div>
               </div>
