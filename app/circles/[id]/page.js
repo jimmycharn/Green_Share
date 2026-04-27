@@ -705,14 +705,20 @@ export default function CircleDetail() {
                           {/* Bingo/Auction Logic */}
                           {circle.type === "ประมูล (เปียแข่งดอก)" && (
                             <>
-                              {canUserBid(period) ? (
-                                <button onClick={() => setBidModal({ open: true, period })} className="btn-primary" style={{ flex: "1 1 45%", padding: "12px", fontSize: "0.85rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
-                                  🔨 ประมูล (เปีย)
-                                </button>
+                              {circle.period_extra !== `CLOSED_${period}` ? (
+                                canUserBid(period) ? (
+                                  <button onClick={() => setBidModal({ open: true, period })} className="btn-primary" style={{ flex: "1 1 45%", padding: "12px", fontSize: "0.85rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
+                                    🔨 ประมูล (เปีย)
+                                  </button>
+                                ) : (
+                                  <button onClick={() => alert(circle.bid_permission === 'PARTIAL' ? "กรุณาชำระเงินอย่างน้อย 1 มือก่อนประมูล" : "กรุณาชำระเงินให้ครบทุกมือก่อนประมูล")} className="btn-primary" style={{ flex: "1 1 45%", padding: "12px", fontSize: "0.85rem", background: "#cbd5e1", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", cursor: "not-allowed" }}>
+                                    🔨 ประมูล (ติดเงื่อนไขจ่าย)
+                                  </button>
+                                )
                               ) : (
-                                <button onClick={() => alert(circle.bid_permission === 'PARTIAL' ? "กรุณาชำระเงินอย่างน้อย 1 มือก่อนประมูล" : "กรุณาชำระเงินให้ครบทุกมือก่อนประมูล")} className="btn-primary" style={{ flex: "1 1 45%", padding: "12px", fontSize: "0.85rem", background: "#cbd5e1", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", cursor: "not-allowed" }}>
-                                  🔨 ประมูล (ติดเงื่อนไขจ่าย)
-                                </button>
+                                <div style={{ flex: "1 1 45%", padding: "12px", fontSize: "0.85rem", background: "#f1f5f9", borderRadius: "12px", color: "#64748b", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", border: "1px solid #e2e8f0" }}>
+                                   🔒 ปิดรับการประมูลแล้ว
+                                </div>
                               )}
                               
                               <button 
@@ -735,12 +741,16 @@ export default function CircleDetail() {
 
                               {isCircleAdmin && (
                                 <>
-                                  <button onClick={() => handleCircleAction('random_select_bidder', period)} className="btn-primary" style={{ flex: "1 1 30%", padding: "10px", fontSize: "0.75rem", background: "#8b5cf6", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px" }}>
-                                    <span>🎲</span> สุ่มผู้ชนะ
-                                  </button>
-                                  <button onClick={() => handleCircleAction('close_bidding', period)} className="btn-primary" style={{ flex: "1 1 30%", padding: "10px", fontSize: "0.75rem", background: "#f59e0b", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px" }}>
-                                    <span>🔒</span> ปิดประมูล
-                                  </button>
+                                  {circle.period_extra !== `CLOSED_${period}` && (
+                                    <>
+                                      <button onClick={() => handleCircleAction('random_select_bidder', period)} className="btn-primary" style={{ flex: "1 1 30%", padding: "10px", fontSize: "0.75rem", background: "#8b5cf6", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px" }}>
+                                        <span>🎲</span> สุ่มผู้ชนะ
+                                      </button>
+                                      <button onClick={() => handleCircleAction('close_bidding', period)} className="btn-primary" style={{ flex: "1 1 30%", padding: "10px", fontSize: "0.75rem", background: "#f59e0b", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px" }}>
+                                        <span>🔒</span> ปิดประมูล
+                                      </button>
+                                    </>
+                                  )}
                                   <button onClick={() => handleCircleAction('close_period', period)} className="btn-primary" style={{ flex: "1 1 30%", padding: "10px", fontSize: "0.75rem", background: "#ef4444", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px" }}>
                                     <span>🎌</span> ปิดงวด
                                   </button>
@@ -833,7 +843,7 @@ export default function CircleDetail() {
                           const periodWinner = periodBids[0];
                           const winnerMemberId = periodWinner?.member_id;
                           const currentPayout = payouts.find(po => po.period === period && po.member_id === winnerMemberId);
-                          const biddingIsClosed = isCompleted || (circle.bidding_closed_period >= period) || !!currentPayout;
+                          const biddingIsClosed = isCompleted || (circle.period_extra === `CLOSED_${period}`) || !!currentPayout;
 
                           return players.map(p => {
                             const pBid = bids.find(b => b.period === period && b.member_id === p.member_id);
