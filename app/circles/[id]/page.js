@@ -263,18 +263,52 @@ export default function CircleDetail() {
 
   const handleBidSubmit = async (e) => {
     e.preventDefault();
-    if (!bidAmount) return;
+    if (bidAmount === "") return;
+    const amount = parseFloat(bidAmount);
+
+    // Filter non-zero bids for validation
+    if (amount !== 0) {
+      if (amount < circle.min_bid || amount > circle.max_bid) {
+        return alert(`กรุณาระบุยอดเปียตามเงื่อนไขวงแชร์ (${circle.min_bid.toLocaleString()} - ${circle.max_bid.toLocaleString()} บาท)`);
+      }
+    }
+
     try {
       const res = await fetch('/api/action', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'submit_bid', circle_id: circleId, period: bidModal.period, member_id: dbUser.id, bid_amount: bidAmount })
+        body: JSON.stringify({ action: 'submit_bid', circle_id: circleId, period: bidModal.period, member_id: dbUser.id, bid_amount: amount })
       });
       const data = await res.json();
       if (data.status === 'success') {
         setBidModal({ open: false, period: null });
         setBidAmount("");
         fetchCircleDetail();
+        if (amount === 0) setMessage({ type: "success", text: "ยกเลิกการประมูลเรียบร้อย" });
+      } else alert(data.message);
+    } catch { alert("การเชื่อมต่อขัดข้อง"); }
+  };
+
+  const handleAdminAutoPay = async (period) => {
+    const amt = getRequiredAmount(period);
+    try {
+      const res = await fetch('/api/action', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          action: 'upload_slip', 
+          circle_id: circleId, 
+          member_id: dbUser.id,
+          period: period,
+          amount: amt,
+          status: 'APPROVED',
+          caller_role: dbUser.role
+        })
+      });
+      const data = await res.json();
+      if (data.status === 'success') {
+        fetchCircleDetail();
+        setMessage({ type: "success", text: "แอดมินชำระเงินเรียบร้อย!" });
       } else alert(data.message);
     } catch { alert("การเชื่อมต่อขัดข้อง"); }
   };
@@ -585,9 +619,15 @@ export default function CircleDetail() {
                               
                               <button 
                                 onClick={() => { 
-                                  const amt = getRequiredAmount(period); 
-                                  setUploadData({...uploadData, amount: amt}); 
-                                  setSlipModal({ open: true, period }); 
+                                  if (isCircleAdmin) {
+                                    if (confirm("ยืนยันการชำระเงินทุกมือสำหรับงวดนี้? (แอดมินชำระให้ตนเอง)")) {
+                                      handleAdminAutoPay(period);
+                                    }
+                                  } else {
+                                    const amt = getRequiredAmount(period); 
+                                    setUploadData({...uploadData, amount: amt}); 
+                                    setSlipModal({ open: true, period }); 
+                                  }
                                 }} 
                                 className="btn-primary" 
                                 style={{ flex: "1 1 45%", padding: "12px", fontSize: "0.85rem", background: "var(--secondary)", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}
@@ -616,9 +656,15 @@ export default function CircleDetail() {
                             <>
                               <button 
                                 onClick={() => { 
-                                  const amt = getRequiredAmount(period); 
-                                  setUploadData({...uploadData, amount: amt}); 
-                                  setSlipModal({ open: true, period }); 
+                                  if (isCircleAdmin) {
+                                    if (confirm("ยืนยันการชำระเงินทุกมือสำหรับงวดนี้? (แอดมินชำระให้ตนเอง)")) {
+                                      handleAdminAutoPay(period);
+                                    }
+                                  } else {
+                                    const amt = getRequiredAmount(period); 
+                                    setUploadData({...uploadData, amount: amt}); 
+                                    setSlipModal({ open: true, period }); 
+                                  }
                                 }} 
                                 className="btn-primary" 
                                 style={{ flex: "1 1 100%", padding: "14px", fontSize: "1rem", background: "var(--secondary)", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}
