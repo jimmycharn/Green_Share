@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { registerMember, updateProfile, getMembers } from '@/lib/controllers/member';
-import { createCircle, getCircles, getCircleDetail, joinCircle, submitBid, uploadSlip, verifySlip, randomSelectBidder, startCircle, cancelHand, changeHandOwner, updateCircleSettings } from '@/lib/controllers/circle';
+import { createCircle, getCircles, getCircleDetail, joinCircle, submitBid, uploadSlip, verifySlip, randomSelectBidder, startCircle, cancelHand, changeHandOwner, updateCircleSettings, closeBidding, closePeriod } from '@/lib/controllers/circle';
 import { manageSlot, approvePayment, getAdminDashboard, approveHouseMember, removeHouseMember, updateMemberRole, assignMemberBank, transferMember, addBank, editBank, deleteBank, setDefaultBank } from '@/lib/controllers/admin';
 
 export async function POST(req) {
@@ -30,6 +30,8 @@ export async function POST(req) {
     if (action === 'cancel_hand') return NextResponse.json(await cancelHand(data));
     if (action === 'change_hand_owner') return NextResponse.json(await changeHandOwner(data));
     if (action === 'update_circle_settings') return NextResponse.json(await updateCircleSettings(data));
+    if (action === 'close_bidding') return NextResponse.json(await closeBidding(data));
+    if (action === 'close_period') return NextResponse.json(await closePeriod(data));
 
     // --- Admin Dashboard Routes ---
     if (action === 'get_admin_dashboard') return NextResponse.json(await getAdminDashboard(data));

@@ -298,6 +298,33 @@ export default function CircleDetail() {
     } catch { alert("การเชื่อมต่อขัดข้อง"); }
   };
 
+  const handleCircleAction = async (action, period) => {
+    let confirmMsg = "";
+    if (action === 'random_select_bidder') confirmMsg = "สุ่มหาผู้ชนะสำหรับงวดนี้? (จะใช้กรณีไม่มีคนประมูลดอก)";
+    if (action === 'close_bidding') confirmMsg = "ยืนยันการปิดรับประมูลของงวดนี้?";
+    if (action === 'close_period') confirmMsg = "ยืนยันการปิดงวดและเริ่มงวดถัดไป? (ตรวจสอบว่าทุกคนชำระเงินเรียบร้อยแล้ว)";
+    
+    if (confirmMsg && !confirm(confirmMsg)) return;
+
+    try {
+      const res = await fetch('/api/action', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          action, 
+          circle_id: circleId, 
+          period, 
+          caller_role: dbUser.role 
+        })
+      });
+      const data = await res.json();
+      if (data.status === 'success') {
+        setMessage({ type: "success", text: data.message });
+        fetchCircleDetail();
+      } else alert(data.message);
+    } catch { alert("การเชื่อมต่อขัดข้อง"); }
+  };
+
   const toggleAccordion = (period) => {
     setExpandedPeriod(expandedPeriod === period ? null : period);
   };
@@ -503,19 +530,64 @@ export default function CircleDetail() {
                   {isExpanded && (
                     <div style={{ padding: "16px 20px", borderTop: "1px solid #f1f5f9", background: "white" }}>
                       {isCurrent && (
-                        <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
-                          <button onClick={() => setBidModal({ open: true, period })} className="btn-primary" style={{ flex: 1, padding: "10px", fontSize: "0.9rem" }}>🔨 ประมูล (เปีย)</button>
-                          <button 
-                            onClick={() => { 
-                              const amt = getRequiredAmount(period); 
-                              setUploadData({...uploadData, amount: amt}); 
-                              setSlipModal({ open: true, period }); 
-                            }} 
-                            className="btn-primary" 
-                            style={{ flex: 1, padding: "10px", fontSize: "0.9rem", background: "var(--secondary)" }}
-                          >
-                            📤 ชำระเงิน
-                          </button>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "20px" }}>
+                          {/* Bingo/Auction Logic */}
+                          {circle.type === "ประมูล (เปียแข่งดอก)" && (
+                            <>
+                              <button onClick={() => setBidModal({ open: true, period })} className="btn-primary" style={{ flex: "1 1 45%", padding: "12px", fontSize: "0.85rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
+                                🔨 ประมูล (เปีย)
+                              </button>
+                              
+                              <button 
+                                onClick={() => { 
+                                  const amt = getRequiredAmount(period); 
+                                  setUploadData({...uploadData, amount: amt}); 
+                                  setSlipModal({ open: true, period }); 
+                                }} 
+                                className="btn-primary" 
+                                style={{ flex: "1 1 45%", padding: "12px", fontSize: "0.85rem", background: "var(--secondary)", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}
+                              >
+                                🗳️ ชำระเงิน
+                              </button>
+
+                              {isCircleAdmin && (
+                                <>
+                                  <button onClick={() => handleCircleAction('random_select_bidder', period)} className="btn-primary" style={{ flex: "1 1 30%", padding: "10px", fontSize: "0.75rem", background: "#8b5cf6", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px" }}>
+                                    <span>🎲</span> สุ่มผู้ชนะ
+                                  </button>
+                                  <button onClick={() => handleCircleAction('close_bidding', period)} className="btn-primary" style={{ flex: "1 1 30%", padding: "10px", fontSize: "0.75rem", background: "#f59e0b", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px" }}>
+                                    <span>🔒</span> ปิดประมูล
+                                  </button>
+                                  <button onClick={() => handleCircleAction('close_period', period)} className="btn-primary" style={{ flex: "1 1 30%", padding: "10px", fontSize: "0.75rem", background: "#ef4444", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px" }}>
+                                    <span>🎌</span> ปิดงวด
+                                  </button>
+                                </>
+                              )}
+                            </>
+                          )}
+
+                          {/* Staircase/Fixed Interest Logic */}
+                          {circle.type === "ขั้นบันได (ดอกคงที่)" && (
+                            <>
+                              <button 
+                                onClick={() => { 
+                                  const amt = getRequiredAmount(period); 
+                                  setUploadData({...uploadData, amount: amt}); 
+                                  setSlipModal({ open: true, period }); 
+                                }} 
+                                className="btn-primary" 
+                                style={{ flex: "1 1 100%", padding: "14px", fontSize: "1rem", background: "var(--secondary)", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}
+                              >
+                                🗳️ ชำระเงิน
+                              </button>
+
+                              {isCircleAdmin && (
+                                <button onClick={() => handleCircleAction('close_period', period)} className="btn-primary" style={{ flex: "1 1 100%", padding: "12px", fontSize: "0.9rem", background: "#ef4444", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
+                                  <span>🎌</span> ปิดงวดการส่งเงิน
+                                </button>
+                              )}
+                            </>
+                          )}
                         </div>
                       )}
 
