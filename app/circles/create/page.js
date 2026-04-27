@@ -105,35 +105,37 @@ export default function CreateCircle() {
 
   return (
     <div className="animate-fade-in" style={{ backgroundColor: "#f8fafc", minHeight: "100vh" }}>
-      {/* Header Layout from Image 2 */}
-      <div style={{ 
-        background: "linear-gradient(to right, #48bb78, #38a169)", 
-        padding: "30px 20px", 
-        borderRadius: "30px 30px 0 0",
-        display: "flex",
-        alignItems: "center",
-        gap: "16px",
-        boxShadow: "0 4px 15px rgba(56, 161, 105, 0.2)",
-        marginTop: "10px"
-      }}>
+      {/* Widened Container */}
+      <div style={{ margin: "0 -8px" }}>
+        {/* Header Layout */}
         <div style={{ 
-          background: "rgba(255, 255, 255, 0.2)", 
-          padding: "12px", 
-          borderRadius: "16px",
+          background: "linear-gradient(to right, #48bb78, #38a169)", 
+          padding: "30px 20px", 
+          borderRadius: "30px 30px 0 0",
           display: "flex",
           alignItems: "center",
-          justifyContent: "center"
+          gap: "16px",
+          boxShadow: "0 4px 15px rgba(56, 161, 105, 0.2)",
+          marginTop: "10px"
         }}>
-          <span style={{ fontSize: "1.8rem" }}>👥</span>
+          <div style={{ 
+            background: "rgba(255, 255, 255, 0.2)", 
+            padding: "12px", 
+            borderRadius: "16px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center"
+          }}>
+            <span style={{ fontSize: "1.8rem" }}>👥</span>
+          </div>
+          <div>
+            <h2 style={{ fontSize: "1.4rem", fontWeight: "800", margin: 0, color: "white" }}>✨ ข้อมูลวงแชร์ ✨</h2>
+            <p style={{ color: "rgba(255, 255, 255, 0.9)", margin: "2px 0 0 0", fontSize: "0.95rem" }}>กรอกรายละเอียดให้ครบถ้วน</p>
+          </div>
         </div>
-        <div>
-          <h2 style={{ fontSize: "1.4rem", fontWeight: "800", margin: 0, color: "white" }}>✨ ข้อมูลวงแชร์พรีเมียม ✨</h2>
-          <p style={{ color: "rgba(255, 255, 255, 0.9)", margin: "2px 0 0 0", fontSize: "0.95rem" }}>กรอกรายละเอียดให้ครบถ้วนเพื่อเริ่มวงใหม่</p>
-        </div>
-      </div>
 
       <div style={{ padding: "0 0 40px 0" }}>
-        <div className="glass-panel" style={{ padding: "24px 16px", borderRadius: "0 0 30px 30px", boxShadow: "0 10px 25px rgba(0,0,0,0.05)" }}>
+        <div className="glass-panel" style={{ padding: "24px 14px", borderRadius: "0 0 30px 30px", boxShadow: "0 10px 25px rgba(0,0,0,0.05)" }}>
           {message.text && (
             <div style={{ padding: "14px", marginBottom: "24px", borderRadius: "12px", background: message.type === "success" ? "#dcfce7" : "#fee2e2", color: message.type === "success" ? "#166534" : "#991b1b", textAlign: "center", fontWeight: "700", fontSize: "0.9rem" }}>
               {message.text}
@@ -258,8 +260,8 @@ export default function CreateCircle() {
               </div>
             </div>
 
-            <div style={{ padding: "20px", borderRadius: "24px", background: "#f1f5f9", border: "1px solid #e2e8f0" }}>
-              <h4 style={{ margin: "0 0 16px 0", fontSize: "1rem", color: "#475569", display: "flex", alignItems: "center", gap: "8px" }}>
+            <div style={{ padding: "20px 8px", borderRadius: "24px", background: "#f1f5f9", border: "1px solid #e2e8f0", margin: "0 -10px" }}>
+              <h4 style={{ margin: "0 0 16px 4px", fontSize: "1rem", color: "#475569", display: "flex", alignItems: "center", gap: "8px" }}>
                 <span>⚙️</span> ตั้งค่าการประมูลพื้นฐาน
               </h4>
               
@@ -345,6 +347,7 @@ export default function CreateCircle() {
           </div>
         </div>
       </div>
+    </div>
 
       <style jsx>{`
         .input-glow:focus {
