@@ -18,6 +18,7 @@ export default function CircleDetail() {
   const [players, setPlayers] = useState([]);
   const [bids, setBids] = useState([]);
   const [slips, setSlips] = useState([]);
+  const [payouts, setPayouts] = useState([]);
   const [message, setMessage] = useState({ type: "", text: "" });
   const [activeTab, setActiveTab] = useState(""); // Will be set after fetch
   
@@ -30,6 +31,8 @@ export default function CircleDetail() {
   const [expandedPeriod, setExpandedPeriod] = useState(null);
   const [bidModal, setBidModal] = useState({ open: false, period: null });
   const [configModal, setConfigModal] = useState({ open: false, period: null, mode: "" });
+  const [payoutModal, setPayoutModal] = useState({ open: false, period: null, winner_id: null, winner_name: "", amount: 0 });
+  const [inspectPayoutModal, setInspectPayoutModal] = useState({ open: false, payout: null });
   const [bidAmount, setBidAmount] = useState("");
   const [paymentMode, setPaymentMode] = useState("TRANSFER");
   const [myBank, setMyBank] = useState(null);
@@ -82,6 +85,7 @@ export default function CircleDetail() {
       setPlayers(data.players || []);
       setBids(data.bids || []);
       setSlips(data.slips || []);
+      setPayouts(data.payouts || []);
       setMyBank(data.myBank);
       
       // Conditional Default Tab
@@ -439,6 +443,68 @@ export default function CircleDetail() {
     navigator.clipboard.writeText(text);
     alert("คัดลอกเลขบัญชีแล้ว!");
   };
+  const handlePayoutSubmit = async () => {
+    if (!payoutModal.period || !payoutModal.winner_id) return;
+    setUploadLoading(true);
+    try {
+      let finalImg = uploadData.image_url;
+      if (selectedFile) {
+        const fileExt = selectedFile.name.split('.').pop();
+        const fileName = `${Math.random()}.${fileExt}`;
+        const filePath = `slips/${fileName}`;
+        const { error: uploadError } = await supabase.storage.from('shares').upload(filePath, selectedFile);
+        if (uploadError) throw uploadError;
+        const { data: { publicUrl } } = supabase.storage.from('shares').getPublicUrl(filePath);
+        finalImg = publicUrl;
+      }
+
+      const res = await fetch('/api/action', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'create_payout',
+          circle_id: circleId,
+          member_id: payoutModal.winner_id,
+          period: payoutModal.period,
+          amount: payoutModal.amount,
+          image_url: finalImg,
+          is_cash: paymentMode === 'CASH',
+          caller_role: dbUser.role
+        })
+      });
+      const data = await res.json();
+      if (data.status === 'success') {
+        setMessage({ type: "success", text: data.message });
+        setPayoutModal({ ...payoutModal, open: false });
+        setSelectedFile(null);
+        setFilePreview(null);
+        fetchCircleDetail();
+      } else {
+        setMessage({ type: "error", text: data.message });
+      }
+    } catch (err) {
+      setMessage({ type: "error", text: "เกิดข้อผิดพลาดในการส่งหลักฐาน" });
+    } finally {
+      setUploadLoading(false);
+    }
+  };
+
+  const handleVerifyPayout = async (payoutId, status) => {
+    try {
+       const res = await fetch('/api/action', {
+         method: 'POST',
+         headers: { 'Content-Type': 'application/json' },
+         body: JSON.stringify({ action: 'verify_payout', payout_id: payoutId, status, caller_id: dbUser.id })
+       });
+       const data = await res.json();
+       if (data.status === 'success') {
+         setMessage({ type: "success", text: data.message });
+         setInspectPayoutModal({ open: false, payout: null });
+         fetchCircleDetail();
+       } else setMessage({ type: "error", text: data.message });
+    } catch { setMessage({ type: "error", text: "การเชื่อมต่อขัดข้อง" }); }
+  };
+
   if (isUserLoading || isInitializing) {
     return (
       <div className="loader-container">
@@ -762,6 +828,13 @@ export default function CircleDetail() {
                              });
                           });
 
+                          // 3. Current period winner
+                          const periodBids = bids.filter(b => b.period === period).sort((a,b) => b.bid_amount - a.bid_amount);
+                          const periodWinner = periodBids[0];
+                          const winnerMemberId = periodWinner?.member_id;
+                          const currentPayout = payouts.find(po => po.period === period && po.member_id === winnerMemberId);
+                          const biddingIsClosed = isCompleted || (circle.bidding_closed_period >= period) || !!currentPayout;
+
                           return players.map(p => {
                             const pBid = bids.find(b => b.period === period && b.member_id === p.member_id);
                             const pSlip = slips.find(s => s.period === period && s.member_id === p.member_id);
@@ -769,28 +842,71 @@ export default function CircleDetail() {
                             const status = handStatus[p.hand_no];
                             const isDead = status === 'DEAD';
                             const isActive = status === 'ACTIVE';
+                            const isWinner = p.member_id === winnerMemberId && biddingIsClosed;
+
+                            // Net Amount Calculation for winner: (Total Hands * Amount Per Hand) - (My Bid Amount)
+                            // This depends on the circle rules, but usually:
+                            const netAmount = (circle.total_hands * circle.amount_per_hand) - (periodWinner?.bid_amount || 0);
 
                             return (
-                              <div key={p.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 12px", borderRadius: "10px", background: "#f8fafc", border: isMe ? "1px solid #cbd5e1" : "none", opacity: isDead ? 0.6 : 1 }}>
-                                <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.85rem" }}>
-                                  <span style={{ fontWeight: isActive ? "700" : "400", color: isDead ? "#94a3b8" : "inherit" }}>
-                                    {p.member_name} {isDead ? "(มือตาย)" : ""}
-                                  </span>
-                                  {pBid && isActive && (
-                                    <span style={{ fontSize: "0.75rem", color: "var(--primary)", fontWeight: "600" }}>
-                                      (เปีย {isCompleted || isCircleAdmin || isMe ? pBid.bid_amount.toLocaleString() : "***"})
+                              <div key={p.id} style={{ display: "flex", flexDirection: "column", gap: "4px", padding: "12px", borderRadius: "14px", background: isWinner ? "#fffbeb" : "#f8fafc", border: isWinner ? "1.5px solid #fbbf24" : (isMe ? "1.5px solid #cbd5e1" : "1px solid #f1f5f9"), opacity: isDead ? 0.6 : 1, marginBottom: "8px" }}>
+                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                  <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.95rem" }}>
+                                    <span style={{ fontWeight: (isActive || isWinner) ? "800" : "500", color: isWinner ? "#92400e" : (isDead ? "#94a3b8" : "#1e293b") }}>
+                                      {isWinner ? "🏆 " : ""}{p.member_name} {isDead ? "(มือตาย)" : ""}
                                     </span>
-                                  )}
+                                    {pBid && !isWinner && isActive && (
+                                      <span style={{ fontSize: "0.75rem", color: "var(--primary)", fontWeight: "600" }}>
+                                        (เปีย {isCompleted || isCircleAdmin || isMe ? pBid.bid_amount.toLocaleString() : "***"})
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                    {isWinner ? (
+                                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                        {/* Status Text for Others */}
+                                        <span style={{ fontSize: "0.75rem", fontWeight: "700", color: currentPayout?.status === 'APPROVED' ? "#16a34a" : (currentPayout?.status === 'PENDING' ? "#ea580c" : "#dc2626") }}>
+                                           {currentPayout?.status === 'APPROVED' ? "✅ จ่ายแล้ว" : (currentPayout?.status === 'PENDING' ? "⏳ รอตรวจสอบ" : "❌ ยังไม่จ่าย")}
+                                        </span>
+
+                                        {/* Admin Action: Pay Winner */}
+                                        {isCircleAdmin && (!currentPayout || currentPayout.status === 'REJECTED') && (
+                                           <button 
+                                              onClick={(e) => { e.stopPropagation(); setPayoutModal({ open: true, period, winner_id: p.member_id, winner_name: p.member_name, amount: netAmount }); }} 
+                                              style={{ background: "var(--primary-gradient)", color: "white", border: "none", padding: "4px 10px", borderRadius: "8px", fontSize: "0.75rem", fontWeight: "700" }}
+                                           >
+                                              💸 จ่ายเงิน
+                                           </button>
+                                        )}
+
+                                        {/* Winner Action: Verify Admin's Slip */}
+                                        {isMe && currentPayout?.status === 'PENDING' && (
+                                           <button 
+                                              onClick={(e) => { e.stopPropagation(); setInspectPayoutModal({ open: true, payout: currentPayout }); }} 
+                                              style={{ background: "#3b82f6", color: "white", border: "none", padding: "4px 10px", borderRadius: "8px", fontSize: "0.75rem", fontWeight: "700" }}
+                                           >
+                                              🔍 ตรวจสอบ
+                                           </button>
+                                        )}
+                                      </div>
+                                    ) : (
+                                       pSlip ? (
+                                          <span style={{ fontSize: "0.7rem", padding: "2px 8px", borderRadius: "6px", background: pSlip.status === 'APPROVED' ? "#dcfce7" : "#fef3c7", color: pSlip.status === 'APPROVED' ? "#166534" : "#92400e" }}>
+                                            {pSlip.status === 'APPROVED' ? "✅ จ่ายแล้ว" : "⏳ รออนุมัติ"}
+                                          </span>
+                                       ) : (
+                                          <span style={{ fontSize: "0.7rem", padding: "2px 8px", borderRadius: "6px", background: "#fee2e2", color: "#991b1b" }}>❌ ยังไม่จ่าย</span>
+                                       )
+                                    )}
+                                  </div>
                                 </div>
-                                <div style={{ display: "flex", gap: "6px" }}>
-                                  {pSlip ? (
-                                    <span style={{ fontSize: "0.7rem", padding: "2px 8px", borderRadius: "6px", background: pSlip.status === 'APPROVED' ? "#dcfce7" : "#fef3c7", color: pSlip.status === 'APPROVED' ? "#166534" : "#92400e" }}>
-                                      {pSlip.status === 'APPROVED' ? "✅ จ่ายแล้ว" : "⏳ รออนุมัติ"}
-                                    </span>
-                                  ) : (
-                                    <span style={{ fontSize: "0.7rem", padding: "2px 8px", borderRadius: "6px", background: "#fee2e2", color: "#991b1b" }}>❌ ยังไม่จ่าย</span>
-                                  )}
-                                </div>
+                                
+                                {isWinner && (
+                                  <div style={{ fontSize: "0.8rem", color: "#92400e", fontWeight: "600", marginTop: "2px", display: "flex", justifyContent: "space-between" }}>
+                                     <span>ยอดรับสุทธิ: {netAmount.toLocaleString()} ฿</span>
+                                     <span style={{ fontSize: "0.7rem", opacity: 0.8 }}> (เปีย {periodWinner.bid_amount.toLocaleString()})</span>
+                                  </div>
+                                )}
                               </div>
                             );
                           });
@@ -1052,6 +1168,94 @@ export default function CircleDetail() {
               <button type="submit" className="btn-primary" style={{ marginTop: "10px" }}>บันทึกข้อมูล</button>
             </form>
           </div>
+        </div>
+      )}
+      {/* Payout Modal (Admin paying Winner) */}
+      {payoutModal.open && (
+        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999, padding: "10px" }}>
+          <div className="glass-panel" style={{ width: "100%", maxWidth: "420px", padding: "24px 16px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+               <h3 style={{ margin: 0 }}>💸 จ่ายเงินให้ผู้ชนะ (งวดที่ {payoutModal.period})</h3>
+               <button onClick={() => setPayoutModal({ ...payoutModal, open: false })} style={{ background: "none", border: "none", fontSize: "1.2rem" }}>✕</button>
+            </div>
+            
+            <p style={{ margin: "0 0 16px 0", fontSize: "0.9rem", color: "#64748b" }}>
+               เตรียมโอนเงินให้ <b>{payoutModal.winner_name}</b><br/>
+               ยอดรับสุทธิ: <b style={{ color: "var(--primary)", fontSize: "1.2rem" }}>{payoutModal.amount.toLocaleString()} ฿</b>
+            </p>
+
+            <div style={{ background: "#f8fafc", padding: "16px", borderRadius: "18px", border: "1px solid #e2e8f0", marginBottom: "16px" }}>
+              <label style={{ display: "block", marginBottom: "10px", fontWeight: "700", fontSize: "0.85rem" }}>วิธีการชำระ</label>
+              <div style={{ display: "flex", gap: "10px" }}>
+                <button onClick={() => setPaymentMode("TRANSFER")} style={{ flex: 1, padding: "10px", borderRadius: "12px", border: "1.5px solid", borderColor: paymentMode === 'TRANSFER' ? 'var(--primary)' : '#e2e8f0', background: paymentMode === 'TRANSFER' ? '#ecfdf5' : 'white', color: paymentMode === 'TRANSFER' ? 'var(--primary)' : '#64748b', fontWeight: "700", fontSize: "0.85rem" }}>🏦 โอนเงิน</button>
+                <button onClick={() => setPaymentMode("CASH")} style={{ flex: 1, padding: "10px", borderRadius: "12px", border: "1.5px solid", borderColor: paymentMode === 'CASH' ? 'var(--primary)' : '#e2e8f0', background: paymentMode === 'CASH' ? '#ecfdf5' : 'white', color: paymentMode === 'CASH' ? 'var(--primary)' : '#64748b', fontWeight: "700", fontSize: "0.85rem" }}>💵 เงินสด</button>
+              </div>
+            </div>
+
+            {paymentMode === 'TRANSFER' && (
+              <div style={{ marginBottom: "20px" }}>
+                <label style={{ display: "block", marginBottom: "10px", fontWeight: "700", fontSize: "0.85rem" }}>แนบหลักฐานการโอน (สลิป)</label>
+                <div 
+                   onClick={() => document.getElementById('payout-file').click()}
+                   style={{ width: "100%", height: "160px", border: "2px dashed #e2e8f0", borderRadius: "20px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", cursor: "pointer", background: "#f8fafc", overflow: "hidden", position: "relative" }}
+                >
+                  {filePreview ? (
+                    <img src={filePreview} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  ) : (
+                    <>
+                      <div style={{ fontSize: "2rem", marginBottom: "8px" }}>📸</div>
+                      <div style={{ fontSize: "0.85rem", color: "#94a3b8" }}>กดเพื่ออัปโหลดรูปภาพ</div>
+                    </>
+                  )}
+                </div>
+                <input 
+                   id="payout-file" 
+                   type="file" 
+                   accept="image/*" 
+                   onChange={(e) => {
+                     const file = e.target.files[0];
+                     if (file) { setSelectedFile(file); setFilePreview(URL.createObjectURL(file)); }
+                   }} 
+                   style={{ display: "none" }} 
+                />
+              </div>
+            )}
+
+            <button 
+              onClick={handlePayoutSubmit} 
+              disabled={uploadLoading}
+              className="btn-primary" 
+              style={{ width: "100%", padding: "14px" }}
+            >
+              {uploadLoading ? "กำลังส่ง..." : (paymentMode === 'CASH' ? "✅ ยืนยันการจ่ายเงินสด" : "🚀 ส่งหลักฐานการโอน")}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Inspect Payout Modal (Winner reviewing Admin) */}
+      {inspectPayoutModal.open && inspectPayoutModal.payout && (
+        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999, padding: "10px" }}>
+           <div className="glass-panel" style={{ width: "100%", maxWidth: "400px", padding: "24px 16px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+                 <h3 style={{ margin: 0 }}>🔍 ตรวจสอบยอดรับเงิน</h3>
+                 <button onClick={() => setInspectPayoutModal({ open: false, payout: null })} style={{ background: "none", border: "none", fontSize: "1.2rem" }}>✕</button>
+              </div>
+
+              <div style={{ textAlign: "center", marginBottom: "20px" }}>
+                 <div style={{ fontSize: "0.9rem", color: "#64748b", marginBottom: "4px" }}>ยอดที่แอดมินแจ้งโอน</div>
+                 <div style={{ fontSize: "1.5rem", fontWeight: "800", color: "var(--primary)" }}>{parseFloat(inspectPayoutModal.payout.amount).toLocaleString()} ฿</div>
+              </div>
+
+              <div style={{ width: "100%", borderRadius: "16px", overflow: "hidden", border: "1px solid #e2e8f0", marginBottom: "20px", background: "#f8fafc" }}>
+                 <img src={inspectPayoutModal.payout.image_url} style={{ width: "100%", maxHeight: "350px", objectFit: "contain" }} alt="Admin Slip" />
+              </div>
+
+              <div style={{ display: "flex", gap: "10px" }}>
+                 <button onClick={() => handleVerifyPayout(inspectPayoutModal.payout.id, 'REJECTED')} style={{ flex: 1, padding: "12px", borderRadius: "12px", border: "1px solid #ef4444", color: "#ef4444", fontWeight: "700", background: "white" }}>❌ แจ้งสลิปผิด</button>
+                 <button onClick={() => handleVerifyPayout(inspectPayoutModal.payout.id, 'APPROVED')} style={{ flex: 1, padding: "12px", borderRadius: "12px", border: "none", background: "var(--primary-gradient)", color: "white", fontWeight: "700" }}>✅ ได้รับเงินแล้ว</button>
+              </div>
+           </div>
         </div>
       )}
     </>
