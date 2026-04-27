@@ -659,8 +659,20 @@ export default function CircleDetail() {
                       <div>
                         <div style={{ fontWeight: "700", fontSize: "0.95rem" }}>
                            งวดที่ {period} 
-                           {isCurrent && <span style={{ marginLeft: "8px", color: "var(--primary)", fontSize: "0.7rem", verticalAlign: "middle" }}>⭐ กำลังดำเนินการ</span>}
-                           {isFuture && <span style={{ marginLeft: "8px", color: "#94a3b8", fontSize: "0.7rem", fontWeight: "500" }}>🔒 รอดำเนินการ</span>}
+                                                       {circle.status === 'OPEN' ? (
+                              <span style={{ marginLeft: "8px", color: "#94a3b8", fontSize: "0.7rem", fontWeight: "500" }}>🔒 รอดำเนินการ</span>
+                            ) : (
+                              <>
+                                {circle.status === 'OPEN' ? (
+                              <span style={{ marginLeft: "8px", color: "#94a3b8", fontSize: "0.7rem", fontWeight: "500" }}>🔒 รอดำเนินการ</span>
+                            ) : (
+                              <>
+                                {isCurrent && <span style={{ marginLeft: "8px", color: "var(--primary)", fontSize: "0.7rem", verticalAlign: "middle" }}>⭐ กำลังดำเนินการ</span>}
+                                {isFuture && <span style={{ marginLeft: "8px", color: "#94a3b8", fontSize: "0.7rem", fontWeight: "500" }}>🔒 รอดำเนินการ</span>}
+                              </>
+                            )}
+                              </>
+                            )}
                         </div>
                         {isCompleted && winner && (
                           <div style={{ fontSize: "0.8rem", color: "#64748b", display: "flex", alignItems: "center", gap: "4px" }}>
@@ -710,7 +722,38 @@ export default function CircleDetail() {
                   {/* Accordion Content */}
                   {isExpanded && (
                     <div style={{ padding: "16px 20px", borderTop: "1px solid #f1f5f9", background: "white" }}>
-                      {isCurrent && (
+                      {circle.status === 'OPEN' ? (
+                        <div style={{ display: "flex", flexDirection: "column", gap: "12px", padding: "16px", background: "#f8fafc", borderRadius: "20px", border: "1px solid #e2e8f0" }}>
+                           <div style={{ fontSize: "0.9rem", color: "#64748b", display: "flex", alignItems: "center", gap: "10px" }}>
+                              <span style={{ fontSize: "1.4rem" }}>🎯</span> 
+                              งวดนี้ยังไม่เปิดดำเนินการ (อยู่ระหว่างรวบรวมสมาชิก)
+                           </div>
+                           {(() => {
+                              let assignedTo = 'NONE';
+                              let assignedName = '';
+                              try {
+                                 const meta = JSON.parse(circle.notify_message || '{}');
+                                 assignedTo = meta?.assignments?.[period.toString()] || 'NONE';
+                                 if (assignedTo !== 'NONE') {
+                                    if (assignedTo === circle.creator_id) assignedName = 'ท้าวแชร์';
+                                    else {
+                                       const m = players.find(p => p.member_id === assignedTo);
+                                       assignedName = m ? m.member_name : assignedTo;
+                                    }
+                                 }
+                              } catch {}
+                              
+                              if (assignedTo !== 'NONE') {
+                                 return (
+                                   <div style={{ fontSize: "0.9rem", color: "var(--primary)", fontWeight: "800", background: "rgba(16, 185, 129, 0.1)", padding: "12px", borderRadius: "14px", border: "1px dashed var(--primary)", display: "flex", alignItems: "center", gap: "8px" }}>
+                                      📌 กำหนดผู้ชนะล่วงหน้าคือ: <span style={{ color: "black" }}>{assignedName}</span>
+                                   </div>
+                                 );
+                               }
+                               return null;
+                            })()}
+                        </div>
+                      ) : isCurrent && (
                         <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "20px" }}>
                           {/* Bingo/Auction Logic */}
                           {circle.type === "ประมูล (เปียแข่งดอก)" && (
