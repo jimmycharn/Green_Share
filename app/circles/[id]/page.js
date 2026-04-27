@@ -90,11 +90,7 @@ export default function CircleDetail() {
       
       // Conditional Default Tab
       if (!activeTab) {
-        if (data.circle.status === 'ACTIVE') {
           setActiveTab("timeline");
-        } else {
-          setActiveTab("members");
-        }
       }
     } else {
       setMessage({ type: "error", text: data.message || "ไม่พบวงแชร์นี้" });
@@ -327,7 +323,8 @@ export default function CircleDetail() {
             action: 'update_circle_settings', 
             circle_id: circleId, 
             caller_role: dbUser.role,
-            ...settingsData 
+            ...settingsData,
+            period_config: configModal.period ? { period: configModal.period, assigned_to: settingsData.assigned_to } : null
         })
       });
       const data = await res.json();
@@ -416,6 +413,13 @@ export default function CircleDetail() {
   const canUserBid = (period) => {
     if (!circle || !dbUser) return false;
     
+    // Assignment check: if this period is assigned, no manual bidding
+    try {
+       const meta = JSON.parse(circle.notify_message || '{}');
+       const assignedTo = meta?.assignments?.[period.toString()];
+       if (assignedTo && assignedTo !== 'NONE') return false;
+    } catch {}
+
     // Permission check
     const permission = circle.bid_permission || 'NONE';
     if (permission === 'NONE') return true;
@@ -431,8 +435,6 @@ export default function CircleDetail() {
     }
     
     if (permission === 'ALL') {
-      // In current logic, one slip pays for all hands.
-      // We check if at least one approved slip exists.
       return approvedSlips.length >= 1;
     }
     
@@ -567,8 +569,7 @@ export default function CircleDetail() {
         <div className="glass-panel" style={{ display: "flex", gap: "8px", marginBottom: "24px", padding: "6px", borderRadius: "18px" }}>
           <button 
             onClick={() => setActiveTab("timeline")} 
-            disabled={circle.status === 'OPEN'}
-            style={{ flex: 1, padding: "12px", borderRadius: "14px", border: "none", fontWeight: "700", cursor: "pointer", transition: "all 0.3s", background: activeTab === "timeline" ? "var(--primary-gradient)" : "transparent", color: activeTab === "timeline" ? "white" : "#64748b", opacity: circle.status === 'OPEN' ? 0.5 : 1 }}
+            style={{ flex: 1, padding: "12px", borderRadius: "14px", border: "none", fontWeight: "700", cursor: "pointer", transition: "all 0.3s", background: activeTab === "timeline" ? "var(--primary-gradient)" : "transparent", color: activeTab === "timeline" ? "white" : "#64748b" }}
           >
             📊 ติดตามงวด
           </button>
@@ -630,14 +631,14 @@ export default function CircleDetail() {
                 <div key={period} className="glass-panel" style={{ padding: "0", overflow: "hidden", border: isCurrent ? "2px solid var(--primary)" : "1px solid var(--glass-border)" }}>
                   {/* Card Header */}
                   <div 
-                    onClick={() => !isFuture ? toggleAccordion(period) : null}
+                    onClick={() => (!isFuture || circle.status === 'OPEN') ? toggleAccordion(period) : null}
                     style={{ 
                       padding: "16px 20px", 
                       display: "flex", 
                       alignItems: "center", 
                       justifyContent: "space-between",
                       background: isCompleted ? "rgba(16, 185, 129, 0.05)" : (isCurrent ? "rgba(16, 185, 129, 0.1)" : "transparent"),
-                      cursor: isFuture ? "default" : "pointer"
+                      cursor: (isFuture && circle.status !== 'OPEN') ? "default" : "pointer"
                     }}
                   >
                     <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
@@ -671,15 +672,24 @@ export default function CircleDetail() {
                     
                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                       {isCompleted && <span style={{ fontSize: "1.2rem" }}>🏆</span>}
-                      {isFuture && isCircleAdmin && (
+                      {(isFuture || isCurrent || circle.status === 'OPEN') && isCircleAdmin && (
                         <button 
-                          onClick={(e) => { e.stopPropagation(); setConfigModal({ open: true, period }); setSettingsData({...circle, close_mode: circle.close_mode === 'AUTO' ? 'ปิดอัตโนมัติ' : 'แอดมินปิดเอง'}); }}
+                          onClick={(e) => { 
+                            e.stopPropagation(); 
+                            let assignedTo = 'NONE';
+                            try {
+                               const meta = JSON.parse(circle.notify_message || '{}');
+                               assignedTo = meta?.assignments?.[period.toString()] || 'NONE';
+                            } catch {}
+                            setSettingsData({...circle, close_mode: circle.close_mode === 'AUTO' ? 'ปิดอัตโนมัติ' : 'แอดมินปิดเอง', assigned_to: assignedTo});
+                            setConfigModal({ open: true, period }); 
+                          }}
                           style={{ background: "#f1f5f9", border: "none", padding: "8px", borderRadius: "10px", color: "#64748b" }}
                         >
                           ⚙️
                         </button>
                       )}
-                      {!isFuture && (
+                      {(!isFuture || circle.status === 'OPEN') && (
                         <span style={{ transform: isExpanded ? "rotate(180deg)" : "rotate(0)", transition: "all 0.3s", color: "#cbd5e1" }}>▼</span>
                       )}
                     </div>
@@ -706,15 +716,31 @@ export default function CircleDetail() {
                           {circle.type === "ประมูล (เปียแข่งดอก)" && (
                             <>
                               {circle.period_extra !== `CLOSED_${period}` ? (
-                                canUserBid(period) ? (
-                                  <button onClick={() => setBidModal({ open: true, period })} className="btn-primary" style={{ flex: "1 1 45%", padding: "12px", fontSize: "0.85rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
-                                    🔨 ประมูล (เปีย)
-                                  </button>
-                                ) : (
-                                  <button onClick={() => alert(circle.bid_permission === 'PARTIAL' ? "กรุณาชำระเงินอย่างน้อย 1 มือก่อนประมูล" : "กรุณาชำระเงินให้ครบทุกมือก่อนประมูล")} className="btn-primary" style={{ flex: "1 1 45%", padding: "12px", fontSize: "0.85rem", background: "#cbd5e1", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", cursor: "not-allowed" }}>
-                                    🔨 ประมูล (ติดเงื่อนไขจ่าย)
-                                  </button>
-                                )
+                                (() => {
+                                   let assignedTo = 'NONE';
+                                   try {
+                                      const meta = JSON.parse(circle.notify_message || '{}');
+                                      assignedTo = meta?.assignments?.[period.toString()] || 'NONE';
+                                   } catch {}
+
+                                   if (assignedTo !== 'NONE') {
+                                      return (
+                                        <div style={{ flex: "1 1 45%", padding: "12px", fontSize: "0.85rem", background: "rgba(16, 185, 129, 0.1)", borderRadius: "12px", color: "var(--primary)", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", border: "1px dashed var(--primary)" }}>
+                                           🔒 งวดนี้กำหนดผู้ชนะไว้แล้ว
+                                        </div>
+                                      );
+                                   }
+
+                                   return canUserBid(period) ? (
+                                     <button onClick={() => setBidModal({ open: true, period })} className="btn-primary" style={{ flex: "1 1 45%", padding: "12px", fontSize: "0.85rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
+                                       🔨 ประมูล (เปีย)
+                                     </button>
+                                   ) : (
+                                     <button onClick={() => alert(circle.bid_permission === 'PARTIAL' ? "กรุณาชำระเงินอย่างน้อย 1 มือก่อนประมูล" : "กรุณาชำระเงินให้ครบทุกมือก่อนประมูล")} className="btn-primary" style={{ flex: "1 1 45%", padding: "12px", fontSize: "0.85rem", background: "#cbd5e1", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", cursor: "not-allowed" }}>
+                                       🔨 ประมูล (ติดเงื่อนไขจ่าย)
+                                     </button>
+                                   );
+                                })()
                               ) : (
                                 <div style={{ flex: "1 1 45%", padding: "12px", fontSize: "0.85rem", background: "#f1f5f9", borderRadius: "12px", color: "#64748b", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", border: "1px solid #e2e8f0" }}>
                                    🔒 ปิดรับการประมูลแล้ว
@@ -743,9 +769,18 @@ export default function CircleDetail() {
                                 <>
                                   {circle.period_extra !== `CLOSED_${period}` && (
                                     <>
-                                      <button onClick={() => handleCircleAction('random_select_bidder', period)} className="btn-primary" style={{ flex: "1 1 30%", padding: "10px", fontSize: "0.75rem", background: "#8b5cf6", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px" }}>
-                                        <span>🎲</span> สุ่มผู้ชนะ
-                                      </button>
+                                      {(() => {
+                                         let isAssigned = false;
+                                         try {
+                                            const meta = JSON.parse(circle.notify_message || '{}');
+                                            isAssigned = !!meta?.assignments?.[period.toString()];
+                                         } catch {}
+                                         return !isAssigned && (
+                                           <button onClick={() => handleCircleAction('random_select_bidder', period)} className="btn-primary" style={{ flex: "1 1 30%", padding: "10px", fontSize: "0.75rem", background: "#8b5cf6", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px" }}>
+                                             <span>🎲</span> สุ่มผู้ชนะ
+                                           </button>
+                                         );
+                                      })()}
                                       <button onClick={() => handleCircleAction('close_bidding', period)} className="btn-primary" style={{ flex: "1 1 30%", padding: "10px", fontSize: "0.75rem", background: "#f59e0b", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px" }}>
                                         <span>🔒</span> ปิดประมูล
                                       </button>
@@ -1165,6 +1200,25 @@ export default function CircleDetail() {
                    <option value="ไม่หักดอก">ไม่หักดอก (Interest Add)</option>
                 </select>
               </div>
+
+               {configModal.period && (
+                 <div style={{ background: "#f8fafc", padding: "16px", borderRadius: "18px", border: "1px solid #e2e8f0", marginTop: "16px" }}>
+                   <label style={{ display: "block", marginBottom: "8px", fontWeight: "700", fontSize: "0.85rem" }}>งวดนี้กำหนดไว้ให้กับ</label>
+                   <select 
+                     value={settingsData.assigned_to || 'NONE'} 
+                     onChange={(e) => setSettingsData({...settingsData, assigned_to: e.target.value})} 
+                     className="glass-panel" 
+                     style={{ width: "100%", padding: "12px", border: "1.5px solid #edf2f7" }}
+                   >
+                     <option value="NONE">ไม่กำหนด</option>
+                     <option value={circle.creator_id}>ท้าวแชร์</option>
+                     {Array.from(new Set(players.filter(p => p.member_id !== circle.creator_id).map(p => p.member_id))).map(mId => {
+                        const m = players.find(p => p.member_id === mId);
+                        return <option key={mId} value={mId}>{m?.member_name}</option>
+                     })}
+                   </select>
+                 </div>
+               )}
 
               <div style={{ background: "#f8fafc", padding: "16px", borderRadius: "18px", border: "1px solid #e2e8f0", marginBottom: "10px" }}>
                 <label style={{ display: "block", marginBottom: "8px", fontWeight: "700", fontSize: "0.85rem" }}>⚖️ สิทธิประมูล (Auction Permission)</label>
