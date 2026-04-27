@@ -333,17 +333,46 @@ export default function CircleDetail() {
 
   const getRequiredAmount = (period) => {
     if (!circle || !dbUser) return 0;
-    const userWinningBid = bids.find(b => b.member_id === dbUser.id && b.period < period);
     
-    if (!userWinningBid) {
-        return circle.amount_per_hand;
-    } else {
-        if (circle.interest_method === 'หักดอก') {
-            return circle.amount_per_hand;
-        } else {
-            return circle.amount_per_hand + userWinningBid.bid_amount;
-        }
+    // 1. Identify all winner IDs for past periods
+    const pastWinnersMap = {}; // period -> winner_id
+    const bidsByP = {};
+    bids.forEach(b => {
+      if (b.period < period) {
+        if (!bidsByP[b.period]) bidsByP[b.period] = [];
+        bidsByP[b.period].push(b);
+      }
+    });
+    Object.keys(bidsByP).forEach(p => {
+      const sorted = bidsByP[p].sort((a,b) => b.bid_amount - a.bid_amount);
+      pastWinnersMap[p] = sorted[0].member_id;
+    });
+
+    // 2. Count how many wins the current user has and sum their bid amounts if needed
+    const userWins = [];
+    Object.keys(pastWinnersMap).forEach(p => {
+      if (pastWinnersMap[p] === dbUser.id) {
+        const winningBid = bids.find(b => b.period === parseInt(p) && b.member_id === dbUser.id);
+        if (winningBid) userWins.push(winningBid);
+      }
+    });
+
+    const userHandsCount = players.filter(p => p.member_id === dbUser.id).length;
+    const deadHandsCount = userWins.length;
+    const liveHandsCount = userHandsCount - deadHandsCount;
+
+    let totalAmount = 0;
+    // Every hand pays the base amount
+    totalAmount += userHandsCount * circle.amount_per_hand;
+
+    // If method is 'ไม่หักดอก', dead hands also pay their respective bid amounts
+    if (circle.interest_method === 'ไม่หักดอก') {
+      userWins.forEach(win => {
+        totalAmount += win.bid_amount;
+      });
     }
+
+    return totalAmount;
   };
 
   const copyToClipboard = (text) => {
@@ -622,33 +651,72 @@ export default function CircleDetail() {
                       {/* Details: Bids & Slips */}
                       <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                         <div style={{ fontSize: "0.85rem", fontWeight: "700", color: "#475569", marginBottom: "4px" }}>สถานะสมาชิกในงวดนี้:</div>
-                        {players.map(p => {
-                          const pBid = bids.find(b => b.period === period && b.member_id === p.member_id);
-                          const pSlip = slips.find(s => s.period === period && s.member_id === p.member_id);
-                          const isMe = dbUser && p.member_id === dbUser.id;
+                        {(() => {
+                          // 1. Identify winners of all periods BEFORE this period to count wins per member
+                          const winCounts = {};
+                          const bidsByP = {};
+                          bids.forEach(b => {
+                            if (b.period < period) {
+                              if (!bidsByP[b.period]) bidsByP[b.period] = [];
+                              bidsByP[b.period].push(b);
+                            }
+                          });
+                          Object.keys(bidsByP).forEach(pKey => {
+                            const sorted = bidsByP[pKey].sort((a,b) => b.bid_amount - a.bid_amount);
+                            const winnerId = sorted[0].member_id;
+                            winCounts[winnerId] = (winCounts[winnerId] || 0) + 1;
+                          });
+
+                          // 2. Identify status for each hand
+                          const handStatus = {}; // hand_no -> status
+                          const memberHands = {};
+                          [...players].sort((a,b) => a.hand_no - b.hand_no).forEach(hp => {
+                             if (!memberHands[hp.member_id]) memberHands[hp.member_id] = [];
+                             memberHands[hp.member_id].push(hp.hand_no);
+                          });
                           
-                          return (
-                            <div key={p.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 12px", borderRadius: "10px", background: "#f8fafc", border: isMe ? "1px solid #cbd5e1" : "none" }}>
-                              <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.85rem" }}>
-                                <span>{p.member_name}</span>
-                                {pBid && (
-                                  <span style={{ fontSize: "0.75rem", color: "var(--primary)", fontWeight: "600" }}>
-                                    (เปีย {isCompleted || isCircleAdmin || isMe ? pBid.bid_amount.toLocaleString() : "***"})
+                          Object.keys(memberHands).forEach(mId => {
+                             const wins = winCounts[mId] || 0;
+                             memberHands[mId].forEach((hNo, idx) => {
+                                if (idx < wins) handStatus[hNo] = 'DEAD';
+                                else if (idx === wins) handStatus[hNo] = 'ACTIVE';
+                                else handStatus[hNo] = 'FUTURE';
+                             });
+                          });
+
+                          return players.map(p => {
+                            const pBid = bids.find(b => b.period === period && b.member_id === p.member_id);
+                            const pSlip = slips.find(s => s.period === period && s.member_id === p.member_id);
+                            const isMe = dbUser && p.member_id === dbUser.id;
+                            const status = handStatus[p.hand_no];
+                            const isDead = status === 'DEAD';
+                            const isActive = status === 'ACTIVE';
+
+                            return (
+                              <div key={p.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 12px", borderRadius: "10px", background: "#f8fafc", border: isMe ? "1px solid #cbd5e1" : "none", opacity: isDead ? 0.6 : 1 }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.85rem" }}>
+                                  <span style={{ fontWeight: isActive ? "700" : "400", color: isDead ? "#94a3b8" : "inherit" }}>
+                                    {p.member_name} {isDead ? "(มือตาย)" : ""}
                                   </span>
-                                )}
+                                  {pBid && isActive && (
+                                    <span style={{ fontSize: "0.75rem", color: "var(--primary)", fontWeight: "600" }}>
+                                      (เปีย {isCompleted || isCircleAdmin || isMe ? pBid.bid_amount.toLocaleString() : "***"})
+                                    </span>
+                                  )}
+                                </div>
+                                <div style={{ display: "flex", gap: "6px" }}>
+                                  {pSlip ? (
+                                    <span style={{ fontSize: "0.7rem", padding: "2px 8px", borderRadius: "6px", background: pSlip.status === 'APPROVED' ? "#dcfce7" : "#fef3c7", color: pSlip.status === 'APPROVED' ? "#166534" : "#92400e" }}>
+                                      {pSlip.status === 'APPROVED' ? "✅ จ่ายแล้ว" : "⏳ รออนุมัติ"}
+                                    </span>
+                                  ) : (
+                                    <span style={{ fontSize: "0.7rem", padding: "2px 8px", borderRadius: "6px", background: "#fee2e2", color: "#991b1b" }}>❌ ยังไม่จ่าย</span>
+                                  )}
+                                </div>
                               </div>
-                              <div style={{ display: "flex", gap: "6px" }}>
-                                {pSlip ? (
-                                  <span style={{ fontSize: "0.7rem", padding: "2px 8px", borderRadius: "6px", background: pSlip.status === 'APPROVED' ? "#dcfce7" : "#fef3c7", color: pSlip.status === 'APPROVED' ? "#166534" : "#92400e" }}>
-                                    {pSlip.status === 'APPROVED' ? "✅ จ่ายแล้ว" : "⏳ รออนุมัติ"}
-                                  </span>
-                                ) : (
-                                  <span style={{ fontSize: "0.7rem", padding: "2px 8px", borderRadius: "6px", background: "#fee2e2", color: "#991b1b" }}>❌ ยังไม่จ่าย</span>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })}
+                            );
+                          });
+                        })()}
                       </div>
                     </div>
                   )}
