@@ -409,6 +409,32 @@ export default function CircleDetail() {
     return totalAmount;
   };
 
+  const canUserBid = (period) => {
+    if (!circle || !dbUser) return false;
+    
+    // Permission check
+    const permission = circle.bid_permission || 'NONE';
+    if (permission === 'NONE') return true;
+    
+    const myHandsCount = players.filter(p => p.member_id === dbUser.id).length;
+    if (myHandsCount === 0) return false;
+    
+    // Count approved slips for this user in this period
+    const approvedSlips = slips.filter(s => s.member_id === dbUser.id && s.period === period && s.status === 'APPROVED');
+    
+    if (permission === 'PARTIAL') {
+      return approvedSlips.length >= 1;
+    }
+    
+    if (permission === 'ALL') {
+      // In current logic, one slip pays for all hands.
+      // We check if at least one approved slip exists.
+      return approvedSlips.length >= 1;
+    }
+    
+    return true;
+  };
+
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
     alert("คัดลอกเลขบัญชีแล้ว!");
@@ -613,9 +639,15 @@ export default function CircleDetail() {
                           {/* Bingo/Auction Logic */}
                           {circle.type === "ประมูล (เปียแข่งดอก)" && (
                             <>
-                              <button onClick={() => setBidModal({ open: true, period })} className="btn-primary" style={{ flex: "1 1 45%", padding: "12px", fontSize: "0.85rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
-                                🔨 ประมูล (เปีย)
-                              </button>
+                              {canUserBid(period) ? (
+                                <button onClick={() => setBidModal({ open: true, period })} className="btn-primary" style={{ flex: "1 1 45%", padding: "12px", fontSize: "0.85rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
+                                  🔨 ประมูล (เปีย)
+                                </button>
+                              ) : (
+                                <button onClick={() => alert(circle.bid_permission === 'PARTIAL' ? "กรุณาชำระเงินอย่างน้อย 1 มือก่อนประมูล" : "กรุณาชำระเงินให้ครบทุกมือก่อนประมูล")} className="btn-primary" style={{ flex: "1 1 45%", padding: "12px", fontSize: "0.85rem", background: "#cbd5e1", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", cursor: "not-allowed" }}>
+                                  🔨 ประมูล (ติดเงื่อนไขจ่าย)
+                                </button>
+                              )}
                               
                               <button 
                                 onClick={() => { 
@@ -1005,6 +1037,15 @@ export default function CircleDetail() {
                 <select value={settingsData.interest_method} onChange={(e) => setSettingsData({...settingsData, interest_method: e.target.value})} className="glass-panel" style={{ width: "100%", padding: "12px" }}>
                    <option value="หักดอก">หักดอก (Interest Deduct)</option>
                    <option value="ไม่หักดอก">ไม่หักดอก (Interest Add)</option>
+                </select>
+              </div>
+
+              <div style={{ background: "#f8fafc", padding: "16px", borderRadius: "18px", border: "1px solid #e2e8f0", marginBottom: "10px" }}>
+                <label style={{ display: "block", marginBottom: "8px", fontWeight: "700", fontSize: "0.85rem" }}>⚖️ สิทธิประมูล (Auction Permission)</label>
+                <select value={settingsData.bid_permission} onChange={(e) => setSettingsData({...settingsData, bid_permission: e.target.value})} className="glass-panel" style={{ width: "100%", padding: "12px", border: "1.5px solid #edf2f7" }}>
+                  <option value="NONE">ไม่ต้องชำระก่อน</option>
+                  <option value="PARTIAL">ต้องชำระบางมือก่อนอย่างน้อย 1 มือ</option>
+                  <option value="ALL">ต้องชำระทุกมือก่อนในงวดนั้น</option>
                 </select>
               </div>
 

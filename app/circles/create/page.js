@@ -23,7 +23,8 @@ export default function CreateCircle() {
     min_bid: "0",
     max_bid: "1000",
     notify_hours: "24",
-    close_mode: "แอดมินปิดเอง"
+    close_mode: "แอดมินปิดเอง",
+    bid_permission: "NONE"
   });
   
   const [message, setMessage] = useState({ type: "", text: "" });
@@ -82,7 +83,8 @@ export default function CreateCircle() {
           min_bid: formData.min_bid,
           max_bid: formData.max_bid,
           notify_hours: formData.notify_hours,
-          close_mode: formData.close_mode
+          close_mode: formData.close_mode,
+          bid_permission: formData.bid_permission
         })
       });
       
@@ -173,6 +175,25 @@ export default function CreateCircle() {
                 >
                   <option value="ประมูล (เปียแข่งดอก)">🎯 บิงโก (ประมูลราคาสูงสุด)</option>
                   <option value="ขั้นบันได (ดอกคงที่)">📊 ขั้นบันได (ดอกคงที่)</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px", fontWeight: "700", fontSize: "0.9rem", color: "#334155" }}>
+                <span style={{ fontSize: "1.1rem" }}>⚖️</span> สิทธิประมูล (Auction Permission)
+              </label>
+              <div style={{ position: "relative" }}>
+                <select 
+                  name="bid_permission" 
+                  value={formData.bid_permission} 
+                  onChange={handleChange}
+                  className="input-glow"
+                  style={{ width: "100%", padding: "16px", borderRadius: "18px", border: "1.5px solid #edf2f7", fontSize: "1rem", backgroundColor: "white", outline: "none" }}
+                >
+                  <option value="NONE">ไม่ต้องชำระก่อน (Free to bid)</option>
+                  <option value="PARTIAL">ต้องชำระบางมือก่อนอย่างน้อย 1 มือ (Pay at least 1 hand)</option>
+                  <option value="ALL">ต้องชำระทุกมือก่อนในงวดนั้น (Pay all hands first)</option>
                 </select>
               </div>
             </div>
