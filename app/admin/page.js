@@ -1,14 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Script from "next/script";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useUser } from "@/contexts/UserContext";
 
 export default function AdminDashboard() {
   const router = useRouter();
-  const [isInitializing, setIsInitializing] = useState(true);
-  const [dbUser, setDbUser] = useState(null);
+  const { dbUser, isLoading: isUserLoading } = useUser();
   const [message, setMessage] = useState({ type: "", text: "" });
 
   // Dashboard data
@@ -26,54 +25,15 @@ export default function AdminDashboard() {
   const [bankFormModal, setBankFormModal] = useState({ open: false, mode: "add", bankId: "", bank_name: "", account_no: "", account_name: "" });
 
   useEffect(() => {
-    if (typeof window !== "undefined" && window.liff) {
-      initLiff();
-    }
-  }, []);
-
-  const handleScriptLoad = () => {
-    if (window.liff) initLiff();
-  };
-
-  const initLiff = async () => {
-    try {
-      const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
-      await window.liff.init({ liffId });
-
-      if (!window.liff.isLoggedIn()) {
-        window.liff.login();
-        return;
-      }
-
-      const userProfile = await window.liff.getProfile();
-      const houseParam = new URLSearchParams(window.location.search).get('house');
-      const regRes = await fetch('/api/action', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'register',
-          name: userProfile.displayName,
-          nickname: userProfile.displayName,
-          line_id: userProfile.userId,
-          house: houseParam
-        })
-      });
-      const user = await regRes.json();
-
-      if (user.status !== 'success' || !['ADMIN', 'SUPERADMIN'].includes(user.role)) {
+    if (dbUser) {
+      if (!['ADMIN', 'SUPERADMIN'].includes(dbUser.role)) {
         alert("ไม่มีสิทธิ์เข้าถึง (Access Denied)");
         router.push('/');
         return;
       }
-
-      setDbUser(user);
-      fetchDashboard(user.id, user.role);
-
-    } catch (err) {
-      setMessage({ type: "error", text: "การเชื่อมต่อขัดข้อง" });
-      setIsInitializing(false);
+      fetchDashboard(dbUser.id, dbUser.role);
     }
-  };
+  }, [dbUser, router]);
 
   const fetchDashboard = async (callerId, callerRole) => {
     try {
@@ -91,7 +51,6 @@ export default function AdminDashboard() {
     } catch (err) {
       setMessage({ type: "error", text: "ดึงข้อมูลล้มเหลว" });
     }
-    setIsInitializing(false);
   };
 
   const refresh = () => fetchDashboard(dbUser.id, dbUser.role);
@@ -225,14 +184,16 @@ export default function AdminDashboard() {
   };
 
   // ============ Loading ============
-  if (isInitializing) {
+  if (isUserLoading) {
     return (
-      <div style={{ padding: "20px", minHeight: "100vh" }}>
-        <Script src="https://static.line-scdn.net/liff/edge/versions/2.22.1/sdk.js" onLoad={handleScriptLoad} />
-        <div className="loader-container"><div className="loader"></div><h3 style={{ color: "var(--primary)" }}>กำลังตรวจสอบสิทธิ์ Admin...</h3></div>
+      <div className="loader-container">
+        <div className="loader"></div>
+        <h3 style={{ color: "var(--primary)" }}>กำลังตรวจสอบสิทธิ์ Admin...</h3>
       </div>
     );
   }
+
+  if (!dbUser) return null;
 
   // ============ Filtered members ============
   const filteredMembers = houseMembers.filter(h => {
@@ -401,8 +362,6 @@ export default function AdminDashboard() {
 
   return (
     <div className="animate-fade-in" style={{ paddingBottom: "40px" }}>
-      <Script src="https://static.line-scdn.net/liff/edge/versions/2.22.1/sdk.js" onLoad={handleScriptLoad} />
-      
       {/* Admin Header */}
       <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "24px" }}>
         <div style={{ width: "60px", height: "60px", borderRadius: "20px", background: "var(--primary-gradient)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "2rem", boxShadow: "0 8px 16px rgba(16, 185, 129, 0.2)" }}>

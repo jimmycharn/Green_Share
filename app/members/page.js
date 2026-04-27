@@ -1,71 +1,24 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Script from "next/script";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useUser } from "@/contexts/UserContext";
 
 export default function Members() {
   const router = useRouter();
-  const [isInitializing, setIsInitializing] = useState(true);
-  const [dbUser, setDbUser] = useState(null);
+  const { dbUser, isLoading: isUserLoading } = useUser();
   const [members, setMembers] = useState([]);
+  const [isLoadingMembers, setIsLoadingMembers] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
 
   useEffect(() => {
-    if (typeof window !== "undefined" && window.liff) {
-      initLiff();
+    if (dbUser) {
+      fetchMembers(dbUser.id);
     }
-  }, []);
-
-  const handleScriptLoad = () => {
-    if (window.liff) {
-      initLiff();
-    }
-  };
-
-  const initLiff = async () => {
-    try {
-      const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
-      await window.liff.init({ liffId });
-      
-      if (!window.liff.isLoggedIn()) {
-        router.push('/');
-        return;
-      }
-      
-      const userProfile = await window.liff.getProfile();
-
-      const houseParam = new URLSearchParams(window.location.search).get('house');
-      const regRes = await fetch('/api/action', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'register',
-          name: userProfile.displayName,
-          nickname: userProfile.displayName,
-          line_id: userProfile.userId,
-          house: houseParam
-        })
-      });
-      const user = await regRes.json();
-      
-      if (user.status !== 'success') {
-        setMessage({ type: "error", text: "โหลดข้อมูลผู้ใช้ล้มเหลว" });
-        setIsInitializing(false);
-        return;
-      }
-      setDbUser(user);
-      
-      fetchMembers(user.id);
-      
-    } catch (err) {
-      setMessage({ type: "error", text: "การเชื่อมต่อขัดข้อง" });
-      setIsInitializing(false);
-    }
-  };
+  }, [dbUser]);
 
   const fetchMembers = async (memberId) => {
+    setIsLoadingMembers(true);
     try {
       const res = await fetch('/api/action', {
         method: 'POST',
@@ -84,33 +37,38 @@ export default function Members() {
       }
     } catch(err) {
       setMessage({ type: "error", text: "โหลดข้อมูลสมาชิกล้มเหลว" });
+    } finally {
+      setIsLoadingMembers(false);
     }
-    setIsInitializing(false);
   };
 
   const handleCopyInviteLink = () => {
+    if (!dbUser) return;
     const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
     const link = `https://liff.line.me/${liffId}?house=${dbUser.id}`;
     navigator.clipboard.writeText(link);
     setMessage({ type: "success", text: "คัดลอกลิงก์สำเร็จ ส่งชวนเพื่อนในไลน์ได้เลย!" });
   };
 
-  if (isInitializing) {
+  if (isUserLoading) {
     return (
-      <div style={{ padding: "20px", minHeight: "100vh" }}>
-        <Script src="https://static.line-scdn.net/liff/edge/versions/2.22.1/sdk.js" onLoad={handleScriptLoad} />
-        <div className="loader-container">
-          <div className="loader"></div>
-          <h3 style={{ color: "var(--primary)" }}>กำลังโหลดสมาชิก...</h3>
-        </div>
+      <div className="loader-container">
+        <div className="loader"></div>
+        <h3 style={{ color: "var(--primary)" }}>กำลังโหลด...</h3>
+      </div>
+    );
+  }
+
+  if (!dbUser) {
+    return (
+      <div style={{ padding: "40px 20px", textAlign: "center" }}>
+        <h3 style={{ color: "#64748b" }}>กรุณาเข้าสู่ระบบเพื่อดูข้อมูลสมาชิก</h3>
       </div>
     );
   }
 
   return (
     <div className="animate-fade-in">
-      <Script src="https://static.line-scdn.net/liff/edge/versions/2.22.1/sdk.js" onLoad={handleScriptLoad} />
-      
       {message.text && (
         <div style={{ padding: "12px", marginBottom: "20px", borderRadius: "12px", background: message.type === "success" ? "#dcfce7" : "#fee2e2", color: message.type === "success" ? "#166534" : "#991b1b", textAlign: "center", fontWeight: "600", fontSize: "0.9rem" }}>
           {message.text}
@@ -137,7 +95,11 @@ export default function Members() {
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-        {members.length === 0 ? (
+        {isLoadingMembers ? (
+          <div className="glass-panel" style={{ textAlign: "center", padding: "40px", color: "#94a3b8" }}>
+            กำลังโหลดสมาชิก...
+          </div>
+        ) : members.length === 0 ? (
           <div className="glass-panel" style={{ textAlign: "center", padding: "40px", color: "#94a3b8" }}>
             ยังไม่มีสมาชิกในบ้านนี้
           </div>
@@ -164,3 +126,4 @@ export default function Members() {
     </div>
   );
 }
+
