@@ -29,11 +29,13 @@ export default function CircleDetail() {
   const [adminSelectedUserId, setAdminSelectedUserId] = useState("");
   const [expandedPeriod, setExpandedPeriod] = useState(null);
   const [bidModal, setBidModal] = useState({ open: false, period: null });
-  const [configModal, setConfigModal] = useState({ open: false, period: null });
+  const [configModal, setConfigModal] = useState({ open: false, period: null, mode: "" });
   const [bidAmount, setBidAmount] = useState("");
   const [paymentMode, setPaymentMode] = useState("TRANSFER");
   const [myBank, setMyBank] = useState(null);
   const [settingsData, setSettingsData] = useState({
+    name: "",
+    line_group_url: "",
     bid_start_time: "12:00",
     bid_end_time: "18:00",
     min_bid: "0",
@@ -378,6 +380,20 @@ export default function CircleDetail() {
         <div style={{ marginBottom: "20px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "4px" }}>
               <h2 style={{ fontSize: "1.6rem", fontWeight: "800", margin: 0 }}>{circle.name}</h2>
+              {isCircleAdmin && (
+                <button 
+                  onClick={() => {
+                    setSettingsData({
+                      ...circle,
+                      close_mode: circle.close_mode === 'AUTO' ? 'ปิดอัตโนมัติ' : 'แอดมินปิดเอง'
+                    });
+                    setConfigModal({ open: true, mode: 'EDIT_CIRCLE' });
+                  }}
+                  style={{ background: "#f1f5f9", border: "none", width: "28px", height: "28px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: "0.8rem" }}
+                >
+                  ✏️
+                </button>
+              )}
               <span className={`badge ${circle.status === 'ACTIVE' ? 'badge-success' : 'badge-warning'}`} style={{ fontSize: "0.6rem" }}>{circle.status}</span>
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
@@ -486,9 +502,9 @@ export default function CircleDetail() {
                       </div>
                       <div>
                         <div style={{ fontWeight: "700", fontSize: "0.95rem" }}>
-                          งวดที่ {period} 
-                          {isCurrent && <span style={{ marginLeft: "8px", color: "var(--primary)", fontSize: "0.7rem", verticalAlign: "middle" }}>⭐ กำลังดำเนินการ</span>}
-                          {isFuture && <span style={{ marginLeft: "8px", color: "#94a3b8", fontSize: "0.7rem", fontWeight: "500" }}>🔒 รอดำเนินการ</span>}
+                           งวดที่ {period} 
+                           {isCurrent && <span style={{ marginLeft: "8px", color: "var(--primary)", fontSize: "0.7rem", verticalAlign: "middle" }}>⭐ กำลังดำเนินการ</span>}
+                           {isFuture && <span style={{ marginLeft: "8px", color: "#94a3b8", fontSize: "0.7rem", fontWeight: "500" }}>🔒 รอดำเนินการ</span>}
                         </div>
                         {isCompleted && winner && (
                           <div style={{ fontSize: "0.8rem", color: "#64748b", display: "flex", alignItems: "center", gap: "4px" }}>
@@ -643,7 +659,7 @@ export default function CircleDetail() {
         )}
       </div>
 
-      {/* Modals - Placed OUTSIDE the animated content to fix fixed positioning */}
+      {/* Modals */}
       {adminModal.open && (
         <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999, padding: "10px" }}>
           <div className="glass-panel" style={{ width: "100%", maxWidth: "420px", padding: "24px 16px", boxShadow: "0 20px 40px rgba(0,0,0,0.3)" }}>
@@ -667,7 +683,6 @@ export default function CircleDetail() {
       {slipModal.open && (
         <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999, padding: "10px" }}>
           <div className="glass-panel" style={{ width: "100%", maxWidth: "480px", maxHeight: "95vh", overflowY: "auto", padding: "24px 16px" }}>
-            {/* Sticky Header with Different Color */}
             <div style={{ 
                 position: "sticky", 
                 top: "-24px", 
@@ -688,7 +703,6 @@ export default function CircleDetail() {
               <button onClick={() => setSlipModal({ open: false })} style={{ background: "none", border: "none", fontSize: "1.5rem", color: "#94a3b8" }}>✕</button>
             </div>
 
-            {/* Money Bag Icon */}
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: "30px" }}>
                 <div style={{ width: "90px", height: "90px", borderRadius: "50%", background: "#10b981", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "16px", boxShadow: "0 8px 16px rgba(16, 185, 129, 0.2)" }}>
                    <span style={{ fontSize: "2.4rem" }}>💰</span>
@@ -697,7 +711,6 @@ export default function CircleDetail() {
                 <div style={{ fontSize: "1rem", color: "#64748b", fontWeight: "500" }}>บาท</div>
             </div>
 
-            {/* Mode Switcher */}
             <div style={{ display: "flex", gap: "10px", marginBottom: "24px" }}>
               <button 
                 onClick={() => setPaymentMode("TRANSFER")} 
@@ -740,12 +753,7 @@ export default function CircleDetail() {
                           <div style={{ fontSize: "0.75rem", color: "#94a3b8", marginTop: "4px" }}>รองรับไฟล์ภาพ JPEG, PNG</div>
                         </>
                       )}
-                      <input 
-                        type="file" 
-                        accept="image/*"
-                        onChange={handleFileChange}
-                        style={{ display: "none" }}
-                      />
+                      <input type="file" accept="image/*" onChange={handleFileChange} style={{ display: "none" }} />
                     </label>
                   </div>
                 )}
@@ -770,10 +778,10 @@ export default function CircleDetail() {
                   {uploadLoading ? "⌛ กำลังดำเนินการ..." : "✅ ยืนยันชำระเงิน"}
                 </button>
             </form>
-
           </div>
         </div>
       )}
+
       {/* Bid Modal */}
       {bidModal.open && (
         <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999, padding: "10px" }}>
@@ -805,16 +813,43 @@ export default function CircleDetail() {
         </div>
       )}
 
-      {/* Config Modal (Matching User Image) */}
+      {/* Config / Edit Modal */}
       {configModal.open && (
         <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999, padding: "10px" }}>
           <div className="glass-panel" style={{ width: "100%", maxWidth: "480px", padding: "24px 16px", maxHeight: "95vh", overflowY: "auto" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-               <h3 style={{ margin: 0 }}>⚙️ ตั้งค่า (เฉพาะงวด {configModal.period})</h3>
+               <h3 style={{ margin: 0 }}>⚙️ ตั้งค่า: {configModal.period ? `(งวด ${configModal.period})` : (configModal.mode === 'EDIT_CIRCLE' ? 'แก้ไขข้อมูลวงแชร์' : circle.name)}</h3>
                <button onClick={() => setConfigModal({ open: false, period: null })} style={{ background: "none", border: "none", fontSize: "1.2rem" }}>✕</button>
             </div>
             
             <form onSubmit={handleUpdateSettings} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+              {(configModal.mode === 'EDIT_CIRCLE') && (
+                <>
+                  <div style={{ background: "#f8fafc", padding: "16px", borderRadius: "18px", border: "1px solid #e2e8f0" }}>
+                    <label style={{ display: "block", marginBottom: "8px", fontWeight: "700", fontSize: "0.85rem" }}>ชื่อวงแชร์</label>
+                    <input 
+                      type="text" 
+                      value={settingsData.name} 
+                      onChange={(e) => setSettingsData({...settingsData, name: e.target.value})}
+                      required
+                      className="glass-panel" 
+                      style={{ width: "100%", padding: "12px", border: "1.5px solid #edf2f7" }} 
+                    />
+                  </div>
+                  <div style={{ background: "#f8fafc", padding: "16px", borderRadius: "18px", border: "1px solid #e2e8f0" }}>
+                    <label style={{ display: "block", marginBottom: "8px", fontWeight: "700", fontSize: "0.85rem" }}>ลิงก์กลุ่ม LINE ประจำวง</label>
+                    <input 
+                      type="text" 
+                      value={settingsData.line_group_url} 
+                      onChange={(e) => setSettingsData({...settingsData, line_group_url: e.target.value})}
+                      placeholder="https://line.me/ti/g/..."
+                      className="glass-panel" 
+                      style={{ width: "100%", padding: "12px", border: "1.5px solid #edf2f7" }} 
+                    />
+                  </div>
+                </>
+              )}
+
               <div style={{ display: "flex", gap: "16px" }}>
                 <div style={{ flex: 1 }}>
                   <label style={{ display: "block", marginBottom: "8px", fontSize: "0.8rem", fontWeight: "700" }}>⏰ เวลาเปิด</label>
@@ -846,7 +881,7 @@ export default function CircleDetail() {
                   <label style={{ display: "block", marginBottom: "8px", fontSize: "0.8rem", fontWeight: "700" }}>🔒 โหมดปิด</label>
                   <select value={settingsData.close_mode} onChange={(e) => setSettingsData({...settingsData, close_mode: e.target.value})} className="glass-panel" style={{ width: "100%", padding: "12px" }}>
                      <option value="แอดมินปิดเอง">แอดมินปิดเอง</option>
-                     <option value="ปิดอัตโนมัติ">ปิดอัตโนมัติ</option>
+                     <option value="ปิดอัตโนมัติ">ปิดอัตโนมัติ (AUTO)</option>
                   </select>
                 </div>
               </div>
@@ -859,7 +894,7 @@ export default function CircleDetail() {
                 </select>
               </div>
 
-              <button type="submit" className="btn-primary" style={{ marginTop: "10px" }}>บันทึกการตั้งค่า</button>
+              <button type="submit" className="btn-primary" style={{ marginTop: "10px" }}>บันทึกข้อมูล</button>
             </form>
           </div>
         </div>
