@@ -169,8 +169,8 @@ export default function Members() {
               </div>
               <div style={{ textAlign: "right", display: "flex", alignItems: "center", gap: "12px" }}>
                 <div style={{ textAlign: "right" }}>
-                  <span className={m.house_status === 'ACTIVE' ? "badge badge-success" : "badge-warning"} style={{ fontSize: "0.65rem" }}>
-                    {m.house_status === 'NOT_JOINED' ? 'ไม่ใช่ลูกวง' : m.house_status}
+                  <span className={m.id === dbUser.id ? "badge badge-primary" : (m.house_status === 'ACTIVE' ? "badge badge-success" : "badge-warning")} style={{ fontSize: "0.65rem" }}>
+                    {m.id === dbUser.id ? 'เจ้าของบ้าน' : (m.house_status === 'NOT_JOINED' ? 'ยังไม่เข้าบ้าน' : m.house_status)}
                   </span>
                   <div style={{ fontSize: "0.75rem", color: "#94a3b8", marginTop: "4px", fontWeight: "600" }}>{m.role}</div>
                 </div>

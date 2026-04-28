@@ -25,7 +25,18 @@ export function UserProvider({ children }) {
         setProfile(userProfile);
 
         // Fetch DB user once and cache it
-        const houseParam = new URLSearchParams(window.location.search).get('house');
+        // Better house param detection (handling LIFF's various URL formats)
+        const urlParams = new URLSearchParams(window.location.search);
+        let houseParam = urlParams.get('house');
+        
+        // Fallback: Check if it's in the hash or after LIFF redirect
+        if (!houseParam && window.location.hash.includes('house=')) {
+          const hashParams = new URLSearchParams(window.location.hash.split('?')[1]);
+          houseParam = hashParams.get('house');
+        }
+
+        console.log("Registering user with House Param:", houseParam);
+
         const res = await fetch('/api/action', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
