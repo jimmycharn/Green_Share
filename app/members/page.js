@@ -199,8 +199,8 @@ export default function Members() {
                     {['SUPERADMIN', 'ADMIN'].includes(m.role) ? 'เจ้าของบ้าน' : (m.house_status === 'NOT_JOINED' ? 'ยังไม่เข้าบ้าน' : m.house_status)}
                   </span>
                   
-                  {/* Role Selector for Superadmin */}
-                  {dbUser.role === 'SUPERADMIN' && m.id !== dbUser.id ? (
+                  {/* Role Selector for Superadmin: Only allow change if status is ACTIVE */}
+                  {dbUser.role === 'SUPERADMIN' && m.id !== dbUser.id && m.house_status === 'ACTIVE' ? (
                     <select 
                       value={m.role} 
                       onChange={(e) => handleUpdateRole(m.id, e.target.value)}
@@ -211,7 +211,7 @@ export default function Members() {
                       <option value="ADMIN">ADMIN</option>
                     </select>
                   ) : (
-                    <div style={{ fontSize: "0.75rem", color: "#94a3b8", marginTop: "4px", fontWeight: "600" }}>{m.role}</div>
+                    <div style={{ fontSize: "0.75rem", color: "#94a3b8", marginTop: "4px", fontWeight: "700" }}>{m.role}</div>
                   )}
                 </div>
                 
