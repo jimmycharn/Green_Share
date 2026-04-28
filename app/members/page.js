@@ -147,22 +147,6 @@ export default function Members() {
     );
   }
 
-  const [activeTab, setActiveTab] = useState("my_house");
-  const [expandedAdmin, setExpandedAdmin] = useState(null);
-
-  // --- Grouping Logic for Superadmin ---
-  const myHouseMembers = members.filter(m => 
-    m.id !== dbUser.id && m.member_houses?.some(h => h.admin_id === dbUser.id)
-  );
-
-  const otherAdmins = members.filter(m => m.role === 'ADMIN' || (m.role === 'SUPERADMIN' && m.id !== dbUser.id));
-  
-  const getMembersByAdmin = (adminId) => {
-    return members.filter(m => 
-      m.id !== adminId && m.member_houses?.some(h => h.admin_id === adminId)
-    );
-  };
-
   return (
     <div className="animate-fade-in">
       {message.text && (
@@ -171,16 +155,21 @@ export default function Members() {
         </div>
       )}
 
-      {/* Tabs Selection (Only for Superadmin) */}
+      {/* 1. Tabs Selection at the TOP (Only for Superadmin) */}
       {dbUser.role === 'SUPERADMIN' && (
-        <div style={{ display: "flex", gap: "8px", marginBottom: "20px", background: "rgba(255,255,255,0.5)", padding: "4px", borderRadius: "16px" }}>
+        <div style={{ 
+          display: "flex", gap: "0", marginBottom: "24px", 
+          background: "#334155", padding: "6px", borderRadius: "20px",
+          boxShadow: "inset 0 2px 4px rgba(0,0,0,0.1)"
+        }}>
           <button 
             onClick={() => setActiveTab("my_house")}
             style={{ 
-              flex: 1, padding: "12px", borderRadius: "12px", border: "none", 
+              flex: 1, padding: "12px", borderRadius: "15px", border: "none", 
               background: activeTab === 'my_house' ? 'var(--primary)' : 'transparent',
-              color: activeTab === 'my_house' ? 'white' : '#64748b',
-              fontWeight: "700", transition: "0.3s", cursor: "pointer"
+              color: activeTab === 'my_house' ? 'white' : '#94a3b8',
+              fontWeight: "700", transition: "0.3s", cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center", gap: "8px"
             }}
           >
             🏠 บ้านแชร์ฉัน
@@ -188,10 +177,11 @@ export default function Members() {
           <button 
             onClick={() => setActiveTab("other_houses")}
             style={{ 
-              flex: 1, padding: "12px", borderRadius: "12px", border: "none", 
+              flex: 1, padding: "12px", borderRadius: "15px", border: "none", 
               background: activeTab === 'other_houses' ? 'var(--primary)' : 'transparent',
-              color: activeTab === 'other_houses' ? 'white' : '#64748b',
-              fontWeight: "700", transition: "0.3s", cursor: "pointer"
+              color: activeTab === 'other_houses' ? 'white' : '#94a3b8',
+              fontWeight: "700", transition: "0.3s", cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center", gap: "8px"
             }}
           >
             🏘️ บ้านแชร์อื่น
@@ -199,7 +189,7 @@ export default function Members() {
         </div>
       )}
 
-      {/* Invite Section (Only shows in My House or for regular Admins) */}
+      {/* 2. Invite Section (Only shows in My House or for regular Admins) */}
       {(activeTab === 'my_house' || dbUser.role === 'ADMIN') && (
         <div className="glass-panel" style={{ textAlign: "center", marginBottom: "32px", border: "1px dashed var(--primary)" }}>
           <div style={{ fontSize: "2rem", marginBottom: "12px" }}>🤝</div>
@@ -213,11 +203,13 @@ export default function Members() {
         <div className="glass-panel" style={{ textAlign: "center", padding: "40px", color: "#94a3b8" }}>กำลังโหลด...</div>
       ) : activeTab === 'my_house' ? (
         <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-          <h3 style={{ fontSize: "1rem", fontWeight: "700", marginBottom: "4px" }}>ท้าวแชร์</h3>
+          <h3 style={{ fontSize: "1.1rem", fontWeight: "800", marginBottom: "8px", color: "#f8fafc" }}>ท้าวแชร์</h3>
           {/* Superadmin Card (Self) */}
           <MemberCard member={dbUser} isSelf={true} />
           
-          <h3 style={{ fontSize: "1rem", fontWeight: "700", marginTop: "12px", marginBottom: "4px" }}>ลูกบ้าน ({myHouseMembers.length})</h3>
+          <h3 style={{ fontSize: "1.1rem", fontWeight: "800", marginTop: "24px", marginBottom: "8px", color: "#f8fafc" }}>
+            ลูกบ้าน ({myHouseMembers.length})
+          </h3>
           {myHouseMembers.map(m => (
             <MemberCard 
               key={m.id} 
@@ -228,35 +220,37 @@ export default function Members() {
               handleUpdateRole={handleUpdateRole}
             />
           ))}
-          {myHouseMembers.length === 0 && <div style={{ textAlign: "center", padding: "20px", color: "#94a3b8", fontSize: "0.9rem" }}>ยังไม่มีลูกบ้าน</div>}
+          {myHouseMembers.length === 0 && <div style={{ textAlign: "center", padding: "30px", color: "#64748b", background: "rgba(255,255,255,0.05)", borderRadius: "20px" }}>ยังไม่มีลูกบ้าน</div>}
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-          <h3 style={{ fontSize: "1rem", fontWeight: "700", marginBottom: "4px" }}>ท้าวแชร์ท่านอื่น ({otherAdmins.length})</h3>
+          <h3 style={{ fontSize: "1.1rem", fontWeight: "800", marginBottom: "12px", color: "#f8fafc" }}>ท้าวแชร์ท่านอื่น ({otherAdmins.length})</h3>
           {otherAdmins.map(admin => (
             <div key={admin.id} style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
               <div 
                 onClick={() => setExpandedAdmin(expandedAdmin === admin.id ? null : admin.id)}
                 className="glass-panel" 
                 style={{ 
-                  padding: "16px", cursor: "pointer", 
+                  padding: "20px", cursor: "pointer", 
+                  background: expandedAdmin === admin.id ? "rgba(16, 185, 129, 0.1)" : "rgba(255,255,255,0.05)",
                   border: expandedAdmin === admin.id ? "2px solid var(--primary)" : "1px solid var(--glass-border)",
                   transition: "0.3s"
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-                  <div style={{ width: "45px", height: "45px", borderRadius: "12px", background: "var(--primary-gradient)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.2rem", color: "white" }}>👑</div>
+                  <div style={{ width: "50px", height: "50px", borderRadius: "15px", background: "var(--primary-gradient)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.5rem", color: "white" }}>👑</div>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: "800", fontSize: "1rem" }}>{admin.house_name || admin.name}</div>
-                    <div style={{ fontSize: "0.8rem", color: "#64748b" }}>ดูแลโดย: {admin.nickname} ({admin.name})</div>
+                    <div style={{ fontWeight: "800", fontSize: "1.1rem" }}>{admin.house_name || admin.name}</div>
+                    <div style={{ fontSize: "0.85rem", color: "#94a3b8" }}>{admin.nickname} ({admin.name})</div>
                   </div>
-                  <div style={{ fontSize: "1.2rem", transform: expandedAdmin === admin.id ? "rotate(180deg)" : "rotate(0deg)", transition: "0.3s" }}>⌄</div>
+                  <div style={{ fontSize: "0.8rem", color: "var(--primary)", fontWeight: "700" }}>ท้าวแชร์</div>
+                  <div style={{ fontSize: "1.2rem", transform: expandedAdmin === admin.id ? "rotate(180deg)" : "rotate(0deg)", transition: "0.3s", marginLeft: "10px" }}>⌄</div>
                 </div>
               </div>
               
               {/* Accordion Content */}
               {expandedAdmin === admin.id && (
-                <div className="animate-slide-up" style={{ paddingLeft: "20px", borderLeft: "2px solid var(--primary)", display: "flex", flexDirection: "column", gap: "10px", marginTop: "4px", marginBottom: "16px" }}>
+                <div className="animate-slide-up" style={{ paddingLeft: "20px", borderLeft: "3px solid var(--primary)", display: "flex", flexDirection: "column", gap: "10px", marginTop: "8px", marginBottom: "20px" }}>
                   {getMembersByAdmin(admin.id).map(m => (
                     <MemberCard 
                       key={m.id} 
@@ -268,7 +262,7 @@ export default function Members() {
                       mini={true}
                     />
                   ))}
-                  {getMembersByAdmin(admin.id).length === 0 && <div style={{ fontSize: "0.85rem", color: "#94a3b8", padding: "10px" }}>ยังไม่มีลูกวง</div>}
+                  {getMembersByAdmin(admin.id).length === 0 && <div style={{ fontSize: "0.9rem", color: "#64748b", padding: "15px", background: "rgba(255,255,255,0.02)", borderRadius: "15px" }}>ยังไม่มีลูกวง</div>}
                 </div>
               )}
             </div>
@@ -282,31 +276,42 @@ export default function Members() {
 // Reusable Member Card Component
 function MemberCard({ member, dbUser, handleApprove, handleDelete, handleUpdateRole, isSelf = false, mini = false }) {
   return (
-    <div className="glass-panel" style={{ padding: mini ? "12px" : "16px", display: "flex", alignItems: "center", gap: mini ? "12px" : "16px" }}>
+    <div className="glass-panel" style={{ 
+      padding: mini ? "14px" : "18px", 
+      display: "flex", 
+      alignItems: "center", 
+      gap: mini ? "12px" : "18px",
+      background: isSelf ? "rgba(16, 185, 129, 0.05)" : "rgba(255,255,255,0.05)"
+    }}>
       <div style={{ 
-        width: mini ? "35px" : "45px", height: mini ? "35px" : "45px", 
-        borderRadius: "10px", background: isSelf ? "var(--primary-gradient)" : "var(--background)", 
+        width: mini ? "40px" : "50px", height: mini ? "40px" : "50px", 
+        borderRadius: "15px", background: isSelf ? "var(--primary-gradient)" : "#1e293b", 
         display: "flex", alignItems: "center", justifyContent: "center", 
-        fontSize: mini ? "1rem" : "1.2rem", border: "1px solid var(--glass-border)", color: isSelf ? "white" : "inherit"
+        fontSize: mini ? "1.1rem" : "1.3rem", border: "1px solid var(--glass-border)", color: "white"
       }}>
-        {isSelf ? "👑" : "👤"}
+        {isSelf || member.role === 'ADMIN' ? "👑" : "👤"}
       </div>
       <div style={{ flex: 1 }}>
-        <div style={{ fontWeight: "700", fontSize: mini ? "0.9rem" : "1rem" }}>{member.nickname || member.name} {isSelf && "(ฉัน)"}</div>
-        {!mini && <div style={{ fontSize: "0.8rem", color: "#64748b" }}>📞 {member.phone || "ไม่ระบุ"}</div>}
+        <div style={{ fontWeight: "800", fontSize: mini ? "0.95rem" : "1.05rem", color: "#f8fafc" }}>
+          {member.nickname || member.name} {isSelf && "(ฉัน)"}
+        </div>
+        {!mini && <div style={{ fontSize: "0.85rem", color: "#94a3b8" }}>📞 {member.phone || "ไม่ระบุ"}</div>}
       </div>
-      <div style={{ textAlign: "right", display: "flex", alignItems: "center", gap: "10px" }}>
+      <div style={{ textAlign: "right", display: "flex", alignItems: "center", gap: "12px" }}>
         <div style={{ textAlign: "right" }}>
-          <span className={['SUPERADMIN', 'ADMIN'].includes(member.role) ? "badge badge-primary" : (member.house_status === 'ACTIVE' ? "badge badge-success" : (member.house_status === 'PENDING' ? "badge badge-warning" : "badge-danger"))} style={{ fontSize: "0.6rem" }}>
-            {['SUPERADMIN', 'ADMIN'].includes(member.role) ? 'ท้าวแชร์' : (member.house_status === 'PENDING' ? 'รออนุมัติ' : (member.house_status === 'ACTIVE' ? 'สมาชิก' : 'บล็อค'))}
-          </span>
+          <div style={{ fontSize: "0.75rem", fontWeight: "800", color: "var(--primary)", marginBottom: "4px" }}>
+            {['SUPERADMIN', 'ADMIN'].includes(member.role) ? 'ท้าวแชร์' : (member.house_status === 'PENDING' ? 'รออนุมัติ' : 'สมาชิก')}
+          </div>
           
           {/* Role Selector */}
           {!isSelf && dbUser?.role === 'SUPERADMIN' && member.house_status === 'ACTIVE' && (
             <select 
               value={member.role} 
               onChange={(e) => handleUpdateRole(member.id, e.target.value)}
-              style={{ display: "block", fontSize: "0.7rem", marginTop: "4px", padding: "2px", borderRadius: "4px", border: "1px solid #cbd5e1" }}
+              style={{ 
+                display: "block", fontSize: "0.75rem", marginTop: "4px", padding: "4px 8px", 
+                borderRadius: "8px", border: "1px solid #475569", background: "#1e293b", color: "white"
+              }}
             >
               <option value="MEMBER">MEMBER</option>
               <option value="MANAGER">MANAGER</option>
@@ -324,8 +329,8 @@ function MemberCard({ member, dbUser, handleApprove, handleDelete, handleUpdateR
         )}
       </div>
       <style jsx>{`
-        .btn-approve-mini { background: #dcfce7; color: #166534; border: none; padding: 6px 10px; borderRadius: 8px; cursor: pointer; fontSize: 0.7rem; fontWeight: 700; }
-        .btn-delete-mini { background: #fee2e2; color: #ef4444; border: none; padding: 6px; borderRadius: 8px; cursor: pointer; display: flex; alignItems: center; justifyContent: center; }
+        .btn-approve-mini { background: #dcfce7; color: #166534; border: none; padding: 8px 12px; borderRadius: 10px; cursor: pointer; fontSize: 0.75rem; fontWeight: 800; }
+        .btn-delete-mini { background: #fee2e2; color: #ef4444; border: none; padding: 8px; borderRadius: 10px; cursor: pointer; display: flex; alignItems: center; justifyContent: center; }
       `}</style>
     </div>
   );
