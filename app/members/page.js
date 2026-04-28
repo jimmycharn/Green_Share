@@ -96,6 +96,32 @@ export default function Members() {
     }
   };
 
+  const handleUpdateRole = async (targetMemberId, newRole) => {
+    try {
+      const res = await fetch('/api/action', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'update_member_role',
+          caller_id: dbUser.id,
+          caller_role: dbUser.role,
+          member_id: targetMemberId,
+          new_role: newRole
+        })
+      });
+      const data = await res.json();
+      
+      if (data.status === 'success') {
+        setMessage({ type: "success", text: data.message });
+        fetchMembers(dbUser.id);
+      } else {
+        setMessage({ type: "error", text: data.message });
+      }
+    } catch (err) {
+      setMessage({ type: "error", text: "เปลี่ยนยศล้มเหลว" });
+    }
+  };
+
   const handleCopyInviteLink = () => {
     if (!dbUser) return;
     const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
@@ -172,7 +198,21 @@ export default function Members() {
                   <span className={m.id === dbUser.id ? "badge badge-primary" : (m.house_status === 'ACTIVE' ? "badge badge-success" : "badge-warning")} style={{ fontSize: "0.65rem" }}>
                     {m.id === dbUser.id ? 'เจ้าของบ้าน' : (m.house_status === 'NOT_JOINED' ? 'ยังไม่เข้าบ้าน' : m.house_status)}
                   </span>
-                  <div style={{ fontSize: "0.75rem", color: "#94a3b8", marginTop: "4px", fontWeight: "600" }}>{m.role}</div>
+                  
+                  {/* Role Selector for Superadmin */}
+                  {dbUser.role === 'SUPERADMIN' && m.id !== dbUser.id ? (
+                    <select 
+                      value={m.role} 
+                      onChange={(e) => handleUpdateRole(m.id, e.target.value)}
+                      style={{ display: "block", fontSize: "0.75rem", marginTop: "4px", padding: "2px 4px", borderRadius: "4px", border: "1px solid #cbd5e1" }}
+                    >
+                      <option value="MEMBER">MEMBER</option>
+                      <option value="MANAGER">MANAGER</option>
+                      <option value="ADMIN">ADMIN</option>
+                    </select>
+                  ) : (
+                    <div style={{ fontSize: "0.75rem", color: "#94a3b8", marginTop: "4px", fontWeight: "600" }}>{m.role}</div>
+                  )}
                 </div>
                 
                 {/* Approve Button for PENDING house members */}
