@@ -264,6 +264,23 @@ export default function Members() {
                     <div style={{ fontSize: "0.85rem", color: "#94a3b8" }}>{admin.nickname} ({admin.name})</div>
                   </div>
                   <div style={{ fontSize: "0.8rem", color: "var(--primary)", fontWeight: "700" }}>ท้าวแชร์</div>
+                  
+                  {/* Delete Admin Button (Only for Superadmin) */}
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation(); // กันไม่ให้ไปกดขยาย Accordion
+                      handleDeleteMember(admin.id, admin.name);
+                    }}
+                    style={{ 
+                      background: "#fee2e2", color: "#ef4444", border: "none", 
+                      padding: "8px", borderRadius: "10px", cursor: "pointer",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      marginLeft: "10px"
+                    }}
+                  >
+                    🗑️
+                  </button>
+
                   <div style={{ fontSize: "1.2rem", transform: expandedAdmin === admin.id ? "rotate(180deg)" : "rotate(0deg)", transition: "0.3s", marginLeft: "10px" }}>⌄</div>
                 </div>
               </div>
