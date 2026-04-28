@@ -13,18 +13,18 @@ export default function CreateCircle() {
   const [formData, setFormData] = useState({
     circle_name: "",
     type: "ประมูล (เปียแข่งดอก)",
-    interest_method: "หักดอก",
-    amount_per_hand: "",
-    total_hands: "",
+    interest_method: "ไม่หักดอก",
+    amount_per_hand: "1000",
+    total_hands: "10",
     line_group_url: "",
     start_date: new Date().toISOString().split('T')[0],
-    bid_start_time: "12:00",
-    bid_end_time: "18:00",
-    min_bid: "0",
-    max_bid: "1000",
-    notify_hours: "24",
-    close_mode: "แอดมินปิดเอง",
-    bid_permission: "NONE"
+    bid_start_time: "08:00",
+    bid_end_time: "13:00",
+    min_bid: "200",
+    max_bid: "500",
+    notify_hours: "1",
+    close_mode: "ปิดอัตโนมัติ",
+    bid_permission: "ALL"
   });
   
   const [message, setMessage] = useState({ type: "", text: "" });
