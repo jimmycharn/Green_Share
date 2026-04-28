@@ -147,6 +147,22 @@ export default function Members() {
     );
   }
 
+  const [activeTab, setActiveTab] = useState("my_house");
+  const [expandedAdmin, setExpandedAdmin] = useState(null);
+
+  // --- Grouping Logic for Superadmin ---
+  const myHouseMembers = members.filter(m => 
+    m.id !== dbUser.id && m.member_houses?.some(h => h.admin_id === dbUser.id)
+  );
+
+  const otherAdmins = members.filter(m => m.role === 'ADMIN' || (m.role === 'SUPERADMIN' && m.id !== dbUser.id));
+  
+  const getMembersByAdmin = (adminId) => {
+    return members.filter(m => 
+      m.id !== adminId && m.member_houses?.some(h => h.admin_id === adminId)
+    );
+  };
+
   return (
     <div className="animate-fade-in">
       {message.text && (
