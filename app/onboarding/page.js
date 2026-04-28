@@ -76,9 +76,9 @@ export default function Onboarding() {
     <div className="onboarding-container animate-fade-in">
       <div className="onboarding-card">
         <div className="onboarding-header">
-          <div className="onboarding-icon">✨</div>
-          <h2>ข้อมูลส่วนตัว</h2>
-          <p>กรุณากรอกข้อมูลให้ครบถ้วนเพื่อเปิดบัญชี GreenShare</p>
+          <div className="onboarding-icon">🌱</div>
+          <h2>เริ่มต้นใช้งาน</h2>
+          <p>กรอกข้อมูลสั้นๆ เพื่อร่วมเป็นส่วนหนึ่งของ GreenShare นะครับ</p>
         </div>
 
         {error && (
@@ -90,7 +90,7 @@ export default function Onboarding() {
         <form onSubmit={handleSubmit} className="onboarding-form">
           <div className="input-group-grid">
             <div className="form-group">
-              <label>ชื่อ-นามสกุล</label>
+              <label>ชื่อ-นามสกุล 📝</label>
               <input 
                 type="text" 
                 required 
@@ -101,7 +101,7 @@ export default function Onboarding() {
             </div>
 
             <div className="form-group">
-              <label>ชื่อเล่น</label>
+              <label>ชื่อเล่น ✨</label>
               <input 
                 type="text" 
                 required 
@@ -113,7 +113,7 @@ export default function Onboarding() {
           </div>
 
           <div className="form-group">
-            <label>เบอร์โทรศัพท์</label>
+            <label>เบอร์โทรศัพท์ 📱</label>
             <input 
               type="tel" 
               required 
@@ -124,24 +124,24 @@ export default function Onboarding() {
           </div>
 
           <div className="form-group">
-            <label>เลขบัญชีธนาคาร (สำหรับรับเงิน)</label>
+            <label>เลขบัญชีธนาคาร (สำหรับรับเงิน) 💰</label>
             <input 
               type="text" 
               required 
               value={formData.bank_account} 
               onChange={e => setFormData({...formData, bank_account: e.target.value})}
-              placeholder="เช่น กสิกร 123-4-56789-0"
+              placeholder="ธนาคาร และ เลขบัญชี"
             />
           </div>
 
           <div className="role-selection">
-            <label style={{ display: "block", marginBottom: "12px", fontWeight: "600", fontSize: "0.9rem" }}>คุณต้องการสมัครในฐานะใด?</label>
+            <label>คุณต้องการใช้งานแบบไหนครับ? 😊</label>
             <div className="role-options">
               <div 
                 className={`role-card ${formData.role === 'MEMBER' ? 'active' : ''}`}
                 onClick={() => setFormData({...formData, role: "MEMBER"})}
               >
-                <div className="role-icon">👤</div>
+                <div className="role-icon">🌻</div>
                 <div className="role-text">สมาชิกวง</div>
                 <div className="role-check">✓</div>
               </div>
@@ -149,7 +149,7 @@ export default function Onboarding() {
                 className={`role-card ${formData.role === 'ADMIN' ? 'active' : ''}`}
                 onClick={() => setFormData({...formData, role: "ADMIN"})}
               >
-                <div className="role-icon">🏠</div>
+                <div className="role-icon">👑</div>
                 <div className="role-text">ท้าวแชร์</div>
                 <div className="role-check">✓</div>
               </div>
@@ -158,7 +158,7 @@ export default function Onboarding() {
 
           {formData.role === 'ADMIN' ? (
             <div className="form-group animate-slide-up">
-              <label>ชื่อบ้านแชร์ของคุณ</label>
+              <label>ตั้งชื่อบ้านแชร์ของคุณ 🏠</label>
               <input 
                 type="text" 
                 required 
@@ -166,11 +166,11 @@ export default function Onboarding() {
                 onChange={e => setFormData({...formData, house_name: e.target.value})}
                 placeholder="เช่น บ้านแชร์เงินล้าน"
               />
-              <span className="input-hint">ชื่อนี้จะแสดงให้ลูกวงเห็นในหน้าแรก</span>
+              <span className="input-hint">💡 ชื่อนี้จะแสดงให้ลูกวงเห็นในหน้าแรกครับ</span>
             </div>
           ) : (
             <div className="form-group animate-slide-up">
-              <label>รหัสบ้านแชร์ (รับจากท้าวแชร์)</label>
+              <label>รหัสบ้านแชร์ (รับจากท้าวแชร์) 🔑</label>
               <input 
                 type="text" 
                 required 
@@ -189,7 +189,9 @@ export default function Onboarding() {
           >
             {isSubmitting ? (
               <span className="btn-loader"></span>
-            ) : "บันทึกข้อมูลและเข้าสู่ระบบ"}
+            ) : (
+              <>ไปลุยกันเลย! 🚀</>
+            )}
           </button>
         </form>
       </div>
