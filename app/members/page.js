@@ -152,10 +152,14 @@ export default function Members() {
 
   // --- Grouping Logic for Superadmin ---
   const myHouseMembers = members.filter(m => 
-    m.id !== dbUser.id && m.member_houses?.some(h => h.admin_id === dbUser.id)
+    m.id !== dbUser.id && 
+    !['ADMIN', 'SUPERADMIN'].includes(m.role) && // ถ้าเป็นท้าวแชร์แล้ว ไม่ให้มาโชว์ในฐานะลูกบ้านเรา
+    m.member_houses?.some(h => h.admin_id === dbUser.id)
   );
 
-  const otherAdmins = members.filter(m => m.role === 'ADMIN' || (m.role === 'SUPERADMIN' && m.id !== dbUser.id));
+  const otherAdmins = members.filter(m => 
+    (m.role === 'ADMIN' || (m.role === 'SUPERADMIN')) && m.id !== dbUser.id
+  );
   
   const getMembersByAdmin = (adminId) => {
     return members.filter(m => 
