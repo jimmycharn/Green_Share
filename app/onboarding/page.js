@@ -73,41 +73,43 @@ export default function Onboarding() {
   }
 
   return (
-    <div className="animate-fade-in" style={{ padding: "20px 0", maxWidth: "500px", margin: "0 auto" }}>
-      <div className="glass-panel" style={{ padding: "32px 24px" }}>
-        <div style={{ textAlign: "center", marginBottom: "32px" }}>
-          <div style={{ fontSize: "3rem", marginBottom: "16px" }}>👋</div>
-          <h2 style={{ fontSize: "1.5rem", fontWeight: "800", marginBottom: "8px" }}>ยินดีต้อนรับสู่ GreenShare</h2>
-          <p style={{ color: "#64748b", fontSize: "0.9rem" }}>กรุณากรอกข้อมูลเพื่อเริ่มต้นใช้งานระบบ</p>
+    <div className="onboarding-container animate-fade-in">
+      <div className="onboarding-card">
+        <div className="onboarding-header">
+          <div className="onboarding-icon">✨</div>
+          <h2>ข้อมูลส่วนตัว</h2>
+          <p>กรุณากรอกข้อมูลให้ครบถ้วนเพื่อเปิดบัญชี GreenShare</p>
         </div>
 
         {error && (
-          <div style={{ padding: "12px", background: "#fee2e2", color: "#991b1b", borderRadius: "8px", marginBottom: "20px", fontSize: "0.85rem", fontWeight: "600", textAlign: "center" }}>
+          <div className="error-alert">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-          <div className="form-group">
-            <label>ชื่อ-นามสกุล</label>
-            <input 
-              type="text" 
-              required 
-              value={formData.name} 
-              onChange={e => setFormData({...formData, name: e.target.value})}
-              placeholder="กรอกชื่อ-นามสกุลจริง"
-            />
-          </div>
+        <form onSubmit={handleSubmit} className="onboarding-form">
+          <div className="input-group-grid">
+            <div className="form-group">
+              <label>ชื่อ-นามสกุล</label>
+              <input 
+                type="text" 
+                required 
+                value={formData.name} 
+                onChange={e => setFormData({...formData, name: e.target.value})}
+                placeholder="ชื่อจริงของคุณ"
+              />
+            </div>
 
-          <div className="form-group">
-            <label>ชื่อเล่น</label>
-            <input 
-              type="text" 
-              required 
-              value={formData.nickname} 
-              onChange={e => setFormData({...formData, nickname: e.target.value})}
-              placeholder="ชื่อเล่นของคุณ"
-            />
+            <div className="form-group">
+              <label>ชื่อเล่น</label>
+              <input 
+                type="text" 
+                required 
+                value={formData.nickname} 
+                onChange={e => setFormData({...formData, nickname: e.target.value})}
+                placeholder="ชื่อเรียกสั้นๆ"
+              />
+            </div>
           </div>
 
           <div className="form-group">
@@ -122,52 +124,60 @@ export default function Onboarding() {
           </div>
 
           <div className="form-group">
-            <label>บทบาทการใช้งาน</label>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginTop: "8px" }}>
+            <label>เลขบัญชีธนาคาร (สำหรับรับเงิน)</label>
+            <input 
+              type="text" 
+              required 
+              value={formData.bank_account} 
+              onChange={e => setFormData({...formData, bank_account: e.target.value})}
+              placeholder="เช่น กสิกร 123-4-56789-0"
+            />
+          </div>
+
+          <div className="role-selection">
+            <label style={{ display: "block", marginBottom: "12px", fontWeight: "600", fontSize: "0.9rem" }}>คุณต้องการสมัครในฐานะใด?</label>
+            <div className="role-options">
               <div 
+                className={`role-card ${formData.role === 'MEMBER' ? 'active' : ''}`}
                 onClick={() => setFormData({...formData, role: "MEMBER"})}
-                style={{ 
-                  padding: "16px", borderRadius: "12px", border: `2px solid ${formData.role === 'MEMBER' ? 'var(--primary)' : 'var(--glass-border)'}`,
-                  background: formData.role === 'MEMBER' ? 'rgba(16, 185, 129, 0.05)' : 'none', textAlign: "center", cursor: "pointer", transition: "0.2s"
-                }}
               >
-                <div style={{ fontSize: "1.5rem" }}>👤</div>
-                <div style={{ fontWeight: "700", marginTop: "8px" }}>สมาชิกวง</div>
+                <div className="role-icon">👤</div>
+                <div className="role-text">สมาชิกวง</div>
+                <div className="role-check">✓</div>
               </div>
               <div 
+                className={`role-card ${formData.role === 'ADMIN' ? 'active' : ''}`}
                 onClick={() => setFormData({...formData, role: "ADMIN"})}
-                style={{ 
-                  padding: "16px", borderRadius: "12px", border: `2px solid ${formData.role === 'ADMIN' ? 'var(--primary)' : 'var(--glass-border)'}`,
-                  background: formData.role === 'ADMIN' ? 'rgba(16, 185, 129, 0.05)' : 'none', textAlign: "center", cursor: "pointer", transition: "0.2s"
-                }}
               >
-                <div style={{ fontSize: "1.5rem" }}>🏠</div>
-                <div style={{ fontWeight: "700", marginTop: "8px" }}>ท้าวแชร์</div>
+                <div className="role-icon">🏠</div>
+                <div className="role-text">ท้าวแชร์</div>
+                <div className="role-check">✓</div>
               </div>
             </div>
           </div>
 
           {formData.role === 'ADMIN' ? (
-            <div className="form-group animate-fade-in">
-              <label>ชื่อบ้านแชร์</label>
+            <div className="form-group animate-slide-up">
+              <label>ชื่อบ้านแชร์ของคุณ</label>
               <input 
                 type="text" 
                 required 
                 value={formData.house_name} 
                 onChange={e => setFormData({...formData, house_name: e.target.value})}
-                placeholder="ชื่อบ้านแชร์ของคุณ (เปลี่ยนได้ภายหลัง)"
+                placeholder="เช่น บ้านแชร์เงินล้าน"
               />
-              <p style={{ fontSize: "0.75rem", color: "#94a3b8", marginTop: "6px" }}>* ระบบจะส่งคำขอไปหา Superadmin เพื่ออนุมัติเปิดบ้าน</p>
+              <span className="input-hint">ชื่อนี้จะแสดงให้ลูกวงเห็นในหน้าแรก</span>
             </div>
           ) : (
-            <div className="form-group animate-fade-in">
-              <label>รหัสบ้านแชร์ (House Code)</label>
+            <div className="form-group animate-slide-up">
+              <label>รหัสบ้านแชร์ (รับจากท้าวแชร์)</label>
               <input 
                 type="text" 
                 required 
                 value={formData.house_code} 
                 onChange={e => setFormData({...formData, house_code: e.target.value})}
-                placeholder="กรอกรหัสของท้าวแชร์ เช่น M0001"
+                placeholder="กรอกรหัส 5 หลัก (เช่น M0001)"
+                style={{ textTransform: "uppercase" }}
               />
             </div>
           )}
@@ -175,13 +185,16 @@ export default function Onboarding() {
           <button 
             type="submit" 
             disabled={isSubmitting} 
-            className="btn-primary" 
-            style={{ marginTop: "12px", width: "100%", height: "50px", fontSize: "1.1rem" }}
+            className="btn-submit"
           >
-            {isSubmitting ? "กำลังบันทึก..." : "เสร็จสิ้นการลงทะเบียน"}
+            {isSubmitting ? (
+              <span className="btn-loader"></span>
+            ) : "บันทึกข้อมูลและเข้าสู่ระบบ"}
           </button>
         </form>
       </div>
     </div>
+  );
+}
   );
 }
