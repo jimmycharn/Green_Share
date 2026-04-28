@@ -21,6 +21,10 @@ export default function Onboarding() {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    // Check for house code in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const houseParam = urlParams.get('house') || (window.location.hash.includes('house=') ? new URLSearchParams(window.location.hash.split('?')[1]).get('house') : null);
+
     if (dbUser && dbUser.member_status === 'ACTIVE' && dbUser.phone) {
        // Already onboarded
        router.push("/");
@@ -29,7 +33,8 @@ export default function Onboarding() {
       setFormData(prev => ({
         ...prev,
         name: dbUser.name || prev.name,
-        nickname: dbUser.nickname || prev.nickname
+        nickname: dbUser.nickname || prev.nickname,
+        house_code: houseParam || prev.house_code
       }));
     }
   }, [dbUser, router]);
