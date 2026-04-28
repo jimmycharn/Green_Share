@@ -12,6 +12,18 @@ export async function POST(req) {
       return NextResponse.json({ status: 'error', message: 'Action is required' }, { status: 400 });
     }
 
+    // --- Safety Check: Ensure user still exists for non-registration/check actions ---
+    const skipCheck = ['register', 'check_user'].includes(action);
+    if (!skipCheck) {
+      const userId = data.member_id || data.caller_id;
+      if (userId) {
+        const { data: exists } = await supabaseAdmin.from('members').select('id').eq('id', userId).maybeSingle();
+        if (!exists) {
+          return NextResponse.json({ status: 'error', message: 'USER_DELETED', forceLogout: true });
+        }
+      }
+    }
+
     // --- Member Routes ---
     if (action === 'register') return NextResponse.json(await registerMember(data));
     if (action === 'check_user') return NextResponse.json(await checkMember(data));

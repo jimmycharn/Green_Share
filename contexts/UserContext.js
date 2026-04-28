@@ -37,9 +37,11 @@ export function UserProvider({ children }) {
         
         if (data.status === 'success' && data.user) {
           setDbUser(data.user);
-        } else if (window.location.pathname !== '/onboarding') {
-          // If no user in DB and not on onboarding page, go to onboarding
-          window.location.href = '/onboarding';
+        } else {
+          setDbUser(null);
+          if (window.location.pathname !== '/onboarding') {
+            window.location.href = '/onboarding';
+          }
         }
       }
     } catch (err) {
