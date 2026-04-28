@@ -150,16 +150,29 @@ export default function Members() {
   const [activeTab, setActiveTab] = useState("my_house");
   const [expandedAdmin, setExpandedAdmin] = useState(null);
 
-  // --- Grouping Logic for Superadmin ---
-  const myHouseMembers = members.filter(m => 
-    m.id !== dbUser.id && 
-    !['ADMIN', 'SUPERADMIN'].includes(m.role) && // ถ้าเป็นท้าวแชร์แล้ว ไม่ให้มาโชว์ในฐานะลูกบ้านเรา
-    m.member_houses?.some(h => h.admin_id === dbUser.id)
-  );
+  // --- Logic Separation by Role ---
+  const isAdmin = ['SUPERADMIN', 'ADMIN'].includes(dbUser.role);
+  
+  let myHouseAdmin = null;
+  let myHouseMembers = [];
 
-  const otherAdmins = members.filter(m => 
-    (m.role === 'ADMIN' || (m.role === 'SUPERADMIN')) && m.id !== dbUser.id
-  );
+  if (isAdmin) {
+    // Admin/Superadmin View
+    myHouseAdmin = dbUser;
+    myHouseMembers = members.filter(m => 
+      m.id !== dbUser.id && 
+      !['ADMIN', 'SUPERADMIN'].includes(m.role) && 
+      m.member_houses?.some(h => h.admin_id === dbUser.id)
+    );
+  } else {
+    // Member View: Find the admin of this house
+    myHouseAdmin = members.find(m => ['ADMIN', 'SUPERADMIN'].includes(m.role));
+    myHouseMembers = members.filter(m => !['ADMIN', 'SUPERADMIN'].includes(m.role));
+  }
+
+  const otherAdmins = dbUser.role === 'SUPERADMIN' 
+    ? members.filter(m => m.role === 'ADMIN' && m.id !== dbUser.id)
+    : [];
   
   const getMembersByAdmin = (adminId) => {
     return members.filter(m => 
@@ -209,8 +222,8 @@ export default function Members() {
         </div>
       )}
 
-      {/* 2. Invite Section (Only shows in My House or for regular Admins) */}
-      {(activeTab === 'my_house' || dbUser.role === 'ADMIN') && (
+      {/* 2. Invite Section (Only for Admins) */}
+      {isAdmin && activeTab === 'my_house' && (
         <div className="glass-panel" style={{ textAlign: "center", marginBottom: "32px", border: "1px dashed var(--primary)" }}>
           <div style={{ fontSize: "2rem", marginBottom: "12px" }}>🤝</div>
           <h3 style={{ marginBottom: "8px", fontSize: "1.2rem", fontWeight: "700" }}>ชวนเพื่อนเข้าบ้าน</h3>
@@ -224,8 +237,11 @@ export default function Members() {
       ) : activeTab === 'my_house' ? (
         <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
           <h3 style={{ fontSize: "1.1rem", fontWeight: "800", marginBottom: "8px", color: "#f8fafc" }}>ท้าวแชร์</h3>
-          {/* Superadmin Card (Self) */}
-          <MemberCard member={dbUser} isSelf={true} />
+          {myHouseAdmin ? (
+            <MemberCard member={myHouseAdmin} isSelf={myHouseAdmin.id === dbUser.id} dbUser={dbUser} />
+          ) : (
+            <div style={{ padding: "10px", color: "#64748b" }}>ไม่พบข้อมูลท้าวแชร์</div>
+          )}
           
           <h3 style={{ fontSize: "1.1rem", fontWeight: "800", marginTop: "24px", marginBottom: "8px", color: "#f8fafc" }}>
             ลูกบ้าน ({myHouseMembers.length})
@@ -238,6 +254,7 @@ export default function Members() {
               handleApprove={handleApproveMember} 
               handleDelete={handleDeleteMember}
               handleUpdateRole={handleUpdateRole}
+              isSelf={m.id === dbUser.id}
             />
           ))}
           {myHouseMembers.length === 0 && <div style={{ textAlign: "center", padding: "30px", color: "#64748b", background: "rgba(255,255,255,0.05)", borderRadius: "20px" }}>ยังไม่มีลูกบ้าน</div>}
@@ -312,21 +329,25 @@ export default function Members() {
 
 // Reusable Member Card Component
 function MemberCard({ member, dbUser, handleApprove, handleDelete, handleUpdateRole, isSelf = false, mini = false }) {
+  const isAdmin = ['SUPERADMIN', 'ADMIN'].includes(member.role);
+  const isPending = member.house_status === 'PENDING';
+  
   return (
     <div className="glass-panel" style={{ 
       padding: mini ? "14px" : "18px", 
       display: "flex", 
       alignItems: "center", 
       gap: mini ? "12px" : "18px",
-      background: isSelf ? "rgba(16, 185, 129, 0.05)" : "rgba(255,255,255,0.05)"
+      background: isSelf ? "rgba(16, 185, 129, 0.05)" : "rgba(255,255,255,0.05)",
+      border: isSelf ? "1px solid var(--primary)" : "1px solid var(--glass-border)"
     }}>
       <div style={{ 
         width: mini ? "40px" : "50px", height: mini ? "40px" : "50px", 
-        borderRadius: "15px", background: isSelf ? "var(--primary-gradient)" : "#1e293b", 
+        borderRadius: "15px", background: isAdmin ? "var(--primary-gradient)" : "#1e293b", 
         display: "flex", alignItems: "center", justifyContent: "center", 
         fontSize: mini ? "1.1rem" : "1.3rem", border: "1px solid var(--glass-border)", color: "white"
       }}>
-        {isSelf || member.role === 'ADMIN' ? "👑" : "👤"}
+        {isAdmin ? "👑" : "👤"}
       </div>
       <div style={{ flex: 1 }}>
         <div style={{ fontWeight: "800", fontSize: mini ? "0.95rem" : "1.05rem", color: "#f8fafc" }}>
@@ -336,11 +357,14 @@ function MemberCard({ member, dbUser, handleApprove, handleDelete, handleUpdateR
       </div>
       <div style={{ textAlign: "right", display: "flex", alignItems: "center", gap: "12px" }}>
         <div style={{ textAlign: "right" }}>
-          <div style={{ fontSize: "0.75rem", fontWeight: "800", color: "var(--primary)", marginBottom: "4px" }}>
-            {['SUPERADMIN', 'ADMIN'].includes(member.role) ? 'ท้าวแชร์' : (member.house_status === 'PENDING' ? 'รออนุมัติ' : 'สมาชิก')}
+          <div style={{ display: "flex", gap: "4px", justifyContent: "flex-end", alignItems: "center" }}>
+             {isPending && <span style={{ background: "#fef08a", color: "#854d0e", fontSize: "0.6rem", padding: "2px 6px", borderRadius: "4px", fontWeight: "900" }}>รออนุมัติ</span>}
+             <span style={{ fontSize: "0.75rem", fontWeight: "800", color: isAdmin ? "var(--primary)" : "#94a3b8" }}>
+               {isAdmin ? 'ท้าวแชร์' : member.role}
+             </span>
           </div>
           
-          {/* Role Selector */}
+          {/* Role Selector: Only Superadmin can change others' roles */}
           {!isSelf && dbUser?.role === 'SUPERADMIN' && member.house_status === 'ACTIVE' && (
             <select 
               value={member.role} 
@@ -357,12 +381,14 @@ function MemberCard({ member, dbUser, handleApprove, handleDelete, handleUpdateR
           )}
         </div>
         
-        {!isSelf && member.house_status === 'PENDING' && ['SUPERADMIN', 'ADMIN'].includes(dbUser?.role) && (
-          <button onClick={() => handleApprove(member.house_id, member.name)} className="btn-approve-mini">อนุมัติ</button>
-        )}
-
+        {/* Management Buttons: Only for Admins to manage OTHERS */}
         {!isSelf && ['SUPERADMIN', 'ADMIN'].includes(dbUser?.role) && (
-          <button onClick={() => handleDelete(member.id, member.name)} className="btn-delete-mini">🗑️</button>
+          <div style={{ display: "flex", gap: "8px" }}>
+            {isPending && (
+              <button onClick={() => handleApprove(member.house_id, member.name)} className="btn-approve-mini">อนุมัติ</button>
+            )}
+            <button onClick={() => handleDelete(member.id, member.name)} className="btn-delete-mini">🗑️</button>
+          </div>
         )}
       </div>
       <style jsx>{`
