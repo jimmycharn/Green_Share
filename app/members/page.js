@@ -68,6 +68,34 @@ export default function Members() {
     }
   };
 
+  const handleApproveMember = async (houseId, targetName) => {
+    if (!window.confirm(`ยืนยันการรับคุณ ${targetName} เข้าบ้านแชร์?`)) return;
+    
+    try {
+      const res = await fetch('/api/action', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'approve_house_member',
+          caller_id: dbUser.id,
+          caller_role: dbUser.role,
+          house_id: houseId,
+          new_status: 'ACTIVE'
+        })
+      });
+      const data = await res.json();
+      
+      if (data.status === 'success') {
+        setMessage({ type: "success", text: data.message });
+        fetchMembers(dbUser.id);
+      } else {
+        setMessage({ type: "error", text: data.message });
+      }
+    } catch (err) {
+      setMessage({ type: "error", text: "อนุมัติสมาชิกล้มเหลว" });
+    }
+  };
+
   const handleCopyInviteLink = () => {
     if (!dbUser) return;
     const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
@@ -141,12 +169,31 @@ export default function Members() {
               </div>
               <div style={{ textAlign: "right", display: "flex", alignItems: "center", gap: "12px" }}>
                 <div style={{ textAlign: "right" }}>
-                  <span className={m.status === 'ACTIVE' ? "badge badge-success" : "badge-warning"} style={{ fontSize: "0.65rem" }}>
-                    {m.status}
+                  <span className={m.house_status === 'ACTIVE' ? "badge badge-success" : "badge-warning"} style={{ fontSize: "0.65rem" }}>
+                    {m.house_status === 'NOT_JOINED' ? 'ไม่ใช่ลูกวง' : m.house_status}
                   </span>
                   <div style={{ fontSize: "0.75rem", color: "#94a3b8", marginTop: "4px", fontWeight: "600" }}>{m.role}</div>
                 </div>
                 
+                {/* Approve Button for PENDING house members */}
+                {m.house_status === 'PENDING' && (
+                  <button 
+                    onClick={() => handleApproveMember(m.house_id, m.name)}
+                    style={{ 
+                      background: "#dcfce7", 
+                      color: "#166534", 
+                      border: "none", 
+                      padding: "8px 12px", 
+                      borderRadius: "8px", 
+                      cursor: "pointer",
+                      fontSize: "0.75rem",
+                      fontWeight: "700"
+                    }}
+                  >
+                    อนุมัติ
+                  </button>
+                )}
+
                 {/* Delete Button for Admins (not for themselves) */}
                 {['SUPERADMIN', 'ADMIN'].includes(dbUser.role) && m.id !== dbUser.id && (
                   <button 
