@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { registerMember, updateProfile, getMembers, completeOnboarding } from '@/lib/controllers/member';
+import { registerMember, updateProfile, getMembers, checkMember } from '@/lib/controllers/member';
 import { createCircle, getCircles, getCircleDetail, joinCircle, submitBid, uploadSlip, verifySlip, randomSelectBidder, startCircle, cancelHand, changeHandOwner, updateCircleSettings, closeBidding, closePeriod, deleteCircle, createPayout, verifyPayout } from '@/lib/controllers/circle';
 import { manageSlot, approvePayment, getAdminDashboard, approveHouseMember, removeHouseMember, fullDeleteMember, updateMemberRole, assignMemberBank, transferMember, addBank, editBank, deleteBank, setDefaultBank } from '@/lib/controllers/admin';
 
@@ -14,9 +14,9 @@ export async function POST(req) {
 
     // --- Member Routes ---
     if (action === 'register') return NextResponse.json(await registerMember(data));
+    if (action === 'check_user') return NextResponse.json(await checkMember(data));
     if (action === 'update_profile') return NextResponse.json(await updateProfile(data));
     if (action === 'get_members') return NextResponse.json(await getMembers(data));
-    if (action === 'complete_onboarding') return NextResponse.json(await completeOnboarding(data));
 
     // --- Circle Routes ---
     if (action === 'create_circle') return NextResponse.json(await createCircle(data));

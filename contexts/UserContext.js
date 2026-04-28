@@ -24,37 +24,22 @@ export function UserProvider({ children }) {
         const userProfile = await window.liff.getProfile();
         setProfile(userProfile);
 
-        // Fetch DB user once and cache it
-        // Better house param detection (handling LIFF's various URL formats)
-        const urlParams = new URLSearchParams(window.location.search);
-        let houseParam = urlParams.get('house');
-        
-        // Fallback: Check if it's in the hash or after LIFF redirect
-        if (!houseParam && window.location.hash.includes('house=')) {
-          const hashParams = new URLSearchParams(window.location.hash.split('?')[1]);
-          houseParam = hashParams.get('house');
-        }
-
-        console.log("Registering user with House Param:", houseParam);
-
+        // Check if user exists in DB without registering yet
         const res = await fetch('/api/action', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            action: 'register',
-            name: userProfile.displayName,
-            nickname: userProfile.displayName,
-            line_id: userProfile.userId,
-            house: houseParam
+            action: 'check_user',
+            line_id: userProfile.userId
           })
         });
         const data = await res.json();
-        if (data.status === 'success') {
-          setDbUser(data);
-          // Redirect to onboarding if profile is incomplete (no phone number)
-          if (!data.phone && window.location.pathname !== '/onboarding') {
-            window.location.href = '/onboarding';
-          }
+        
+        if (data.status === 'success' && data.user) {
+          setDbUser(data.user);
+        } else if (window.location.pathname !== '/onboarding') {
+          // If no user in DB and not on onboarding page, go to onboarding
+          window.location.href = '/onboarding';
         }
       }
     } catch (err) {
