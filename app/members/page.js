@@ -236,14 +236,14 @@ export default function Members() {
         <div className="glass-panel" style={{ textAlign: "center", padding: "40px", color: "#94a3b8" }}>กำลังโหลด...</div>
       ) : activeTab === 'my_house' ? (
         <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-          <h3 style={{ fontSize: "1.1rem", fontWeight: "800", marginBottom: "8px", color: "#f8fafc" }}>ท้าวแชร์</h3>
+          <h3 style={{ fontSize: "1.1rem", fontWeight: "800", marginBottom: "8px", color: "#1e293b" }}>ท้าวแชร์</h3>
           {myHouseAdmin ? (
             <MemberCard member={myHouseAdmin} isSelf={myHouseAdmin.id === dbUser.id} dbUser={dbUser} />
           ) : (
             <div style={{ padding: "10px", color: "#64748b" }}>ไม่พบข้อมูลท้าวแชร์</div>
           )}
           
-          <h3 style={{ fontSize: "1.1rem", fontWeight: "800", marginTop: "24px", marginBottom: "8px", color: "#f8fafc" }}>
+          <h3 style={{ fontSize: "1.1rem", fontWeight: "800", marginTop: "24px", marginBottom: "8px", color: "#1e293b" }}>
             ลูกบ้าน ({myHouseMembers.length})
           </h3>
           {myHouseMembers.map(m => (
@@ -261,7 +261,7 @@ export default function Members() {
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-          <h3 style={{ fontSize: "1.1rem", fontWeight: "800", marginBottom: "12px", color: "#f8fafc" }}>ท้าวแชร์ท่านอื่น ({otherAdmins.length})</h3>
+          <h3 style={{ fontSize: "1.1rem", fontWeight: "800", marginBottom: "12px", color: "#1e293b" }}>ท้าวแชร์ท่านอื่น ({otherAdmins.length})</h3>
           {otherAdmins.map(admin => (
             <div key={admin.id} style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
               <div 
@@ -350,7 +350,7 @@ function MemberCard({ member, dbUser, handleApprove, handleDelete, handleUpdateR
         {isAdmin ? "👑" : "👤"}
       </div>
       <div style={{ flex: 1 }}>
-        <div style={{ fontWeight: "800", fontSize: mini ? "0.95rem" : "1.05rem", color: "#f8fafc" }}>
+        <div style={{ fontWeight: "800", fontSize: mini ? "0.95rem" : "1.05rem", color: "#1e293b" }}>
           {member.nickname || member.name} {isSelf && "(ฉัน)"}
         </div>
         {!mini && <div style={{ fontSize: "0.85rem", color: "#94a3b8" }}>📞 {member.phone || "ไม่ระบุ"}</div>}
