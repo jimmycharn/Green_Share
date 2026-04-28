@@ -8,12 +8,15 @@ export default function ClientLayout({ children }) {
   const pathname = usePathname();
   const { profile, dbUser, isLoading } = useUser();
 
-  // Format Header Name: Nickname (RealName)
-  const headerName = dbUser 
-    ? (dbUser.nickname && dbUser.name && dbUser.nickname !== dbUser.name 
-        ? `${dbUser.nickname} (${dbUser.name})` 
-        : (dbUser.nickname || dbUser.name))
-    : (profile ? profile.displayName : "GreenShare");
+  // Format Header Name: Nickname (RealName) or HouseName
+  const isOwner = ['SUPERADMIN', 'ADMIN'].includes(dbUser?.role);
+  const displayName = isOwner && dbUser?.house_name 
+    ? dbUser.house_name 
+    : (dbUser 
+        ? (dbUser.nickname && dbUser.name && dbUser.nickname !== dbUser.name 
+            ? `${dbUser.nickname} (${dbUser.name})` 
+            : (dbUser.nickname || dbUser.name))
+        : (profile ? profile.displayName : "GreenShare"));
 
   const navItems = [
     { label: "หน้าแรก", icon: "🏠", path: "/" },
@@ -30,10 +33,10 @@ export default function ClientLayout({ children }) {
       {/* Top Header */}
       <header className="app-header">
         <div className="app-title" style={{ fontSize: "0.95rem", fontWeight: "700", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-            <div style={{ lineHeight: "1.2" }}>{headerName}</div>
+            <div style={{ lineHeight: "1.2" }}>{displayName}</div>
             {dbUser && (
-              <div style={{ fontSize: "0.65rem", color: "var(--primary)", fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                {dbUser.role === 'SUPERADMIN' ? 'Superadmin' : (dbUser.role === 'ADMIN' ? 'Admin' : (dbUser.role === 'MANAGER' ? 'Manager' : 'Member'))}
+              <div style={{ fontSize: "0.65rem", color: "var(--primary)", fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.5px", marginTop: "2px" }}>
+                {dbUser.role} {isOwner && `• รหัสบ้าน: ${dbUser.id}`}
               </div>
             )}
         </div>

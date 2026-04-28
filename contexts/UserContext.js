@@ -51,6 +51,10 @@ export function UserProvider({ children }) {
         const data = await res.json();
         if (data.status === 'success') {
           setDbUser(data);
+          // Redirect to onboarding if profile is incomplete (no phone number)
+          if (!data.phone && window.location.pathname !== '/onboarding') {
+            window.location.href = '/onboarding';
+          }
         }
       }
     } catch (err) {
