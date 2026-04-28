@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { registerMember, updateProfile, getMembers } from '@/lib/controllers/member';
 import { createCircle, getCircles, getCircleDetail, joinCircle, submitBid, uploadSlip, verifySlip, randomSelectBidder, startCircle, cancelHand, changeHandOwner, updateCircleSettings, closeBidding, closePeriod, deleteCircle, createPayout, verifyPayout } from '@/lib/controllers/circle';
-import { manageSlot, approvePayment, getAdminDashboard, approveHouseMember, removeHouseMember, updateMemberRole, assignMemberBank, transferMember, addBank, editBank, deleteBank, setDefaultBank } from '@/lib/controllers/admin';
+import { manageSlot, approvePayment, getAdminDashboard, approveHouseMember, removeHouseMember, fullDeleteMember, updateMemberRole, assignMemberBank, transferMember, addBank, editBank, deleteBank, setDefaultBank } from '@/lib/controllers/admin';
 
 export async function POST(req) {
   try {
@@ -40,6 +40,7 @@ export async function POST(req) {
     if (action === 'get_admin_dashboard') return NextResponse.json(await getAdminDashboard(data));
     if (action === 'approve_house_member') return NextResponse.json(await approveHouseMember(data));
     if (action === 'remove_house_member') return NextResponse.json(await removeHouseMember(data));
+    if (action === 'full_delete_member') return NextResponse.json(await fullDeleteMember(data));
     if (action === 'update_member_role') return NextResponse.json(await updateMemberRole(data));
     if (action === 'assign_member_bank') return NextResponse.json(await assignMemberBank(data));
     if (action === 'transfer_member') return NextResponse.json(await transferMember(data));

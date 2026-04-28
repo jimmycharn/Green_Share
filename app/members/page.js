@@ -42,6 +42,32 @@ export default function Members() {
     }
   };
 
+  const handleDeleteMember = async (targetMemberId, targetName) => {
+    if (!window.confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบคุณ ${targetName} ออกจากระบบโดยสมบูรณ์?`)) return;
+    
+    try {
+      const res = await fetch('/api/action', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'full_delete_member',
+          caller_role: dbUser.role,
+          member_id: targetMemberId
+        })
+      });
+      const data = await res.json();
+      
+      if (data.status === 'success') {
+        setMessage({ type: "success", text: data.message });
+        fetchMembers(dbUser.id);
+      } else {
+        setMessage({ type: "error", text: data.message });
+      }
+    } catch (err) {
+      setMessage({ type: "error", text: "ลบสมาชิกล้มเหลว" });
+    }
+  };
+
   const handleCopyInviteLink = () => {
     if (!dbUser) return;
     const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
@@ -113,11 +139,36 @@ export default function Members() {
                 <div style={{ fontWeight: "700", fontSize: "1rem" }}>{m.name}</div>
                 <div style={{ fontSize: "0.8rem", color: "#64748b" }}>📞 {m.phone || "ไม่ระบุเบอร์"}</div>
               </div>
-              <div style={{ textAlign: "right" }}>
-                <span className={m.status === 'ACTIVE' ? "badge badge-success" : "badge-warning"} style={{ fontSize: "0.65rem" }}>
-                  {m.status}
-                </span>
-                <div style={{ fontSize: "0.75rem", color: "#94a3b8", marginTop: "4px", fontWeight: "600" }}>{m.role}</div>
+              <div style={{ textAlign: "right", display: "flex", alignItems: "center", gap: "12px" }}>
+                <div style={{ textAlign: "right" }}>
+                  <span className={m.status === 'ACTIVE' ? "badge badge-success" : "badge-warning"} style={{ fontSize: "0.65rem" }}>
+                    {m.status}
+                  </span>
+                  <div style={{ fontSize: "0.75rem", color: "#94a3b8", marginTop: "4px", fontWeight: "600" }}>{m.role}</div>
+                </div>
+                
+                {/* Delete Button for Admins (not for themselves) */}
+                {['SUPERADMIN', 'ADMIN'].includes(dbUser.role) && m.id !== dbUser.id && (
+                  <button 
+                    onClick={() => handleDeleteMember(m.id, m.name)}
+                    style={{ 
+                      background: "#fee2e2", 
+                      color: "#ef4444", 
+                      border: "none", 
+                      padding: "8px", 
+                      borderRadius: "8px", 
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      transition: "0.2s"
+                    }}
+                    onMouseOver={(e) => e.currentTarget.style.background = "#fecaca"}
+                    onMouseOut={(e) => e.currentTarget.style.background = "#fee2e2"}
+                  >
+                    🗑️
+                  </button>
+                )}
               </div>
             </div>
           ))
