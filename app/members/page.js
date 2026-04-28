@@ -195,8 +195,8 @@ export default function Members() {
               </div>
               <div style={{ textAlign: "right", display: "flex", alignItems: "center", gap: "12px" }}>
                 <div style={{ textAlign: "right" }}>
-                  <span className={['SUPERADMIN', 'ADMIN'].includes(m.role) ? "badge badge-primary" : (m.house_status === 'ACTIVE' ? "badge badge-success" : "badge-warning")} style={{ fontSize: "0.65rem" }}>
-                    {['SUPERADMIN', 'ADMIN'].includes(m.role) ? 'เจ้าของบ้าน' : (m.house_status === 'NOT_JOINED' ? 'ยังไม่เข้าบ้าน' : m.house_status)}
+                  <span className={['SUPERADMIN', 'ADMIN'].includes(m.role) ? "badge badge-primary" : (m.house_status === 'ACTIVE' ? "badge badge-success" : (m.house_status === 'PENDING' ? "badge badge-warning" : "badge-danger"))} style={{ fontSize: "0.65rem" }}>
+                    {['SUPERADMIN', 'ADMIN'].includes(m.role) ? 'เจ้าของบ้าน' : (m.house_status === 'PENDING' ? 'รออนุมัติ' : (m.house_status === 'ACTIVE' ? 'สมาชิก' : 'บล็อค'))}
                   </span>
                   
                   {/* Role Selector for Superadmin: Only allow change if status is ACTIVE */}
@@ -215,8 +215,8 @@ export default function Members() {
                   )}
                 </div>
                 
-                {/* Approve Button for PENDING house members */}
-                {m.house_status === 'PENDING' && (
+                {/* Approve Button: Only for Admins/Superadmins, and NOT for themselves */}
+                {m.house_status === 'PENDING' && ['SUPERADMIN', 'ADMIN'].includes(dbUser.role) && m.id !== dbUser.id && (
                   <button 
                     onClick={() => handleApproveMember(m.house_id, m.name)}
                     style={{ 
