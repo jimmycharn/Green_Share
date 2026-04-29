@@ -3,13 +3,18 @@
 import { useState } from 'react';
 import useSWR from 'swr';
 import {
+  ArrowLeft,
+  Ban,
   Building2,
   ChevronDown,
   Crown,
   Home as HomeIcon,
+  Landmark,
   Link2,
   Loader2,
   Phone,
+  Settings,
+  ShieldCheck,
   Trash2,
   User as UserIcon,
 } from 'lucide-react';
@@ -23,6 +28,13 @@ import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -35,9 +47,18 @@ type Member = {
   phone?: string;
   role: Role;
   house_id?: string;
-  house_status?: 'ACTIVE' | 'PENDING' | string;
+  house_status?: 'ACTIVE' | 'PENDING' | 'BLOCKED' | string;
   house_name?: string;
+  assigned_bank_id?: string | null;
   member_houses?: { admin_id: string }[];
+};
+
+type Bank = {
+  id: string;
+  bank_name: string;
+  account_no: string;
+  account_name: string;
+  is_default?: boolean;
 };
 
 const ADMIN_ROLES = new Set(['SUPERADMIN', 'ADMIN']);
@@ -46,6 +67,8 @@ export default function MembersPage() {
   const { dbUser, isLoading: isUserLoading } = useUser() as any;
   const confirm = useConfirm();
   const [expandedAdmin, setExpandedAdmin] = useState<string | null>(null);
+  const [settingsMember, setSettingsMember] = useState<Member | null>(null);
+  const [settingsView, setSettingsView] = useState<'menu' | 'role' | 'bank'>('menu');
 
   const memberId = dbUser?.id;
   const {
@@ -58,6 +81,17 @@ export default function MembersPage() {
   );
 
   const members: Member[] = response?.status === 'success' ? response.members ?? [] : [];
+
+  // Fetch caller's banks (for bank-assignment action). Only for admin roles.
+  const isCallerAdmin =
+    !!dbUser && (dbUser.role === 'SUPERADMIN' || dbUser.role === 'ADMIN');
+  const { data: dashboardResp } = useSWR<{ status: string; banks?: Bank[] }>(
+    isCallerAdmin && memberId
+      ? ['get_admin_dashboard', { caller_id: memberId, caller_role: dbUser.role }]
+      : null,
+    swrFetcher as any,
+  );
+  const myBanks: Bank[] = dashboardResp?.banks ?? [];
 
   const handleDelete = async (target: Member) => {
     const ok = await confirm({
@@ -109,10 +143,56 @@ export default function MembersPage() {
     });
     if (result.status === 'success') {
       toast.success(result.message || 'เปลี่ยนยศสำเร็จ');
+      setSettingsMember(null);
       mutate();
     } else {
       toast.error(result.message || 'เปลี่ยนยศล้มเหลว');
     }
+  };
+
+  const handleBlockToggle = async (target: Member) => {
+    const isBlocked = target.house_status === 'BLOCKED';
+    const ok = await confirm({
+      title: isBlocked ? 'ปลดบล็อกสมาชิก' : 'บล็อกสมาชิก',
+      description: `ยืนยัน${isBlocked ? 'ปลดบล็อก' : 'บล็อก'}คุณ ${target.name}?`,
+      destructive: !isBlocked,
+    });
+    if (!ok) return;
+
+    const result = await callAction('approve_house_member', {
+      caller_id: dbUser.id,
+      caller_role: dbUser.role,
+      house_id: target.house_id,
+      new_status: isBlocked ? 'ACTIVE' : 'BLOCKED',
+    });
+    if (result.status === 'success') {
+      toast.success(result.message || 'สำเร็จ');
+      setSettingsMember(null);
+      mutate();
+    } else {
+      toast.error(result.message || 'ดำเนินการล้มเหลว');
+    }
+  };
+
+  const handleAssignBank = async (target: Member, bankId: string | null) => {
+    const result = await callAction('assign_member_bank', {
+      caller_id: dbUser.id,
+      caller_role: dbUser.role,
+      house_id: target.house_id,
+      bank_id: bankId,
+    });
+    if (result.status === 'success') {
+      toast.success(result.message || 'กำหนดบัญชีเรียบร้อย');
+      setSettingsMember(null);
+      mutate();
+    } else {
+      toast.error(result.message || 'กำหนดบัญชีล้มเหลว');
+    }
+  };
+
+  const openSettings = (m: Member) => {
+    setSettingsView('menu');
+    setSettingsMember(m);
   };
 
   const handleCopyInvite = () => {
@@ -210,8 +290,7 @@ export default function MembersPage() {
             member={m}
             dbUser={dbUser}
             onApprove={handleApprove}
-            onDelete={handleDelete}
-            onUpdateRole={handleUpdateRole}
+            onSettings={openSettings}
           />
         ))
       )}
@@ -281,8 +360,7 @@ export default function MembersPage() {
                       member={m}
                       dbUser={dbUser}
                       onApprove={handleApprove}
-                      onDelete={handleDelete}
-                      onUpdateRole={handleUpdateRole}
+                      onSettings={openSettings}
                       mini
                     />
                   ))
@@ -295,8 +373,29 @@ export default function MembersPage() {
     </div>
   );
 
+  const settingsDialog = (
+    <SettingsDialog
+      member={settingsMember}
+      view={settingsView}
+      setView={setSettingsView}
+      onClose={() => setSettingsMember(null)}
+      onUpdateRole={handleUpdateRole}
+      onBlockToggle={handleBlockToggle}
+      onAssignBank={handleAssignBank}
+      onDelete={handleDelete}
+      banks={myBanks}
+      callerRole={dbUser.role}
+      callerId={dbUser.id}
+    />
+  );
+
   if (!isSuperadmin) {
-    return <div className="animate-fade-in">{myHouseContent}</div>;
+    return (
+      <div className="animate-fade-in">
+        {myHouseContent}
+        {settingsDialog}
+      </div>
+    );
   }
 
   return (
@@ -314,6 +413,7 @@ export default function MembersPage() {
         <TabsContent value="my_house">{myHouseContent}</TabsContent>
         <TabsContent value="other_houses">{otherHousesContent}</TabsContent>
       </Tabs>
+      {settingsDialog}
     </div>
   );
 }
@@ -334,31 +434,29 @@ function MemberCard({
   member,
   dbUser,
   onApprove,
-  onDelete,
-  onUpdateRole,
+  onSettings,
   isSelf = false,
   mini = false,
 }: {
   member: Member;
   dbUser: any;
   onApprove?: (m: Member) => void;
-  onDelete?: (m: Member) => void;
-  onUpdateRole?: (m: Member, role: Role) => void;
+  onSettings?: (m: Member) => void;
   isSelf?: boolean;
   mini?: boolean;
 }) {
   const isMemberAdmin = ADMIN_ROLES.has(member.role);
   const isPending = member.house_status === 'PENDING';
-  const canManage = !isSelf && ADMIN_ROLES.has(dbUser?.role);
-  const canChangeRole =
-    !isSelf && dbUser?.role === 'SUPERADMIN' && member.house_status === 'ACTIVE';
+  const isBlocked = member.house_status === 'BLOCKED';
+  const canManage = !isSelf && !isMemberAdmin && ADMIN_ROLES.has(dbUser?.role);
 
   return (
     <Card
       className={cn(
-        'flex items-center gap-4',
+        'flex items-center gap-3',
         mini ? 'p-3.5' : 'p-4',
         isSelf && 'border-primary bg-primary/5',
+        isBlocked && 'opacity-60',
       )}
     >
       <div
@@ -376,8 +474,19 @@ function MemberCard({
       </div>
 
       <div className="min-w-0 flex-1">
-        <div className={cn('truncate font-extrabold', mini ? 'text-sm' : 'text-base')}>
-          {member.nickname || member.name} {isSelf && <span className="text-primary">(ฉัน)</span>}
+        <div className={cn('flex items-center gap-2 truncate font-extrabold', mini ? 'text-sm' : 'text-base')}>
+          <span className="truncate">{member.nickname || member.name}</span>
+          {isSelf && <span className="text-primary">(ฉัน)</span>}
+          {isPending && (
+            <Badge variant="warning" className="text-[0.55rem]">
+              รออนุมัติ
+            </Badge>
+          )}
+          {isBlocked && (
+            <Badge variant="destructive" className="text-[0.55rem]">
+              ถูกบล็อก
+            </Badge>
+          )}
         </div>
         {!mini && (
           <div className="flex items-center gap-1 text-sm text-muted-foreground">
@@ -387,38 +496,12 @@ function MemberCard({
         )}
       </div>
 
-      <div className="flex flex-col items-end gap-1">
-        <div className="flex items-center gap-1.5">
-          {isPending && (
-            <Badge variant="warning" className="text-[0.55rem]">
-              รออนุมัติ
-            </Badge>
-          )}
-          <span
-            className={cn(
-              'text-xs font-extrabold',
-              isMemberAdmin ? 'text-primary' : 'text-muted-foreground',
-            )}
-          >
-            {isMemberAdmin ? 'ท้าวแชร์' : member.role}
-          </span>
-        </div>
-
-        {canChangeRole && onUpdateRole && (
-          <select
-            value={member.role}
-            onChange={(e) => onUpdateRole(member, e.target.value)}
-            className="rounded-md border border-input bg-background px-2 py-1 text-xs"
-          >
-            <option value="MEMBER">MEMBER</option>
-            <option value="MANAGER">MANAGER</option>
-            <option value="ADMIN">ADMIN</option>
-          </select>
-        )}
-      </div>
+      {isMemberAdmin && (
+        <span className="shrink-0 text-xs font-extrabold text-primary">ท้าวแชร์</span>
+      )}
 
       {canManage && (
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-1">
           {isPending && onApprove && (
             <Button
               type="button"
@@ -430,20 +513,212 @@ function MemberCard({
               อนุมัติ
             </Button>
           )}
-          {onDelete && (
+          {onSettings && (
             <Button
               type="button"
               size="icon"
               variant="ghost"
-              onClick={() => onDelete(member)}
-              className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-              aria-label={`ลบ ${member.name}`}
+              onClick={() => onSettings(member)}
+              aria-label={`ตั้งค่า ${member.name}`}
             >
-              <Trash2 className="size-4" />
+              <Settings className="size-5" />
             </Button>
           )}
         </div>
       )}
     </Card>
+  );
+}
+
+/* ----- Settings Dialog ----- */
+
+function SettingsDialog({
+  member,
+  view,
+  setView,
+  onClose,
+  onUpdateRole,
+  onBlockToggle,
+  onAssignBank,
+  onDelete,
+  banks,
+  callerRole,
+  callerId,
+}: {
+  member: Member | null;
+  view: 'menu' | 'role' | 'bank';
+  setView: (v: 'menu' | 'role' | 'bank') => void;
+  onClose: () => void;
+  onUpdateRole: (m: Member, role: Role) => void;
+  onBlockToggle: (m: Member) => void;
+  onAssignBank: (m: Member, bankId: string | null) => void;
+  onDelete: (m: Member) => void;
+  banks: Bank[];
+  callerRole: Role;
+  callerId: string;
+}) {
+  if (!member) return null;
+
+  const isBlocked = member.house_status === 'BLOCKED';
+  const inMyHouse = member.member_houses?.some((h) => h.admin_id === callerId);
+  const canChangeRole = callerRole === 'SUPERADMIN' && member.house_status === 'ACTIVE';
+
+  // Roles available based on caller permissions
+  const ROLE_OPTIONS: { value: Role; label: string }[] = [
+    { value: 'MEMBER', label: 'MEMBER' },
+    { value: 'MANAGER', label: 'MANAGER' },
+    { value: 'ADMIN', label: 'ADMIN' },
+  ];
+
+  return (
+    <Dialog
+      open={!!member}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+    >
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <DialogTitle className="truncate text-lg">
+                {member.nickname || member.name}
+              </DialogTitle>
+              <DialogDescription className="flex items-center gap-1.5 text-xs">
+                <Landmark className="size-3.5" />
+                {member.assigned_bank_id ? 'ใช้บัญชีเฉพาะที่กำหนด' : 'ใช้บัญชีหลักของบ้าน'}
+              </DialogDescription>
+            </div>
+            <Badge variant="outline" className="shrink-0">
+              {member.role}
+            </Badge>
+          </div>
+        </DialogHeader>
+
+        {view === 'menu' && (
+          <div className="grid grid-cols-2 gap-2 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={!canChangeRole}
+              onClick={() => setView('role')}
+              className="justify-center gap-2"
+            >
+              <ShieldCheck className="size-4" /> ปรับตำแหน่ง
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={!inMyHouse}
+              onClick={() => setView('bank')}
+              className="justify-center gap-2"
+            >
+              <Landmark className="size-4" /> เลือกธนาคาร
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onBlockToggle(member)}
+              className={cn(
+                'justify-center gap-2',
+                !isBlocked &&
+                  'border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 hover:text-rose-800',
+              )}
+            >
+              <Ban className="size-4" />
+              {isBlocked ? 'ปลดบล็อก' : 'บล็อก'}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onDelete(member)}
+              className="justify-center gap-2 border-destructive/30 bg-destructive/5 text-destructive hover:bg-destructive/10 hover:text-destructive"
+            >
+              <Trash2 className="size-4" /> ลบออก
+            </Button>
+          </div>
+        )}
+
+        {view === 'role' && (
+          <div className="flex flex-col gap-2 pt-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="w-fit gap-1 text-muted-foreground"
+              onClick={() => setView('menu')}
+            >
+              <ArrowLeft className="size-4" /> ย้อนกลับ
+            </Button>
+            {ROLE_OPTIONS.map((opt) => {
+              const active = member.role === opt.value;
+              return (
+                <Button
+                  key={opt.value}
+                  type="button"
+                  variant={active ? 'default' : 'outline'}
+                  disabled={active}
+                  onClick={() => onUpdateRole(member, opt.value)}
+                  className="justify-between"
+                >
+                  <span>{opt.label}</span>
+                  {active && <span className="text-xs">ตำแหน่งปัจจุบัน</span>}
+                </Button>
+              );
+            })}
+          </div>
+        )}
+
+        {view === 'bank' && (
+          <div className="flex flex-col gap-2 pt-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="w-fit gap-1 text-muted-foreground"
+              onClick={() => setView('menu')}
+            >
+              <ArrowLeft className="size-4" /> ย้อนกลับ
+            </Button>
+            <Button
+              type="button"
+              variant={!member.assigned_bank_id ? 'default' : 'outline'}
+              disabled={!member.assigned_bank_id}
+              onClick={() => onAssignBank(member, null)}
+              className="justify-start gap-2"
+            >
+              <Landmark className="size-4" /> ใช้บัญชีหลักของบ้าน
+            </Button>
+            {banks.length === 0 ? (
+              <Card className="border-dashed bg-muted/30 p-4 text-center text-sm text-muted-foreground">
+                ยังไม่มีบัญชีธนาคารในบ้าน
+              </Card>
+            ) : (
+              banks.map((b) => {
+                const active = member.assigned_bank_id === b.id;
+                return (
+                  <Button
+                    key={b.id}
+                    type="button"
+                    variant={active ? 'default' : 'outline'}
+                    disabled={active}
+                    onClick={() => onAssignBank(member, b.id)}
+                    className="h-auto justify-start gap-2 py-3 text-left"
+                  >
+                    <Landmark className="size-4 shrink-0" />
+                    <div className="flex flex-col items-start">
+                      <span className="text-sm font-bold">{b.bank_name}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {b.account_no} • {b.account_name}
+                      </span>
+                    </div>
+                  </Button>
+                );
+              })
+            )}
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
