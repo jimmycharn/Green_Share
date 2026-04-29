@@ -1,5 +1,48 @@
 @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
+@import 'tailwindcss';
 
+/* ==========================================================================
+   Tailwind v4 Design Tokens (`@theme`)
+   - These become utility classes automatically:
+     bg-primary, text-foreground, rounded-glass, font-sans, etc.
+   - To remove a Tailwind default, set its variable to `initial`.
+   ========================================================================== */
+@theme {
+  /* Brand colors */
+  --color-primary: #10b981;
+  --color-primary-50: #ecfdf5;
+  --color-primary-100: #d1fae5;
+  --color-primary-500: #10b981;
+  --color-primary-600: #059669;
+  --color-primary-700: #047857;
+
+  --color-secondary: #3b82f6;
+  --color-accent: #8b5cf6;
+  --color-background: #f1f5f9;
+  --color-foreground: #0f172a;
+  --color-muted: #64748b;
+
+  /* Status colors */
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-danger: #e11d48;
+
+  /* Typography */
+  --font-sans: 'Kanit', ui-sans-serif, system-ui, sans-serif;
+
+  /* Custom radii used across the app */
+  --radius-glass: 24px;
+  --radius-pill: 999px;
+
+  /* Shadows */
+  --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+  --shadow-primary: 0 10px 25px rgba(16, 185, 129, 0.25);
+}
+
+/* ==========================================================================
+   Legacy CSS variables — kept for the existing components during Phase 5
+   migration. Will be removed once every page is on Tailwind utilities.
+   ========================================================================== */
 :root {
   /* Premium Palette */
   --primary: #10b981;

@@ -101,8 +101,8 @@ export default function Home() {
           </p>
           <button
             onClick={handleLoginClick}
-            className="btn-primary"
-            style={{ width: '100%', fontSize: '1.1rem', background: '#00B900' }}
+            className="btn-primary w-full text-lg"
+            style={{ background: '#00B900' }}
           >
             💬 เข้าสู่ระบบด้วย LINE
           </button>
