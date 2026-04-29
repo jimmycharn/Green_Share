@@ -2519,182 +2519,98 @@ export default function CircleDetail() {
         </div>
       )}
       {/* Payout Modal (Admin paying Winner) */}
-      {payoutModal.open && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0,0,0,0.6)',
-            backdropFilter: 'blur(8px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 9999,
-            padding: '10px',
-          }}
-        >
-          <div
-            className="glass-panel"
-            style={{ width: '100%', maxWidth: '420px', padding: '24px 16px' }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '20px',
-              }}
-            >
-              <h3 style={{ margin: 0 }}>💸 จ่ายเงินให้ผู้ชนะ (งวดที่ {payoutModal.period})</h3>
+      <Dialog
+        open={payoutModal.open}
+        onOpenChange={(o) => !o && setPayoutModal({ ...payoutModal, open: false })}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>💸 จ่ายเงินให้ผู้ชนะ (งวดที่ {payoutModal.period})</DialogTitle>
+          </DialogHeader>
+
+          <p className="text-sm text-muted-foreground">
+            เตรียมโอนเงินให้ <b>{payoutModal.winner_name}</b>
+            <br />
+            ยอดรับสุทธิ:{' '}
+            <b className="text-xl text-primary">{payoutModal.amount.toLocaleString()} ฿</b>
+          </p>
+
+          <div className="rounded-2xl border border-border bg-muted/40 p-4">
+            <label className="mb-2 block text-sm font-bold">วิธีการชำระ</label>
+            <div className="flex gap-2">
               <button
-                onClick={() => setPayoutModal({ ...payoutModal, open: false })}
-                style={{ background: 'none', border: 'none', fontSize: '1.2rem' }}
+                type="button"
+                onClick={() => setPaymentMode('TRANSFER')}
+                className={`flex-1 rounded-xl border-2 px-3 py-2 text-sm font-bold transition-colors ${
+                  paymentMode === 'TRANSFER'
+                    ? 'border-primary bg-emerald-50 text-primary'
+                    : 'border-border bg-background text-muted-foreground'
+                }`}
               >
-                ✕
+                🏦 โอนเงิน
+              </button>
+              <button
+                type="button"
+                onClick={() => setPaymentMode('CASH')}
+                className={`flex-1 rounded-xl border-2 px-3 py-2 text-sm font-bold transition-colors ${
+                  paymentMode === 'CASH'
+                    ? 'border-primary bg-emerald-50 text-primary'
+                    : 'border-border bg-background text-muted-foreground'
+                }`}
+              >
+                💵 เงินสด
               </button>
             </div>
-
-            <p style={{ margin: '0 0 16px 0', fontSize: '0.9rem', color: '#64748b' }}>
-              เตรียมโอนเงินให้ <b>{payoutModal.winner_name}</b>
-              <br />
-              ยอดรับสุทธิ:{' '}
-              <b style={{ color: 'var(--primary)', fontSize: '1.2rem' }}>
-                {payoutModal.amount.toLocaleString()} ฿
-              </b>
-            </p>
-
-            <div
-              style={{
-                background: '#f8fafc',
-                padding: '16px',
-                borderRadius: '18px',
-                border: '1px solid #e2e8f0',
-                marginBottom: '16px',
-              }}
-            >
-              <label
-                style={{
-                  display: 'block',
-                  marginBottom: '10px',
-                  fontWeight: '700',
-                  fontSize: '0.85rem',
-                }}
-              >
-                วิธีการชำระ
-              </label>
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <button
-                  onClick={() => setPaymentMode('TRANSFER')}
-                  style={{
-                    flex: 1,
-                    padding: '10px',
-                    borderRadius: '12px',
-                    border: '1.5px solid',
-                    borderColor: paymentMode === 'TRANSFER' ? 'var(--primary)' : '#e2e8f0',
-                    background: paymentMode === 'TRANSFER' ? '#ecfdf5' : 'white',
-                    color: paymentMode === 'TRANSFER' ? 'var(--primary)' : '#64748b',
-                    fontWeight: '700',
-                    fontSize: '0.85rem',
-                  }}
-                >
-                  🏦 โอนเงิน
-                </button>
-                <button
-                  onClick={() => setPaymentMode('CASH')}
-                  style={{
-                    flex: 1,
-                    padding: '10px',
-                    borderRadius: '12px',
-                    border: '1.5px solid',
-                    borderColor: paymentMode === 'CASH' ? 'var(--primary)' : '#e2e8f0',
-                    background: paymentMode === 'CASH' ? '#ecfdf5' : 'white',
-                    color: paymentMode === 'CASH' ? 'var(--primary)' : '#64748b',
-                    fontWeight: '700',
-                    fontSize: '0.85rem',
-                  }}
-                >
-                  💵 เงินสด
-                </button>
-              </div>
-            </div>
-
-            {paymentMode === 'TRANSFER' && (
-              <div style={{ marginBottom: '20px' }}>
-                <label
-                  style={{
-                    display: 'block',
-                    marginBottom: '10px',
-                    fontWeight: '700',
-                    fontSize: '0.85rem',
-                  }}
-                >
-                  แนบหลักฐานการโอน (สลิป)
-                </label>
-                <div
-                  onClick={() => document.getElementById('payout-file').click()}
-                  style={{
-                    width: '100%',
-                    height: '160px',
-                    border: '2px dashed #e2e8f0',
-                    borderRadius: '20px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    background: '#f8fafc',
-                    overflow: 'hidden',
-                    position: 'relative',
-                  }}
-                >
-                  {filePreview ? (
-                    <img
-                      src={filePreview}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
-                  ) : (
-                    <>
-                      <div style={{ fontSize: '2rem', marginBottom: '8px' }}>📸</div>
-                      <div style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
-                        กดเพื่ออัปโหลดรูปภาพ
-                      </div>
-                    </>
-                  )}
-                </div>
-                <input
-                  id="payout-file"
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const file = e.target.files[0];
-                    if (file) {
-                      setSelectedFile(file);
-                      setFilePreview(URL.createObjectURL(file));
-                    }
-                  }}
-                  style={{ display: 'none' }}
-                />
-              </div>
-            )}
-
-            <button
-              onClick={handlePayoutSubmit}
-              disabled={uploadLoading}
-              className="btn-primary"
-              style={{ width: '100%', padding: '14px' }}
-            >
-              {uploadLoading
-                ? 'กำลังส่ง...'
-                : paymentMode === 'CASH'
-                  ? '✅ ยืนยันการจ่ายเงินสด'
-                  : '🚀 ส่งหลักฐานการโอน'}
-            </button>
           </div>
-        </div>
-      )}
+
+          {paymentMode === 'TRANSFER' && (
+            <div>
+              <label className="mb-2 block text-sm font-bold">แนบหลักฐานการโอน (สลิป)</label>
+              <div
+                onClick={() => document.getElementById('payout-file').click()}
+                className="flex h-40 w-full cursor-pointer flex-col items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-border bg-muted/40"
+              >
+                {filePreview ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={filePreview} alt="preview" className="size-full object-cover" />
+                ) : (
+                  <>
+                    <div className="mb-2 text-3xl">📸</div>
+                    <div className="text-sm text-muted-foreground">กดเพื่ออัปโหลดรูปภาพ</div>
+                  </>
+                )}
+              </div>
+              <input
+                id="payout-file"
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files[0];
+                  if (file) {
+                    setSelectedFile(file);
+                    setFilePreview(URL.createObjectURL(file));
+                  }
+                }}
+                className="hidden"
+              />
+            </div>
+          )}
+
+          <Button
+            type="button"
+            onClick={handlePayoutSubmit}
+            disabled={uploadLoading}
+            className="w-full"
+            size="lg"
+          >
+            {uploadLoading
+              ? 'กำลังส่ง...'
+              : paymentMode === 'CASH'
+                ? '✅ ยืนยันการจ่ายเงินสด'
+                : '🚀 ส่งหลักฐานการโอน'}
+          </Button>
+        </DialogContent>
+      </Dialog>
 
       {/* Inspect Payout Modal (Winner reviewing Admin) */}
       <Dialog
