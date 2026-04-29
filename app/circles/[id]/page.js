@@ -9,6 +9,14 @@ import { toast } from 'sonner';
 import { useUser } from '@/contexts/UserContext';
 import { authHeaders } from '@/lib/authHeaders';
 import { useConfirm } from '@/components/providers/ConfirmProvider';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 export default function CircleDetail() {
   const router = useRouter();
@@ -1750,95 +1758,66 @@ export default function CircleDetail() {
       </div>
 
       {/* Modals */}
-      {adminModal.open && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0,0,0,0.6)',
-            backdropFilter: 'blur(8px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 9999,
-            padding: '10px',
-          }}
-        >
-          <div
-            className="glass-panel"
-            style={{
-              width: '100%',
-              maxWidth: '420px',
-              padding: '24px 16px',
-              boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
-            }}
-          >
-            <h3 style={{ textAlign: 'center', marginBottom: '20px' }}>
+      <Dialog
+        open={adminModal.open}
+        onOpenChange={(o) => !o && setAdminModal({ open: false, mode: '', handNo: '' })}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>
               {adminModal.mode === 'JOIN'
                 ? `📌 จองมือที่ ${adminModal.handNo}`
                 : `🔄 โอนมือที่ ${adminModal.handNo}`}
-            </h3>
-            <select
-              value={adminSelectedUserId}
-              onChange={(e) => setAdminSelectedUserId(e.target.value)}
-              className="glass-panel"
-              style={{ width: '100%', padding: '14px', marginBottom: '24px' }}
-            >
-              <option value="">-- เลือกสมาชิก --</option>
-              {adminModal.mode === 'JOIN' && (
-                <option value={dbUser.id}>จองให้ตัวเอง ({dbUser.name})</option>
-              )}
-              {allMembers.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.name} ({m.nickname})
-                </option>
-              ))}
-            </select>
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <button
-                onClick={() => setAdminModal({ open: false })}
-                style={{
-                  flex: 1,
-                  padding: '14px',
-                  borderRadius: '12px',
-                  border: '1px solid #e2e8f0',
-                }}
-              >
-                ยกเลิก
-              </button>
-              <button
-                onClick={submitAdminModal}
-                disabled={!adminSelectedUserId}
-                className="btn-primary"
-                style={{ flex: 1 }}
-              >
-                ตกลง
-              </button>
-            </div>
-            {!['JOIN'].includes(adminModal.mode) && circle.status === 'OPEN' && (
-              <button
-                onClick={(e) => {
-                  handleCancelHand(e, adminModal.handNo);
-                  setAdminModal({ open: false });
-                }}
-                style={{
-                  width: '100%',
-                  marginTop: '20px',
-                  color: '#ef4444',
-                  background: 'none',
-                  border: 'none',
-                  textDecoration: 'underline',
-                }}
-              >
-                ยกเลิกการจองมือนี้ (คืนเป็นว่าง)
-              </button>
+            </DialogTitle>
+          </DialogHeader>
+          <select
+            value={adminSelectedUserId}
+            onChange={(e) => setAdminSelectedUserId(e.target.value)}
+            className="w-full rounded-md border border-input bg-background px-3 py-3 text-sm"
+          >
+            <option value="">-- เลือกสมาชิก --</option>
+            {adminModal.mode === 'JOIN' && dbUser && (
+              <option value={dbUser.id}>จองให้ตัวเอง ({dbUser.name})</option>
             )}
-          </div>
-        </div>
-      )}
+            {allMembers.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.name} ({m.nickname})
+              </option>
+            ))}
+          </select>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setAdminModal({ open: false, mode: '', handNo: '' })}
+              className="flex-1"
+            >
+              ยกเลิก
+            </Button>
+            <Button
+              type="button"
+              onClick={submitAdminModal}
+              disabled={!adminSelectedUserId}
+              className="flex-1"
+            >
+              ตกลง
+            </Button>
+          </DialogFooter>
+          {!['JOIN'].includes(adminModal.mode) && circle.status === 'OPEN' && (
+            <Button
+              type="button"
+              variant="link"
+              onClick={(e) => {
+                handleCancelHand(e, adminModal.handNo);
+                setAdminModal({ open: false, mode: '', handNo: '' });
+              }}
+              className="mt-3 w-full text-destructive hover:text-destructive"
+            >
+              ยกเลิกการจองมือนี้ (คืนเป็นว่าง)
+            </Button>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {slipModal.open && (
         <div
@@ -2117,100 +2096,51 @@ export default function CircleDetail() {
       )}
 
       {/* Bid Modal */}
-      {bidModal.open && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0,0,0,0.6)',
-            backdropFilter: 'blur(8px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 9999,
-            padding: '10px',
-          }}
-        >
-          <div
-            className="glass-panel"
-            style={{ width: '100%', maxWidth: '400px', padding: '24px 16px' }}
-          >
-            <h3 style={{ textAlign: 'center', marginBottom: '10px' }}>
+      <Dialog
+        open={bidModal.open}
+        onOpenChange={(o) => !o && setBidModal({ open: false, period: null })}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-center">
               🔨 ประมูล (เปีย) งวดที่ {bidModal.period}
-            </h3>
-            <p
-              style={{
-                textAlign: 'center',
-                fontSize: '0.85rem',
-                color: '#64748b',
-                marginBottom: '24px',
-              }}
-            >
+            </DialogTitle>
+            <p className="text-center text-sm text-muted-foreground">
               ระบุจำนวนดอกเบี้ยที่คุณต้องการประมูล
             </p>
-            <form onSubmit={handleBidSubmit}>
-              <div style={{ marginBottom: '24px' }}>
-                <label
-                  style={{
-                    display: 'block',
-                    marginBottom: '8px',
-                    fontWeight: '700',
-                    fontSize: '0.85rem',
-                  }}
-                >
-                  จำนวนดอกเบี้ย (บาท)
-                </label>
-                <input
-                  type="number"
-                  value={bidAmount}
-                  onChange={(e) => setBidAmount(e.target.value)}
-                  placeholder="เช่น 350"
-                  required
-                  className="glass-panel"
-                  style={{
-                    width: '100%',
-                    padding: '16px',
-                    fontSize: '1.2rem',
-                    textAlign: 'center',
-                    border: '1.5px solid var(--primary)',
-                  }}
-                />
-                <div
-                  style={{
-                    marginTop: '10px',
-                    fontSize: '0.75rem',
-                    color: '#94a3b8',
-                    textAlign: 'center',
-                  }}
-                >
-                  ต่ำสุด {circle.min_bid.toLocaleString()} / สูงสุด{' '}
-                  {circle.max_bid.toLocaleString()}
-                </div>
+          </DialogHeader>
+          <form onSubmit={handleBidSubmit} className="flex flex-col gap-5">
+            <div>
+              <label className="mb-2 block text-sm font-bold">จำนวนดอกเบี้ย (บาท)</label>
+              <input
+                type="number"
+                value={bidAmount}
+                onChange={(e) => setBidAmount(e.target.value)}
+                placeholder="เช่น 350"
+                required
+                className="w-full rounded-lg border-2 border-primary bg-background px-4 py-4 text-center text-xl outline-none focus:ring-2 focus:ring-primary/30"
+              />
+              <div className="mt-2 text-center text-xs text-muted-foreground">
+                ต่ำสุด {circle?.min_bid?.toLocaleString()} / สูงสุด{' '}
+                {circle?.max_bid?.toLocaleString()}
               </div>
-              <div style={{ display: 'flex', gap: '12px' }}>
-                <button
-                  type="button"
-                  onClick={() => setBidModal({ open: false, period: null })}
-                  style={{
-                    flex: 1,
-                    padding: '14px',
-                    borderRadius: '12px',
-                    border: '1px solid #e2e8f0',
-                  }}
-                >
-                  ยกเลิก
-                </button>
-                <button type="submit" className="btn-primary" style={{ flex: 1 }}>
-                  ส่งประมูล
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+            </div>
+            <DialogFooter className="gap-2 sm:gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setBidModal({ open: false, period: null })}
+                className="flex-1"
+              >
+                ยกเลิก
+              </Button>
+              <Button type="submit" className="flex-1">
+                ส่งประมูล
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* Config / Edit Modal */}
       {configModal.open && (
@@ -2767,103 +2697,51 @@ export default function CircleDetail() {
       )}
 
       {/* Inspect Payout Modal (Winner reviewing Admin) */}
-      {inspectPayoutModal.open && inspectPayoutModal.payout && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0,0,0,0.6)',
-            backdropFilter: 'blur(8px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 9999,
-            padding: '10px',
-          }}
-        >
-          <div
-            className="glass-panel"
-            style={{ width: '100%', maxWidth: '400px', padding: '24px 16px' }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '20px',
-              }}
-            >
-              <h3 style={{ margin: 0 }}>🔍 ตรวจสอบยอดรับเงิน</h3>
-              <button
-                onClick={() => setInspectPayoutModal({ open: false, payout: null })}
-                style={{ background: 'none', border: 'none', fontSize: '1.2rem' }}
-              >
-                ✕
-              </button>
-            </div>
-
-            <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-              <div style={{ fontSize: '0.9rem', color: '#64748b', marginBottom: '4px' }}>
-                ยอดที่แอดมินแจ้งโอน
+      <Dialog
+        open={inspectPayoutModal.open}
+        onOpenChange={(o) => !o && setInspectPayoutModal({ open: false, payout: null })}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>🔍 ตรวจสอบยอดรับเงิน</DialogTitle>
+          </DialogHeader>
+          {inspectPayoutModal.payout && (
+            <>
+              <div className="text-center">
+                <div className="mb-1 text-sm text-muted-foreground">ยอดที่แอดมินแจ้งโอน</div>
+                <div className="text-2xl font-extrabold text-primary">
+                  {parseFloat(inspectPayoutModal.payout.amount).toLocaleString()} ฿
+                </div>
               </div>
-              <div style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--primary)' }}>
-                {parseFloat(inspectPayoutModal.payout.amount).toLocaleString()} ฿
+              <div className="overflow-hidden rounded-2xl border border-border bg-muted/40">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={inspectPayoutModal.payout.image_url}
+                  alt="Admin Slip"
+                  className="max-h-[350px] w-full object-contain"
+                />
               </div>
-            </div>
-
-            <div
-              style={{
-                width: '100%',
-                borderRadius: '16px',
-                overflow: 'hidden',
-                border: '1px solid #e2e8f0',
-                marginBottom: '20px',
-                background: '#f8fafc',
-              }}
-            >
-              <img
-                src={inspectPayoutModal.payout.image_url}
-                style={{ width: '100%', maxHeight: '350px', objectFit: 'contain' }}
-                alt="Admin Slip"
-              />
-            </div>
-
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button
-                onClick={() => handleVerifyPayout(inspectPayoutModal.payout.id, 'REJECTED')}
-                style={{
-                  flex: 1,
-                  padding: '12px',
-                  borderRadius: '12px',
-                  border: '1px solid #ef4444',
-                  color: '#ef4444',
-                  fontWeight: '700',
-                  background: 'white',
-                }}
-              >
-                ❌ แจ้งสลิปผิด
-              </button>
-              <button
-                onClick={() => handleVerifyPayout(inspectPayoutModal.payout.id, 'APPROVED')}
-                style={{
-                  flex: 1,
-                  padding: '12px',
-                  borderRadius: '12px',
-                  border: 'none',
-                  background: 'var(--primary-gradient)',
-                  color: 'white',
-                  fontWeight: '700',
-                }}
-              >
-                ✅ ได้รับเงินแล้ว
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+              <DialogFooter className="gap-2 sm:gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1 border-destructive text-destructive hover:bg-destructive/5 hover:text-destructive"
+                  onClick={() => handleVerifyPayout(inspectPayoutModal.payout.id, 'REJECTED')}
+                >
+                  ❌ แจ้งสลิปผิด
+                </Button>
+                <Button
+                  type="button"
+                  className="flex-1"
+                  onClick={() => handleVerifyPayout(inspectPayoutModal.payout.id, 'APPROVED')}
+                >
+                  ✅ ได้รับเงินแล้ว
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
