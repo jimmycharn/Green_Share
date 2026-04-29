@@ -1819,281 +1819,126 @@ export default function CircleDetail() {
         </DialogContent>
       </Dialog>
 
-      {slipModal.open && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0,0,0,0.6)',
-            backdropFilter: 'blur(8px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 9999,
-            padding: '10px',
-          }}
-        >
-          <div
-            className="glass-panel"
-            style={{
-              width: '100%',
-              maxWidth: '480px',
-              maxHeight: '95vh',
-              overflowY: 'auto',
-              padding: '24px 16px',
-            }}
-          >
-            <div
-              style={{
-                position: 'sticky',
-                top: '-24px',
-                left: 0,
-                right: 0,
-                zIndex: 100,
-                background: '#f8fafc',
-                margin: '-24px -16px 30px -16px',
-                padding: '20px 16px',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                borderBottom: '1px solid #e2e8f0',
-              }}
+      <Dialog
+        open={slipModal.open}
+        onOpenChange={(o) => !o && setSlipModal({ open: false, period: null })}
+      >
+        <DialogContent className="max-h-[95vh] max-w-lg overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <span className="text-2xl">💳</span> แจ้งชำระเงิน
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="flex flex-col items-center">
+            <div className="mb-4 flex size-[90px] items-center justify-center rounded-full bg-primary shadow-[0_8px_16px_rgba(16,185,129,0.2)]">
+              <span className="text-4xl">💰</span>
+            </div>
+            <div className="text-4xl font-extrabold text-primary">
+              {uploadData.amount?.toLocaleString()}
+            </div>
+            <div className="text-base font-medium text-muted-foreground">บาท</div>
+          </div>
+
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setPaymentMode('TRANSFER')}
+              className={`flex-1 rounded-2xl px-4 py-3 text-sm font-bold transition-all ${
+                paymentMode === 'TRANSFER'
+                  ? 'bg-primary text-white'
+                  : 'bg-muted text-muted-foreground'
+              }`}
             >
-              <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '1.4rem' }}>💳</span> แจ้งชำระเงิน
-              </h3>
-              <button
-                onClick={() => setSlipModal({ open: false })}
-                style={{ background: 'none', border: 'none', fontSize: '1.5rem', color: '#94a3b8' }}
-              >
-                ✕
-              </button>
-            </div>
-
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                marginBottom: '30px',
-              }}
+              📱 โอนเงิน
+            </button>
+            <button
+              type="button"
+              onClick={() => setPaymentMode('CASH')}
+              className={`flex-1 rounded-2xl px-4 py-3 text-sm font-bold transition-all ${
+                paymentMode === 'CASH'
+                  ? 'bg-slate-600 text-white'
+                  : 'bg-muted text-muted-foreground'
+              }`}
             >
-              <div
-                style={{
-                  width: '90px',
-                  height: '90px',
-                  borderRadius: '50%',
-                  background: '#10b981',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: '16px',
-                  boxShadow: '0 8px 16px rgba(16, 185, 129, 0.2)',
-                }}
-              >
-                <span style={{ fontSize: '2.4rem' }}>💰</span>
-              </div>
-              <div style={{ fontSize: '2.4rem', fontWeight: '800', color: '#10b981' }}>
-                {uploadData.amount?.toLocaleString()}
-              </div>
-              <div style={{ fontSize: '1rem', color: '#64748b', fontWeight: '500' }}>บาท</div>
-            </div>
+              💵 เงินสด
+            </button>
+          </div>
 
-            <div style={{ display: 'flex', gap: '10px', marginBottom: '24px' }}>
-              <button
-                onClick={() => setPaymentMode('TRANSFER')}
-                style={{
-                  flex: 1,
-                  padding: '14px',
-                  borderRadius: '18px',
-                  border: 'none',
-                  fontWeight: '700',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  background: paymentMode === 'TRANSFER' ? '#10b981' : '#f1f5f9',
-                  color: paymentMode === 'TRANSFER' ? 'white' : '#64748b',
-                  transition: 'all 0.2s',
-                }}
-              >
-                📱 โอนเงิน
-              </button>
-              <button
-                onClick={() => setPaymentMode('CASH')}
-                style={{
-                  flex: 1,
-                  padding: '14px',
-                  borderRadius: '18px',
-                  border: 'none',
-                  fontWeight: '700',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  background: paymentMode === 'CASH' ? '#64748b' : '#f1f5f9',
-                  color: paymentMode === 'CASH' ? 'white' : '#64748b',
-                  transition: 'all 0.2s',
-                }}
-              >
-                💵 เงินสด
-              </button>
-            </div>
-
-            {paymentMode === 'TRANSFER' && myBank && (
-              <div
-                style={{
-                  background: '#f8fafc',
-                  padding: '16px',
-                  borderRadius: '20px',
-                  marginBottom: '24px',
-                  border: '1px solid #e2e8f0',
-                  position: 'relative',
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: '0.75rem',
-                    color: '#64748b',
-                    marginBottom: '6px',
-                    fontWeight: '600',
-                  }}
-                >
-                  โอนเข้าบัญชีแอดมิน:
-                </div>
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: '4px',
-                  }}
-                >
-                  <span style={{ fontWeight: '800', fontSize: '1.05rem', color: '#1e293b' }}>
-                    {myBank.bank_name} {myBank.account_no}
-                  </span>
-                  <button
-                    onClick={() => copyToClipboard(myBank.account_no)}
-                    style={{
-                      background: '#10b981',
-                      color: 'white',
-                      border: 'none',
-                      padding: '6px 12px',
-                      borderRadius: '8px',
-                      fontSize: '0.75rem',
-                      fontWeight: '700',
-                    }}
-                  >
-                    คัดลอก
-                  </button>
-                </div>
-                <div style={{ fontSize: '0.9rem', color: '#475569' }}>{myBank.account_name}</div>
+          {paymentMode === 'TRANSFER' && myBank && (
+            <div className="rounded-2xl border border-border bg-muted/40 p-4">
+              <div className="mb-1.5 text-xs font-semibold text-muted-foreground">
+                โอนเข้าบัญชีแอดมิน:
               </div>
+              <div className="flex items-center justify-between">
+                <span className="text-base font-extrabold text-foreground">
+                  {myBank.bank_name} {myBank.account_no}
+                </span>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => copyToClipboard(myBank.account_no)}
+                >
+                  คัดลอก
+                </Button>
+              </div>
+              <div className="mt-1 text-sm text-muted-foreground">{myBank.account_name}</div>
+            </div>
+          )}
+
+          <form onSubmit={handleUploadSlip} className="flex flex-col gap-4">
+            {paymentMode === 'TRANSFER' && (
+              <label className="flex min-h-[150px] cursor-pointer items-center justify-center rounded-2xl border-2 border-dashed border-muted-foreground/30 bg-muted/30 p-3 text-center">
+                {filePreview ? (
+                  <div className="w-full">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={filePreview}
+                      alt="preview"
+                      className="mx-auto max-h-[200px] w-full rounded-xl object-contain"
+                    />
+                    <div className="mt-2.5 text-sm font-bold text-primary">แตะเพื่อเปลี่ยนรูป</div>
+                  </div>
+                ) : (
+                  <div>
+                    <div className="mb-2 text-4xl">📸</div>
+                    <div className="text-base font-bold text-foreground">แตะเพื่อเลือกรูปสลิป</div>
+                    <div className="mt-1 text-xs text-muted-foreground">
+                      รองรับไฟล์ภาพ JPEG, PNG
+                    </div>
+                  </div>
+                )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+              </label>
             )}
 
-            <form
-              onSubmit={handleUploadSlip}
-              style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
+            <div className="relative">
+              <span className="absolute left-4 top-3 text-base">✍️</span>
+              <input
+                type="text"
+                placeholder="บันทึกช่วยจำ (ถ้ามี)"
+                value={uploadData.note}
+                onChange={(e) => setUploadData({ ...uploadData, note: e.target.value })}
+                className="w-full rounded-2xl border-2 border-muted bg-background py-3 pl-11 pr-4 text-base outline-none focus:border-primary"
+              />
+            </div>
+
+            <Button
+              type="submit"
+              size="lg"
+              disabled={uploadLoading || (paymentMode === 'TRANSFER' && !selectedFile)}
+              className="mt-2 h-14 rounded-2xl text-base font-extrabold"
             >
-              {paymentMode === 'TRANSFER' && (
-                <div
-                  style={{
-                    border: '2px dashed #cbd5e1',
-                    borderRadius: '18px',
-                    padding: '10px',
-                    textAlign: 'center',
-                    background: '#f8fafc',
-                    minHeight: '150px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <label style={{ cursor: 'pointer', display: 'block', width: '100%' }}>
-                    {filePreview ? (
-                      <div style={{ position: 'relative' }}>
-                        <img
-                          src={filePreview}
-                          alt="preview"
-                          style={{
-                            width: '100%',
-                            maxHeight: '200px',
-                            objectFit: 'contain',
-                            borderRadius: '12px',
-                          }}
-                        />
-                        <div
-                          style={{
-                            marginTop: '10px',
-                            fontSize: '0.85rem',
-                            color: 'var(--primary)',
-                            fontWeight: '700',
-                          }}
-                        >
-                          แตะเพื่อเปลี่ยนรูป
-                        </div>
-                      </div>
-                    ) : (
-                      <>
-                        <div style={{ fontSize: '2.4rem', marginBottom: '8px' }}>📸</div>
-                        <div style={{ fontSize: '1rem', fontWeight: '700', color: '#475569' }}>
-                          แตะเพื่อเลือกรูปสลิป
-                        </div>
-                        <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '4px' }}>
-                          รองรับไฟล์ภาพ JPEG, PNG
-                        </div>
-                      </>
-                    )}
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleFileChange}
-                      style={{ display: 'none' }}
-                    />
-                  </label>
-                </div>
-              )}
-
-              <div style={{ position: 'relative' }}>
-                <span style={{ position: 'absolute', left: '16px', top: '16px' }}>✍️</span>
-                <input
-                  type="text"
-                  placeholder="บันทึกช่วยจำ (ถ้ามี)"
-                  value={uploadData.note}
-                  onChange={(e) => setUploadData({ ...uploadData, note: e.target.value })}
-                  style={{
-                    width: '100%',
-                    padding: '16px 16px 16px 44px',
-                    borderRadius: '18px',
-                    border: '1.5px solid #edf2f7',
-                    fontSize: '1rem',
-                    outline: 'none',
-                  }}
-                />
-              </div>
-
-              <button
-                type="submit"
-                className="btn-primary"
-                disabled={uploadLoading || (paymentMode === 'TRANSFER' && !selectedFile)}
-                style={{
-                  padding: '18px',
-                  fontSize: '1.1rem',
-                  fontWeight: '800',
-                  borderRadius: '20px',
-                  marginTop: '8px',
-                  opacity: uploadLoading || (paymentMode === 'TRANSFER' && !selectedFile) ? 0.6 : 1,
-                }}
-              >
-                {uploadLoading ? '⌛ กำลังดำเนินการ...' : '✅ ยืนยันชำระเงิน'}
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
+              {uploadLoading ? '⌛ กำลังดำเนินการ...' : '✅ ยืนยันชำระเงิน'}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* Bid Modal */}
       <Dialog
