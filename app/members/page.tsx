@@ -1,17 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import useSWR from 'swr';
 import {
   ArrowLeft,
   Ban,
   Building2,
-  ChevronDown,
   Crown,
   Home as HomeIcon,
   Landmark,
   Link2,
   Loader2,
+  Pencil,
   Phone,
   Settings,
   ShieldCheck,
@@ -29,6 +29,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import {
   Dialog,
   DialogContent,
@@ -52,8 +53,14 @@ type Member = {
   house_status?: 'ACTIVE' | 'PENDING' | 'BLOCKED' | string;
   house_name?: string;
   assigned_bank_id?: string | null;
+  custom_nickname?: string | null;
   member_houses?: { admin_id: string }[];
 };
+
+/** Display name precedence: admin's custom nickname → LINE nickname → registered name. */
+function displayNameOf(m: Member): string {
+  return m.custom_nickname?.trim() || m.nickname?.trim() || m.name;
+}
 
 type Bank = {
   id: string;
@@ -173,6 +180,22 @@ export default function MembersPage() {
       mutate();
     } else {
       toast.error(result.message || 'ดำเนินการล้มเหลว');
+    }
+  };
+
+  const handleSetNickname = async (target: Member, nickname: string) => {
+    const result = await callAction('set_member_nickname', {
+      caller_id: dbUser.id,
+      caller_role: dbUser.role,
+      house_id: target.house_id,
+      nickname,
+    });
+    if (result.status === 'success') {
+      toast.success(result.message || 'ตั้งชื่อเล่นเรียบร้อย');
+      setSettingsMember(null);
+      mutate();
+    } else {
+      toast.error(result.message || 'ตั้งชื่อเล่นล้มเหลว');
     }
   };
 
@@ -333,29 +356,22 @@ export default function MembersPage() {
                   {admin.house_name || admin.name}
                 </div>
                 <div className="truncate text-sm text-muted-foreground">
-                  {admin.nickname} ({admin.name})
+                  {admin.custom_nickname || admin.nickname} ({admin.name})
                 </div>
               </div>
-              <span className="text-xs font-bold text-primary">ท้าวแชร์</span>
+              <span className="shrink-0 text-xs font-bold text-primary">ท้าวแชร์</span>
               <Button
                 type="button"
                 size="icon"
                 variant="ghost"
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleDelete(admin);
+                  openSettings(admin);
                 }}
-                className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                aria-label={`ลบ ${admin.name}`}
+                aria-label={`ตั้งค่า ${admin.name}`}
               >
-                <Trash2 className="size-4" />
+                <Settings className="size-5" />
               </Button>
-              <ChevronDown
-                className={cn(
-                  'size-5 text-muted-foreground transition-transform',
-                  expanded && 'rotate-180',
-                )}
-              />
             </Card>
 
             {expanded && (
@@ -393,6 +409,7 @@ export default function MembersPage() {
       onUpdateRole={handleUpdateRole}
       onBlockToggle={handleBlockToggle}
       onAssignBank={handleAssignBank}
+      onSetNickname={handleSetNickname}
       onDelete={handleDelete}
       banks={myBanks}
       callerRole={dbUser.role}
@@ -479,7 +496,7 @@ function MemberCard({
         {member.picture_url ? (
           <AvatarImage
             src={member.picture_url}
-            alt={member.nickname || member.name}
+            alt={displayNameOf(member)}
             className="object-cover"
           />
         ) : null}
@@ -501,7 +518,7 @@ function MemberCard({
 
       <div className="min-w-0 flex-1">
         <div className={cn('flex items-center gap-2 truncate font-extrabold', mini ? 'text-sm' : 'text-base')}>
-          <span className="truncate">{member.nickname || member.name}</span>
+          <span className="truncate">{displayNameOf(member)}</span>
           {isSelf && <span className="text-primary">(ฉัน)</span>}
           {isPending && (
             <Badge variant="warning" className="text-[0.55rem]">
@@ -566,6 +583,7 @@ function SettingsDialog({
   onUpdateRole,
   onBlockToggle,
   onAssignBank,
+  onSetNickname,
   onDelete,
   banks,
   callerRole,
@@ -578,16 +596,25 @@ function SettingsDialog({
   onUpdateRole: (m: Member, role: Role) => void;
   onBlockToggle: (m: Member) => void;
   onAssignBank: (m: Member, bankId: string | null) => void;
+  onSetNickname: (m: Member, nickname: string) => void;
   onDelete: (m: Member) => void;
   banks: Bank[];
   callerRole: Role;
   callerId: string;
 }) {
+  // Local draft for the nickname input (resets each time a different member is opened).
+  const [nicknameDraft, setNicknameDraft] = useState('');
+  useEffect(() => {
+    setNicknameDraft(member?.custom_nickname ?? '');
+  }, [member?.id, member?.custom_nickname]);
+
   if (!member) return null;
 
   const isBlocked = member.house_status === 'BLOCKED';
   const inMyHouse = member.member_houses?.some((h) => h.admin_id === callerId);
   const canChangeRole = callerRole === 'SUPERADMIN' && member.house_status === 'ACTIVE';
+  const canEditNickname = !!inMyHouse;
+  const nicknameChanged = (nicknameDraft || '').trim() !== (member.custom_nickname || '').trim();
 
   // Roles available based on caller permissions
   const ROLE_OPTIONS: { value: Role; label: string }[] = [
@@ -608,7 +635,7 @@ function SettingsDialog({
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <DialogTitle className="truncate text-lg">
-                {member.nickname || member.name}
+                {displayNameOf(member)}
               </DialogTitle>
               <DialogDescription className="flex items-center gap-1.5 text-xs">
                 <Landmark className="size-3.5" />
@@ -620,6 +647,35 @@ function SettingsDialog({
             </Badge>
           </div>
         </DialogHeader>
+
+        {view === 'menu' && canEditNickname && (
+          <div className="flex flex-col gap-1.5 pt-1">
+            <label className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+              <Pencil className="size-3.5" /> ตั้งชื่อเล่น (สำหรับมุมมองของคุณ)
+            </label>
+            <div className="flex gap-2">
+              <Input
+                value={nicknameDraft}
+                onChange={(e) => setNicknameDraft(e.target.value)}
+                placeholder={member.nickname || member.name}
+                maxLength={120}
+              />
+              <Button
+                type="button"
+                disabled={!nicknameChanged}
+                onClick={() => onSetNickname(member, nicknameDraft.trim())}
+              >
+                บันทึก
+              </Button>
+            </div>
+            {(member.custom_nickname || nicknameDraft) && (
+              <span className="text-[0.7rem] text-muted-foreground">
+                ชื่อจริง: {member.name}
+                {member.nickname && member.nickname !== member.name && ` · LINE: ${member.nickname}`}
+              </span>
+            )}
+          </div>
+        )}
 
         {view === 'menu' && (
           <div className="grid grid-cols-2 gap-2 pt-2">
