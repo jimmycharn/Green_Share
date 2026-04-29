@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import useSWR from 'swr';
 import {
   ArrowLeft,
+  ArrowRightLeft,
   Ban,
   Building2,
   Crown,
@@ -13,6 +14,7 @@ import {
   Loader2,
   Pencil,
   Phone,
+  Search,
   Settings,
   ShieldCheck,
   Trash2,
@@ -54,7 +56,7 @@ type Member = {
   house_name?: string;
   assigned_bank_id?: string | null;
   custom_nickname?: string | null;
-  member_houses?: { admin_id: string }[];
+  member_houses?: { id?: string; admin_id: string; status?: string }[];
 };
 
 /** Display name precedence: admin's custom nickname → LINE nickname → registered name. */
@@ -77,7 +79,7 @@ export default function MembersPage() {
   const confirm = useConfirm();
   const [expandedAdmin, setExpandedAdmin] = useState<string | null>(null);
   const [settingsMember, setSettingsMember] = useState<Member | null>(null);
-  const [settingsView, setSettingsView] = useState<'menu' | 'role' | 'bank'>('menu');
+  const [settingsView, setSettingsView] = useState<'menu' | 'role' | 'bank' | 'transfer'>('menu');
 
   const memberId = dbUser?.id;
   const {
@@ -180,6 +182,28 @@ export default function MembersPage() {
       mutate();
     } else {
       toast.error(result.message || 'ดำเนินการล้มเหลว');
+    }
+  };
+
+  const handleTransfer = async (target: Member, newAdminId: string) => {
+    const targetAdmin = members.find((m) => m.id === newAdminId);
+    const ok = await confirm({
+      title: 'ย้ายสมาชิก',
+      description: `ยืนยันย้าย ${target.name} ไปบ้านของ ${targetAdmin?.name || newAdminId}?`,
+    });
+    if (!ok) return;
+    const result = await callAction('transfer_member', {
+      caller_id: dbUser.id,
+      caller_role: dbUser.role,
+      house_id: target.house_id,
+      new_admin_id: newAdminId,
+    });
+    if (result.status === 'success') {
+      toast.success(result.message || 'ย้ายเรียบร้อย');
+      setSettingsMember(null);
+      mutate();
+    } else {
+      toast.error(result.message || 'ย้ายล้มเหลว');
     }
   };
 
@@ -401,6 +425,9 @@ export default function MembersPage() {
     </div>
   );
 
+  // List of admin members (potential transfer targets) — includes SUPERADMIN/ADMIN.
+  const adminMembers = members.filter((m) => ADMIN_ROLES.has(m.role));
+
   const settingsDialog = (
     <SettingsDialog
       member={settingsMember}
@@ -411,8 +438,10 @@ export default function MembersPage() {
       onBlockToggle={handleBlockToggle}
       onAssignBank={handleAssignBank}
       onSetNickname={handleSetNickname}
+      onTransfer={handleTransfer}
       onDelete={handleDelete}
       banks={myBanks}
+      admins={adminMembers}
       callerRole={dbUser.role}
       callerId={dbUser.id}
     />
@@ -588,28 +617,34 @@ function SettingsDialog({
   onBlockToggle,
   onAssignBank,
   onSetNickname,
+  onTransfer,
   onDelete,
   banks,
+  admins,
   callerRole,
   callerId,
 }: {
   member: Member | null;
-  view: 'menu' | 'role' | 'bank';
-  setView: (v: 'menu' | 'role' | 'bank') => void;
+  view: 'menu' | 'role' | 'bank' | 'transfer';
+  setView: (v: 'menu' | 'role' | 'bank' | 'transfer') => void;
   onClose: () => void;
   onUpdateRole: (m: Member, role: Role) => void;
   onBlockToggle: (m: Member) => void;
   onAssignBank: (m: Member, bankId: string | null) => void;
   onSetNickname: (m: Member, nickname: string) => void;
+  onTransfer: (m: Member, newAdminId: string) => void;
   onDelete: (m: Member) => void;
   banks: Bank[];
+  admins: Member[];
   callerRole: Role;
   callerId: string;
 }) {
   // Local draft for the nickname input (resets each time a different member is opened).
   const [nicknameDraft, setNicknameDraft] = useState('');
+  const [transferQuery, setTransferQuery] = useState('');
   useEffect(() => {
     setNicknameDraft(member?.custom_nickname ?? '');
+    setTransferQuery('');
   }, [member?.id, member?.custom_nickname]);
 
   if (!member) return null;
@@ -618,7 +653,24 @@ function SettingsDialog({
   const inMyHouse = member.member_houses?.some((h) => h.admin_id === callerId);
   const canChangeRole = callerRole === 'SUPERADMIN' && member.house_status === 'ACTIVE';
   const canEditNickname = !!inMyHouse;
+  // Transfer is a Superadmin-only action and only makes sense for non-admin members
+  // (you don't transfer the Superadmin's own admins between houses).
+  const canTransfer =
+    callerRole === 'SUPERADMIN' && !ADMIN_ROLES.has(member.role) && !!member.house_id;
   const nicknameChanged = (nicknameDraft || '').trim() !== (member.custom_nickname || '').trim();
+
+  const currentAdminId = member.member_houses?.find((h) => h.id === member.house_id)?.admin_id;
+  const transferCandidates = admins.filter((a) => a.id !== currentAdminId && a.id !== member.id);
+  const filteredCandidates = transferCandidates.filter((a) => {
+    const q = transferQuery.trim().toLowerCase();
+    if (!q) return true;
+    return (
+      a.id.toLowerCase().includes(q) ||
+      a.name.toLowerCase().includes(q) ||
+      (a.nickname || '').toLowerCase().includes(q) ||
+      (a.custom_nickname || '').toLowerCase().includes(q)
+    );
+  });
 
   // Roles available based on caller permissions
   const ROLE_OPTIONS: { value: Role; label: string }[] = [
@@ -636,20 +688,16 @@ function SettingsDialog({
     >
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <DialogTitle className="truncate text-lg">
-                {displayNameOf(member)}
-              </DialogTitle>
-              <DialogDescription className="flex items-center gap-1.5 text-xs">
-                <Landmark className="size-3.5" />
-                {member.assigned_bank_id ? 'ใช้บัญชีเฉพาะที่กำหนด' : 'ใช้บัญชีหลักของบ้าน'}
-              </DialogDescription>
-            </div>
+          <DialogTitle className="flex items-center gap-2 truncate text-lg">
+            <span className="truncate">{displayNameOf(member)}</span>
             <Badge variant="outline" className="shrink-0">
               {member.role}
             </Badge>
-          </div>
+          </DialogTitle>
+          <DialogDescription className="flex items-center gap-1.5 text-xs">
+            <Landmark className="size-3.5" />
+            {member.assigned_bank_id ? 'ใช้บัญชีเฉพาะที่กำหนด' : 'ใช้บัญชีหลักของบ้าน'}
+          </DialogDescription>
         </DialogHeader>
 
         {view === 'menu' && canEditNickname && (
@@ -679,6 +727,17 @@ function SettingsDialog({
               </span>
             )}
           </div>
+        )}
+
+        {view === 'menu' && canTransfer && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setView('transfer')}
+            className="justify-center gap-2 border-primary/30 bg-primary/5 text-primary hover:bg-primary/10 hover:text-primary"
+          >
+            <ArrowRightLeft className="size-4" /> ย้ายไปบ้านแชร์อื่น
+          </Button>
         )}
 
         {view === 'menu' && (
@@ -752,6 +811,66 @@ function SettingsDialog({
                 </Button>
               );
             })}
+          </div>
+        )}
+
+        {view === 'transfer' && (
+          <div className="flex flex-col gap-2 pt-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="w-fit gap-1 text-muted-foreground"
+              onClick={() => setView('menu')}
+            >
+              <ArrowLeft className="size-4" /> ย้อนกลับ
+            </Button>
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={transferQuery}
+                onChange={(e) => setTransferQuery(e.target.value)}
+                placeholder="ค้นหาจากชื่อหรือ ID…"
+                className="pl-9"
+              />
+            </div>
+            <div className="flex max-h-72 flex-col gap-2 overflow-y-auto">
+              {filteredCandidates.length === 0 ? (
+                <Card className="border-dashed bg-muted/30 p-4 text-center text-sm text-muted-foreground">
+                  {transferCandidates.length === 0
+                    ? 'ยังไม่มีบ้านแชร์อื่นให้ย้ายไป'
+                    : 'ไม่พบผลลัพธ์'}
+                </Card>
+              ) : (
+                filteredCandidates.map((a) => (
+                  <Button
+                    key={a.id}
+                    type="button"
+                    variant="outline"
+                    onClick={() => onTransfer(member, a.id)}
+                    className="h-auto justify-start gap-3 p-3 text-left"
+                  >
+                    <Avatar className="size-9 shrink-0 rounded-xl">
+                      {a.picture_url ? (
+                        <AvatarImage src={a.picture_url} alt={displayNameOf(a)} className="object-cover" />
+                      ) : null}
+                      <AvatarFallback className="rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 text-white">
+                        <Crown className="size-4" />
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-bold">{displayNameOf(a)}</div>
+                      <div className="truncate font-mono text-[0.7rem] text-muted-foreground">
+                        ID: {a.id}
+                      </div>
+                    </div>
+                    <Badge variant="outline" className="shrink-0 text-[0.6rem]">
+                      {a.role}
+                    </Badge>
+                  </Button>
+                ))
+              )}
+            </div>
           </div>
         )}
 
