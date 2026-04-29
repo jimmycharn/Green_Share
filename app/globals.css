@@ -1,31 +1,23 @@
 @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
 @import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
 
 /* ==========================================================================
    Tailwind v4 Design Tokens (`@theme`)
-   - These become utility classes automatically:
-     bg-primary, text-foreground, rounded-glass, font-sans, etc.
-   - To remove a Tailwind default, set its variable to `initial`.
+   - Brand-specific tokens (named after our product, not generic)
+   - Semantic tokens (background, foreground, card, ...) live in :root below
+     and are wired via `@theme inline` further down so they can switch
+     between light/dark using CSS variables.
    ========================================================================== */
 @theme {
-  /* Brand colors */
-  --color-primary: #10b981;
-  --color-primary-50: #ecfdf5;
-  --color-primary-100: #d1fae5;
-  --color-primary-500: #10b981;
-  --color-primary-600: #059669;
-  --color-primary-700: #047857;
-
-  --color-secondary: #3b82f6;
-  --color-accent: #8b5cf6;
-  --color-background: #f1f5f9;
-  --color-foreground: #0f172a;
-  --color-muted: #64748b;
-
-  /* Status colors */
-  --color-success: #10b981;
-  --color-warning: #f59e0b;
-  --color-danger: #e11d48;
+  /* Brand color scale */
+  --color-brand-50: #ecfdf5;
+  --color-brand-100: #d1fae5;
+  --color-brand-500: #10b981;
+  --color-brand-600: #059669;
+  --color-brand-700: #047857;
 
   /* Typography */
   --font-sans: 'Kanit', ui-sans-serif, system-ui, sans-serif;
@@ -34,23 +26,50 @@
   --radius-glass: 24px;
   --radius-pill: 999px;
 
-  /* Shadows */
+  /* Brand shadows */
   --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
   --shadow-primary: 0 10px 25px rgba(16, 185, 129, 0.25);
 }
 
 /* ==========================================================================
-   Legacy CSS variables — kept for the existing components during Phase 5
-   migration. Will be removed once every page is on Tailwind utilities.
+   Semantic Color System (shadcn-style)
+   - Light mode in :root, dark mode in .dark
+   - Wired into Tailwind utilities below via `@theme inline`
    ========================================================================== */
 :root {
-  /* Premium Palette */
-  --primary: #10b981;
-  --primary-gradient: linear-gradient(135deg, #10b981, #059669);
-  --secondary: #3b82f6;
-  --accent: #8b5cf6;
+  --radius: 0.625rem;
+
+  /* Page background uses the existing legacy gray — keeps current look. */
   --background: #f1f5f9;
   --foreground: #0f172a;
+
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+
+  --primary: #10b981;
+  --primary-foreground: #ffffff;
+
+  --secondary: #f1f5f9;
+  --secondary-foreground: #0f172a;
+
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+
+  --accent: #d1fae5;
+  --accent-foreground: #047857;
+
+  --destructive: #e11d48;
+  --destructive-foreground: #ffffff;
+
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #10b981;
+
+  /* ---- Legacy (kept for existing components during migration) ---- */
+  --primary-gradient: linear-gradient(135deg, #10b981, #059669);
 
   /* Glassmorphism Tokens */
   --glass-bg: rgba(255, 255, 255, 0.7);
@@ -62,13 +81,53 @@
   --safe-area-bottom: 90px; /* Space for Bottom Nav */
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0f172a;
-    --foreground: #f8fafc;
-    --glass-bg: rgba(30, 41, 59, 0.6);
-    --glass-border: rgba(255, 255, 255, 0.1);
-  }
+.dark {
+  --background: #0f172a;
+  --foreground: #f8fafc;
+  --card: #1e293b;
+  --card-foreground: #f8fafc;
+  --popover: #1e293b;
+  --popover-foreground: #f8fafc;
+  --primary: #10b981;
+  --primary-foreground: #ffffff;
+  --secondary: #1e293b;
+  --secondary-foreground: #f8fafc;
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  --accent: #064e3b;
+  --accent-foreground: #d1fae5;
+  --destructive: #f43f5e;
+  --destructive-foreground: #ffffff;
+  --border: #334155;
+  --input: #334155;
+  --ring: #10b981;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
 }
 
 * {
