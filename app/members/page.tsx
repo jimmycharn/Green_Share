@@ -25,6 +25,7 @@ import { callAction, swrFetcher } from '@/lib/api';
 import { useConfirm } from '@/components/providers/ConfirmProvider';
 import { cn } from '@/lib/utils';
 
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -46,6 +47,7 @@ type Member = {
   nickname?: string;
   phone?: string;
   role: Role;
+  picture_url?: string | null;
   house_id?: string;
   house_status?: 'ACTIVE' | 'PENDING' | 'BLOCKED' | string;
   house_name?: string;
@@ -314,9 +316,18 @@ export default function MembersPage() {
                   : 'hover:border-primary/30 hover:shadow-md',
               )}
             >
-              <div className="flex size-12 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 text-white">
-                <Crown className="size-6" />
-              </div>
+              <Avatar className="size-12 shrink-0 rounded-2xl">
+                {admin.picture_url ? (
+                  <AvatarImage
+                    src={admin.picture_url}
+                    alt={admin.nickname || admin.name}
+                    className="object-cover"
+                  />
+                ) : null}
+                <AvatarFallback className="rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 text-white">
+                  <Crown className="size-6" />
+                </AvatarFallback>
+              </Avatar>
               <div className="min-w-0 flex-1">
                 <div className="truncate text-base font-extrabold">
                   {admin.house_name || admin.name}
@@ -459,19 +470,34 @@ function MemberCard({
         isBlocked && 'opacity-60',
       )}
     >
-      <div
+      <Avatar
         className={cn(
-          'flex shrink-0 items-center justify-center rounded-2xl text-white',
+          'shrink-0 rounded-2xl',
           mini ? 'size-10' : 'size-12',
-          isMemberAdmin ? 'bg-gradient-to-br from-emerald-400 to-emerald-600' : 'bg-slate-700',
         )}
       >
-        {isMemberAdmin ? (
-          <Crown className={mini ? 'size-5' : 'size-6'} />
-        ) : (
-          <UserIcon className={mini ? 'size-5' : 'size-6'} />
-        )}
-      </div>
+        {member.picture_url ? (
+          <AvatarImage
+            src={member.picture_url}
+            alt={member.nickname || member.name}
+            className="object-cover"
+          />
+        ) : null}
+        <AvatarFallback
+          className={cn(
+            'rounded-2xl text-white',
+            isMemberAdmin
+              ? 'bg-gradient-to-br from-emerald-400 to-emerald-600'
+              : 'bg-slate-700',
+          )}
+        >
+          {isMemberAdmin ? (
+            <Crown className={mini ? 'size-5' : 'size-6'} />
+          ) : (
+            <UserIcon className={mini ? 'size-5' : 'size-6'} />
+          )}
+        </AvatarFallback>
+      </Avatar>
 
       <div className="min-w-0 flex-1">
         <div className={cn('flex items-center gap-2 truncate font-extrabold', mini ? 'text-sm' : 'text-base')}>

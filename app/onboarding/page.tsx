@@ -100,6 +100,7 @@ export default function OnboardingPage() {
 
     const result = await callAction('register', {
       line_id: profile.userId,
+      picture_url: profile.pictureUrl || null,
       ...values,
     });
 

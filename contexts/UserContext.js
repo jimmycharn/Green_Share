@@ -35,6 +35,7 @@ export function UserProvider({ children }) {
             action: 'check_user',
             line_id: userProfile.userId,
             name: userProfile.displayName,
+            picture_url: userProfile.pictureUrl || null,
           }),
         });
         const data = await res.json();
