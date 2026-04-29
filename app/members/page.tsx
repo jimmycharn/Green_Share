@@ -211,7 +211,7 @@ export default function MembersPage() {
     const result = await callAction('set_member_nickname', {
       caller_id: dbUser.id,
       caller_role: dbUser.role,
-      house_id: target.house_id,
+      member_id: target.id,
       nickname,
     });
     if (result.status === 'success') {
@@ -652,7 +652,10 @@ function SettingsDialog({
   const isBlocked = member.house_status === 'BLOCKED';
   const inMyHouse = member.member_houses?.some((h) => h.admin_id === callerId);
   const canChangeRole = callerRole === 'SUPERADMIN' && member.house_status === 'ACTIVE';
-  const canEditNickname = !!inMyHouse;
+  // Nicknames are private to the viewer.
+  // • SUPERADMIN can label anyone.
+  // • ADMIN can label only members in their own house.
+  const canEditNickname = callerRole === 'SUPERADMIN' || (callerRole === 'ADMIN' && !!inMyHouse);
   // Transfer is a Superadmin-only action and only makes sense for non-admin members
   // (you don't transfer the Superadmin's own admins between houses).
   const canTransfer =
