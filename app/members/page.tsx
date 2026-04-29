@@ -353,10 +353,11 @@ export default function MembersPage() {
               </Avatar>
               <div className="min-w-0 flex-1">
                 <div className="truncate text-base font-extrabold">
-                  {admin.house_name || admin.name}
+                  {displayNameOf(admin)}
                 </div>
-                <div className="truncate text-sm text-muted-foreground">
-                  {admin.custom_nickname || admin.nickname} ({admin.name})
+                <div className="flex items-center gap-1 truncate text-sm text-muted-foreground">
+                  <Phone className="size-3.5" />
+                  <span className="truncate">{admin.phone || 'ไม่ระบุ'}</span>
                 </div>
               </div>
               <span className="shrink-0 text-xs font-bold text-primary">ท้าวแชร์</span>
@@ -531,12 +532,15 @@ function MemberCard({
             </Badge>
           )}
         </div>
-        {!mini && (
-          <div className="flex items-center gap-1 text-sm text-muted-foreground">
-            <Phone className="size-3.5" />
-            <span className="truncate">{member.phone || 'ไม่ระบุ'}</span>
-          </div>
-        )}
+        <div
+          className={cn(
+            'flex items-center gap-1 truncate text-muted-foreground',
+            mini ? 'text-xs' : 'text-sm',
+          )}
+        >
+          <Phone className={mini ? 'size-3' : 'size-3.5'} />
+          <span className="truncate">{member.phone || 'ไม่ระบุ'}</span>
+        </div>
       </div>
 
       {isMemberAdmin && (
