@@ -1988,381 +1988,177 @@ export default function CircleDetail() {
       </Dialog>
 
       {/* Config / Edit Modal */}
-      {configModal.open && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0,0,0,0.6)',
-            backdropFilter: 'blur(8px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 9999,
-            padding: '10px',
-          }}
-        >
-          <div
-            className="glass-panel"
-            style={{
-              width: '100%',
-              maxWidth: '480px',
-              padding: '24px 16px',
-              maxHeight: '95vh',
-              overflowY: 'auto',
-            }}
-          >
-            <div
-              style={{
-                position: 'sticky',
-                top: '-24px',
-                left: 0,
-                right: 0,
-                zIndex: 100,
-                background: '#f8fafc',
-                margin: '-24px -16px 30px -16px',
-                padding: '20px 16px',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                borderBottom: '1px solid #e2e8f0',
-              }}
-            >
-              <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '1.2rem' }}>⚙️</span> ตั้งค่า:{' '}
-                {configModal.period
-                  ? `(งวด ${configModal.period})`
-                  : configModal.mode === 'EDIT_CIRCLE'
-                    ? 'แก้ไขข้อมูลวงแชร์'
-                    : circle.name}
-              </h3>
-              <button
-                onClick={() => setConfigModal({ open: false, period: null })}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  fontSize: '1.5rem',
-                  color: '#94a3b8',
-                  cursor: 'pointer',
-                }}
-              >
-                ✕
-              </button>
+      <Dialog
+        open={configModal.open}
+        onOpenChange={(o) => !o && setConfigModal({ open: false, period: null })}
+      >
+        <DialogContent className="max-h-[95vh] max-w-lg overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <span className="text-xl">⚙️</span> ตั้งค่า:{' '}
+              {configModal.period
+                ? `(งวด ${configModal.period})`
+                : configModal.mode === 'EDIT_CIRCLE'
+                  ? 'แก้ไขข้อมูลวงแชร์'
+                  : circle?.name}
+            </DialogTitle>
+          </DialogHeader>
+
+          <form onSubmit={handleUpdateSettings} className="flex flex-col gap-5">
+            {configModal.mode === 'EDIT_CIRCLE' && (
+              <>
+                <FormField label="ชื่อวงแชร์">
+                  <input
+                    type="text"
+                    value={settingsData.name}
+                    onChange={(e) => setSettingsData({ ...settingsData, name: e.target.value })}
+                    required
+                    className="w-full rounded-lg border-2 border-muted bg-background px-3 py-2.5 text-sm outline-none focus:border-primary"
+                  />
+                </FormField>
+                <FormField label="ลิงก์กลุ่ม LINE ประจำวง">
+                  <input
+                    type="text"
+                    value={settingsData.line_group_url}
+                    onChange={(e) =>
+                      setSettingsData({ ...settingsData, line_group_url: e.target.value })
+                    }
+                    placeholder="https://line.me/ti/g/..."
+                    className="w-full rounded-lg border-2 border-muted bg-background px-3 py-2.5 text-sm outline-none focus:border-primary"
+                  />
+                </FormField>
+              </>
+            )}
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField label="⏰ เวลาเปิด" boxed={false}>
+                <input
+                  type="time"
+                  value={settingsData.bid_start_time}
+                  onChange={(e) =>
+                    setSettingsData({ ...settingsData, bid_start_time: e.target.value })
+                  }
+                  className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm"
+                />
+              </FormField>
+              <FormField label="⏰ เวลาปิด" boxed={false}>
+                <input
+                  type="time"
+                  value={settingsData.bid_end_time}
+                  onChange={(e) =>
+                    setSettingsData({ ...settingsData, bid_end_time: e.target.value })
+                  }
+                  className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm"
+                />
+              </FormField>
             </div>
 
-            <form
-              onSubmit={handleUpdateSettings}
-              style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}
-            >
-              {configModal.mode === 'EDIT_CIRCLE' && (
-                <>
-                  <div
-                    style={{
-                      background: '#f8fafc',
-                      padding: '16px',
-                      borderRadius: '18px',
-                      border: '1px solid #e2e8f0',
-                    }}
-                  >
-                    <label
-                      style={{
-                        display: 'block',
-                        marginBottom: '8px',
-                        fontWeight: '700',
-                        fontSize: '0.85rem',
-                      }}
-                    >
-                      ชื่อวงแชร์
-                    </label>
-                    <input
-                      type="text"
-                      value={settingsData.name}
-                      onChange={(e) => setSettingsData({ ...settingsData, name: e.target.value })}
-                      required
-                      className="glass-panel"
-                      style={{ width: '100%', padding: '12px', border: '1.5px solid #edf2f7' }}
-                    />
-                  </div>
-                  <div
-                    style={{
-                      background: '#f8fafc',
-                      padding: '16px',
-                      borderRadius: '18px',
-                      border: '1px solid #e2e8f0',
-                    }}
-                  >
-                    <label
-                      style={{
-                        display: 'block',
-                        marginBottom: '8px',
-                        fontWeight: '700',
-                        fontSize: '0.85rem',
-                      }}
-                    >
-                      ลิงก์กลุ่ม LINE ประจำวง
-                    </label>
-                    <input
-                      type="text"
-                      value={settingsData.line_group_url}
-                      onChange={(e) =>
-                        setSettingsData({ ...settingsData, line_group_url: e.target.value })
-                      }
-                      placeholder="https://line.me/ti/g/..."
-                      className="glass-panel"
-                      style={{ width: '100%', padding: '12px', border: '1.5px solid #edf2f7' }}
-                    />
-                  </div>
-                </>
-              )}
+            <div className="grid grid-cols-2 gap-4">
+              <FormField label="💰 ดอกต่ำสุด" boxed={false}>
+                <input
+                  type="number"
+                  value={settingsData.min_bid}
+                  onChange={(e) => setSettingsData({ ...settingsData, min_bid: e.target.value })}
+                  className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm"
+                />
+              </FormField>
+              <FormField label="💰 ดอกสูงสุด" boxed={false}>
+                <input
+                  type="number"
+                  value={settingsData.max_bid}
+                  onChange={(e) => setSettingsData({ ...settingsData, max_bid: e.target.value })}
+                  className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm"
+                />
+              </FormField>
+            </div>
 
-              <div style={{ display: 'flex', gap: '16px' }}>
-                <div style={{ flex: 1 }}>
-                  <label
-                    style={{
-                      display: 'block',
-                      marginBottom: '8px',
-                      fontSize: '0.8rem',
-                      fontWeight: '700',
-                    }}
-                  >
-                    ⏰ เวลาเปิด
-                  </label>
-                  <input
-                    type="time"
-                    value={settingsData.bid_start_time}
-                    onChange={(e) =>
-                      setSettingsData({ ...settingsData, bid_start_time: e.target.value })
-                    }
-                    className="glass-panel"
-                    style={{ width: '100%', padding: '12px' }}
-                  />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <label
-                    style={{
-                      display: 'block',
-                      marginBottom: '8px',
-                      fontSize: '0.8rem',
-                      fontWeight: '700',
-                    }}
-                  >
-                    ⏰ เวลาปิด
-                  </label>
-                  <input
-                    type="time"
-                    value={settingsData.bid_end_time}
-                    onChange={(e) =>
-                      setSettingsData({ ...settingsData, bid_end_time: e.target.value })
-                    }
-                    className="glass-panel"
-                    style={{ width: '100%', padding: '12px' }}
-                  />
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', gap: '16px' }}>
-                <div style={{ flex: 1 }}>
-                  <label
-                    style={{
-                      display: 'block',
-                      marginBottom: '8px',
-                      fontSize: '0.8rem',
-                      fontWeight: '700',
-                    }}
-                  >
-                    💰 ดอกต่ำสุด
-                  </label>
-                  <input
-                    type="number"
-                    value={settingsData.min_bid}
-                    onChange={(e) => setSettingsData({ ...settingsData, min_bid: e.target.value })}
-                    className="glass-panel"
-                    style={{ width: '100%', padding: '12px' }}
-                  />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <label
-                    style={{
-                      display: 'block',
-                      marginBottom: '8px',
-                      fontSize: '0.8rem',
-                      fontWeight: '700',
-                    }}
-                  >
-                    💰 ดอกสูงสุด
-                  </label>
-                  <input
-                    type="number"
-                    value={settingsData.max_bid}
-                    onChange={(e) => setSettingsData({ ...settingsData, max_bid: e.target.value })}
-                    className="glass-panel"
-                    style={{ width: '100%', padding: '12px' }}
-                  />
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', gap: '16px' }}>
-                <div style={{ flex: 1 }}>
-                  <label
-                    style={{
-                      display: 'block',
-                      marginBottom: '8px',
-                      fontSize: '0.8rem',
-                      fontWeight: '700',
-                    }}
-                  >
-                    🔔 แจ้งเตือน (ชม.)
-                  </label>
-                  <input
-                    type="number"
-                    value={settingsData.notify_hours}
-                    onChange={(e) =>
-                      setSettingsData({ ...settingsData, notify_hours: e.target.value })
-                    }
-                    className="glass-panel"
-                    style={{ width: '100%', padding: '12px' }}
-                  />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <label
-                    style={{
-                      display: 'block',
-                      marginBottom: '8px',
-                      fontSize: '0.8rem',
-                      fontWeight: '700',
-                    }}
-                  >
-                    🔒 โหมดปิด
-                  </label>
-                  <select
-                    value={settingsData.close_mode}
-                    onChange={(e) =>
-                      setSettingsData({ ...settingsData, close_mode: e.target.value })
-                    }
-                    className="glass-panel"
-                    style={{ width: '100%', padding: '12px' }}
-                  >
-                    <option value="แอดมินปิดเอง">แอดมินปิดเอง</option>
-                    <option value="ปิดอัตโนมัติ">ปิดอัตโนมัติ (AUTO)</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label
-                  style={{
-                    display: 'block',
-                    marginBottom: '8px',
-                    fontSize: '0.8rem',
-                    fontWeight: '700',
-                  }}
-                >
-                  ✂️ วิธีคิดดอก
-                </label>
-                <select
-                  value={settingsData.interest_method}
+            <div className="grid grid-cols-2 gap-4">
+              <FormField label="🔔 แจ้งเตือน (ชม.)" boxed={false}>
+                <input
+                  type="number"
+                  value={settingsData.notify_hours}
                   onChange={(e) =>
-                    setSettingsData({ ...settingsData, interest_method: e.target.value })
+                    setSettingsData({ ...settingsData, notify_hours: e.target.value })
                   }
-                  className="glass-panel"
-                  style={{ width: '100%', padding: '12px' }}
+                  className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm"
+                />
+              </FormField>
+              <FormField label="🔒 โหมดปิด" boxed={false}>
+                <select
+                  value={settingsData.close_mode}
+                  onChange={(e) =>
+                    setSettingsData({ ...settingsData, close_mode: e.target.value })
+                  }
+                  className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm"
                 >
-                  <option value="หักดอก">หักดอก (Interest Deduct)</option>
-                  <option value="ไม่หักดอก">ไม่หักดอก (Interest Add)</option>
+                  <option value="แอดมินปิดเอง">แอดมินปิดเอง</option>
+                  <option value="ปิดอัตโนมัติ">ปิดอัตโนมัติ (AUTO)</option>
                 </select>
-              </div>
+              </FormField>
+            </div>
 
-              {configModal.period && (
-                <div
-                  style={{
-                    background: '#f8fafc',
-                    padding: '16px',
-                    borderRadius: '18px',
-                    border: '1px solid #e2e8f0',
-                    marginTop: '16px',
-                  }}
-                >
-                  <label
-                    style={{
-                      display: 'block',
-                      marginBottom: '8px',
-                      fontWeight: '700',
-                      fontSize: '0.85rem',
-                    }}
-                  >
-                    งวดนี้กำหนดไว้ให้กับ
-                  </label>
-                  <select
-                    value={settingsData.assigned_to || 'NONE'}
-                    onChange={(e) =>
-                      setSettingsData({ ...settingsData, assigned_to: e.target.value })
-                    }
-                    className="glass-panel"
-                    style={{ width: '100%', padding: '12px', border: '1.5px solid #edf2f7' }}
-                  >
-                    <option value="NONE">ไม่กำหนด</option>
-                    <option value={circle.creator_id}>ท้าวแชร์</option>
-                    {Array.from(
-                      new Set(
-                        players
-                          .filter((p) => p.member_id !== circle.creator_id)
-                          .map((p) => p.member_id)
-                      )
-                    ).map((mId) => {
-                      const m = players.find((p) => p.member_id === mId);
-                      return (
-                        <option key={mId} value={mId}>
-                          {m?.member_name}
-                        </option>
-                      );
-                    })}
-                  </select>
-                </div>
-              )}
-
-              <div
-                style={{
-                  background: '#f8fafc',
-                  padding: '16px',
-                  borderRadius: '18px',
-                  border: '1px solid #e2e8f0',
-                  marginBottom: '10px',
-                }}
+            <FormField label="✂️ วิธีคิดดอก" boxed={false}>
+              <select
+                value={settingsData.interest_method}
+                onChange={(e) =>
+                  setSettingsData({ ...settingsData, interest_method: e.target.value })
+                }
+                className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm"
               >
-                <label
-                  style={{
-                    display: 'block',
-                    marginBottom: '8px',
-                    fontWeight: '700',
-                    fontSize: '0.85rem',
-                  }}
-                >
-                  ⚖️ สิทธิประมูล (Auction Permission)
-                </label>
-                <select
-                  value={settingsData.bid_permission}
-                  onChange={(e) =>
-                    setSettingsData({ ...settingsData, bid_permission: e.target.value })
-                  }
-                  className="glass-panel"
-                  style={{ width: '100%', padding: '12px', border: '1.5px solid #edf2f7' }}
-                >
-                  <option value="NONE">ไม่ต้องชำระก่อน</option>
-                  <option value="PARTIAL">ต้องชำระบางมือก่อนอย่างน้อย 1 มือ</option>
-                  <option value="ALL">ต้องชำระทุกมือก่อนในงวดนั้น</option>
-                </select>
-              </div>
+                <option value="หักดอก">หักดอก (Interest Deduct)</option>
+                <option value="ไม่หักดอก">ไม่หักดอก (Interest Add)</option>
+              </select>
+            </FormField>
 
-              <button type="submit" className="btn-primary" style={{ marginTop: '10px' }}>
-                บันทึกข้อมูล
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
+            {configModal.period && (
+              <FormField label="งวดนี้กำหนดไว้ให้กับ">
+                <select
+                  value={settingsData.assigned_to || 'NONE'}
+                  onChange={(e) =>
+                    setSettingsData({ ...settingsData, assigned_to: e.target.value })
+                  }
+                  className="w-full rounded-lg border-2 border-muted bg-background px-3 py-2.5 text-sm outline-none focus:border-primary"
+                >
+                  <option value="NONE">ไม่กำหนด</option>
+                  <option value={circle.creator_id}>ท้าวแชร์</option>
+                  {Array.from(
+                    new Set(
+                      players
+                        .filter((p) => p.member_id !== circle.creator_id)
+                        .map((p) => p.member_id)
+                    )
+                  ).map((mId) => {
+                    const m = players.find((p) => p.member_id === mId);
+                    return (
+                      <option key={mId} value={mId}>
+                        {m?.member_name}
+                      </option>
+                    );
+                  })}
+                </select>
+              </FormField>
+            )}
+
+            <FormField label="⚖️ สิทธิประมูล (Auction Permission)">
+              <select
+                value={settingsData.bid_permission}
+                onChange={(e) =>
+                  setSettingsData({ ...settingsData, bid_permission: e.target.value })
+                }
+                className="w-full rounded-lg border-2 border-muted bg-background px-3 py-2.5 text-sm outline-none focus:border-primary"
+              >
+                <option value="NONE">ไม่ต้องชำระก่อน</option>
+                <option value="PARTIAL">ต้องชำระบางมือก่อนอย่างน้อย 1 มือ</option>
+                <option value="ALL">ต้องชำระทุกมือก่อนในงวดนั้น</option>
+              </select>
+            </FormField>
+
+            <Button type="submit" size="lg" className="mt-2 w-full">
+              บันทึกข้อมูล
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
       {/* Payout Modal (Admin paying Winner) */}
       <Dialog
         open={payoutModal.open}
@@ -2504,5 +2300,22 @@ export default function CircleDetail() {
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+function FormField({ label, children, boxed = true }) {
+  if (boxed) {
+    return (
+      <div className="rounded-2xl border border-border bg-muted/40 p-4">
+        <label className="mb-2 block text-sm font-bold">{label}</label>
+        {children}
+      </div>
+    );
+  }
+  return (
+    <div>
+      <label className="mb-2 block text-xs font-bold">{label}</label>
+      {children}
+    </div>
   );
 }
