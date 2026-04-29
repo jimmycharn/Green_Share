@@ -2,6 +2,7 @@ import './globals.css';
 import ClientLayout from '@/components/ClientLayout';
 import { UserProvider } from '@/contexts/UserContext';
 import { Toaster } from '@/components/ui/sonner';
+import { ConfirmProvider } from '@/components/providers/ConfirmProvider';
 
 export const metadata = {
   title: 'GreenShare - ระบบจัดการวงแชร์พรีเมียม',
@@ -19,7 +20,9 @@ export default function RootLayout({ children }) {
       </head>
       <body>
         <UserProvider>
-          <ClientLayout>{children}</ClientLayout>
+          <ConfirmProvider>
+            <ClientLayout>{children}</ClientLayout>
+          </ConfirmProvider>
         </UserProvider>
         <Toaster />
       </body>

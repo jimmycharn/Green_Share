@@ -5,13 +5,16 @@ import { supabase } from '@/lib/supabase';
 import Script from 'next/script';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
+import { toast } from 'sonner';
 import { useUser } from '@/contexts/UserContext';
 import { authHeaders } from '@/lib/authHeaders';
+import { useConfirm } from '@/components/providers/ConfirmProvider';
 
 export default function CircleDetail() {
   const router = useRouter();
   const params = useParams();
   const circleId = params.id;
+  const confirm = useConfirm();
   const { dbUser, profile, liff, isLoading: isUserLoading } = useUser();
 
   const [isInitializing, setIsInitializing] = useState(true);
@@ -116,8 +119,11 @@ export default function CircleDetail() {
   };
 
   const handleMemberJoin = async (handNo) => {
-    const confirmJoin = confirm(`ยืนยันการจองมือที่ ${handNo}?`);
-    if (!confirmJoin) return;
+    const ok = await confirm({
+      title: 'จองมือ',
+      description: `ยืนยันการจองมือที่ ${handNo}?`,
+    });
+    if (!ok) return;
     try {
       const res = await fetch('/api/action', {
         method: 'POST',
@@ -142,7 +148,13 @@ export default function CircleDetail() {
   const submitAdminModal = async () => {
     if (!adminSelectedUserId) return;
     const isJoin = adminModal.mode === 'JOIN';
-    if (!isJoin && !confirm('ยืนยันการโอนมือให้สมาชิกท่านนี้?')) return;
+    if (!isJoin) {
+      const ok = await confirm({
+        title: 'โอนมือ',
+        description: 'ยืนยันการโอนมือให้สมาชิกท่านนี้?',
+      });
+      if (!ok) return;
+    }
     try {
       const payload = isJoin
         ? {
@@ -177,8 +189,12 @@ export default function CircleDetail() {
   };
 
   const handleStartCircle = async () => {
-    if (!confirm('ยืนยันการเริ่มวงแชร์? ระบบจะปิดรับการจองมือตามปกติและเปลี่ยนสถานะเป็น ACTIVE'))
-      return;
+    const ok = await confirm({
+      title: 'เริ่มวงแชร์',
+      description:
+        'ยืนยันการเริ่มวงแชร์? ระบบจะปิดรับการจองมือตามปกติและเปลี่ยนสถานะเป็น ACTIVE',
+    });
+    if (!ok) return;
     try {
       const res = await fetch('/api/action', {
         method: 'POST',
@@ -199,7 +215,12 @@ export default function CircleDetail() {
 
   const handleCancelHand = async (e, handNo) => {
     e.stopPropagation();
-    if (!confirm(`ยืนยันการยกเลิกจองมือที่ ${handNo}?`)) return;
+    const ok = await confirm({
+      title: 'ยกเลิกจองมือ',
+      description: `ยืนยันการยกเลิกจองมือที่ ${handNo}?`,
+      destructive: true,
+    });
+    if (!ok) return;
     try {
       const res = await fetch('/api/action', {
         method: 'POST',
@@ -237,7 +258,11 @@ export default function CircleDetail() {
   };
 
   const handleVerifySlip = async (slipId) => {
-    if (!confirm('ยืนยันการอนุมัติสลิปนี้?')) return;
+    const ok = await confirm({
+      title: 'อนุมัติสลิป',
+      description: 'ยืนยันการอนุมัติสลิปนี้?',
+    });
+    if (!ok) return;
     try {
       const res = await fetch('/api/action', {
         method: 'POST',
@@ -247,7 +272,7 @@ export default function CircleDetail() {
       const data = await res.json();
       if (data.status === 'success') fetchCircleDetail();
     } catch {
-      alert('การเชื่อมต่อขัดข้อง');
+      toast.error('การเชื่อมต่อขัดข้อง');
     }
   };
 
@@ -261,7 +286,10 @@ export default function CircleDetail() {
 
   const handleUploadSlip = async (e) => {
     e.preventDefault();
-    if (!uploadData.amount) return alert('กรุณาระบุยอดเงิน');
+    if (!uploadData.amount) {
+      toast.error('กรุณาระบุยอดเงิน');
+      return;
+    }
 
     let finalImageUrl = uploadData.image_url;
     setUploadLoading(true);
@@ -308,9 +336,9 @@ export default function CircleDetail() {
         setSlipModal({ open: false, period: null });
         fetchCircleDetail();
         setMessage({ type: 'success', text: 'ส่งสลิปเรียบร้อย!' });
-      } else alert(data.message);
+      } else toast.error(data.message);
     } catch (err) {
-      alert(err.message || 'การเชื่อมต่อขัดข้อง');
+      toast.error(err.message || 'การเชื่อมต่อขัดข้อง');
     } finally {
       setUploadLoading(false);
     }
@@ -324,9 +352,10 @@ export default function CircleDetail() {
     // Filter non-zero bids for validation
     if (amount !== 0) {
       if (amount < circle.min_bid || amount > circle.max_bid) {
-        return alert(
+        toast.error(
           `กรุณาระบุยอดเปียตามเงื่อนไขวงแชร์ (${circle.min_bid.toLocaleString()} - ${circle.max_bid.toLocaleString()} บาท)`
         );
+        return;
       }
     }
 
@@ -348,9 +377,9 @@ export default function CircleDetail() {
         setBidAmount('');
         fetchCircleDetail();
         if (amount === 0) setMessage({ type: 'success', text: 'ยกเลิกการประมูลเรียบร้อย' });
-      } else alert(data.message);
+      } else toast.error(data.message);
     } catch {
-      alert('การเชื่อมต่อขัดข้อง');
+      toast.error('การเชื่อมต่อขัดข้อง');
     }
   };
 
@@ -374,9 +403,9 @@ export default function CircleDetail() {
       if (data.status === 'success') {
         fetchCircleDetail();
         setMessage({ type: 'success', text: 'แอดมินชำระเงินเรียบร้อย!' });
-      } else alert(data.message);
+      } else toast.error(data.message);
     } catch {
-      alert('การเชื่อมต่อขัดข้อง');
+      toast.error('การเชื่อมต่อขัดข้อง');
     }
   };
 
@@ -400,9 +429,9 @@ export default function CircleDetail() {
       if (data.status === 'success') {
         setConfigModal({ open: false, period: null });
         fetchCircleDetail();
-      } else alert(data.message);
+      } else toast.error(data.message);
     } catch {
-      alert('การเชื่อมต่อขัดข้อง');
+      toast.error('การเชื่อมต่อขัดข้อง');
     }
   };
 
@@ -414,7 +443,10 @@ export default function CircleDetail() {
     if (action === 'close_period')
       confirmMsg = 'ยืนยันการปิดงวดและเริ่มงวดถัดไป? (ตรวจสอบว่าทุกคนชำระเงินเรียบร้อยแล้ว)';
 
-    if (confirmMsg && !confirm(confirmMsg)) return;
+    if (confirmMsg) {
+      const ok = await confirm({ title: 'ยืนยัน', description: confirmMsg });
+      if (!ok) return;
+    }
 
     try {
       const res = await fetch('/api/action', {
@@ -431,9 +463,9 @@ export default function CircleDetail() {
       if (data.status === 'success') {
         setMessage({ type: 'success', text: data.message });
         fetchCircleDetail();
-      } else alert(data.message);
+      } else toast.error(data.message);
     } catch {
-      alert('การเชื่อมต่อขัดข้อง');
+      toast.error('การเชื่อมต่อขัดข้อง');
     }
   };
 
@@ -525,7 +557,7 @@ export default function CircleDetail() {
 
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
-    alert('คัดลอกเลขบัญชีแล้ว!');
+    toast.success('คัดลอกเลขบัญชีแล้ว!');
   };
   const handlePayoutSubmit = async () => {
     if (!payoutModal.period || !payoutModal.winner_id) return;
@@ -1188,7 +1220,7 @@ export default function CircleDetail() {
                                     ) : (
                                       <button
                                         onClick={() =>
-                                          alert(
+                                          toast.error(
                                             circle.bid_permission === 'PARTIAL'
                                               ? 'กรุณาชำระเงินอย่างน้อย 1 มือก่อนประมูล'
                                               : 'กรุณาชำระเงินให้ครบทุกมือก่อนประมูล'
@@ -1232,15 +1264,14 @@ export default function CircleDetail() {
                                 )}
 
                                 <button
-                                  onClick={() => {
+                                  onClick={async () => {
                                     if (isCircleAdmin) {
-                                      if (
-                                        confirm(
-                                          'ยืนยันการชำระเงินทุกมือสำหรับงวดนี้? (แอดมินชำระให้ตนเอง)'
-                                        )
-                                      ) {
-                                        handleAdminAutoPay(period);
-                                      }
+                                      const ok = await confirm({
+                                        title: 'ชำระเงิน',
+                                        description:
+                                          'ยืนยันการชำระเงินทุกมือสำหรับงวดนี้? (แอดมินชำระให้ตนเอง)',
+                                      });
+                                      if (ok) handleAdminAutoPay(period);
                                     } else {
                                       const amt = getRequiredAmount(period);
                                       setUploadData({ ...uploadData, amount: amt });
@@ -1336,15 +1367,14 @@ export default function CircleDetail() {
                             {circle.type === 'ขั้นบันได (ดอกคงที่)' && (
                               <>
                                 <button
-                                  onClick={() => {
+                                  onClick={async () => {
                                     if (isCircleAdmin) {
-                                      if (
-                                        confirm(
-                                          'ยืนยันการชำระเงินทุกมือสำหรับงวดนี้? (แอดมินชำระให้ตนเอง)'
-                                        )
-                                      ) {
-                                        handleAdminAutoPay(period);
-                                      }
+                                      const ok = await confirm({
+                                        title: 'ชำระเงิน',
+                                        description:
+                                          'ยืนยันการชำระเงินทุกมือสำหรับงวดนี้? (แอดมินชำระให้ตนเอง)',
+                                      });
+                                      if (ok) handleAdminAutoPay(period);
                                     } else {
                                       const amt = getRequiredAmount(period);
                                       setUploadData({ ...uploadData, amount: amt });
