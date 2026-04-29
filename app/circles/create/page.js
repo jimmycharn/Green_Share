@@ -1,33 +1,34 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useUser } from "@/contexts/UserContext";
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useUser } from '@/contexts/UserContext';
+import { authHeaders } from '@/lib/authHeaders';
 
 export default function CreateCircle() {
   const router = useRouter();
   const { dbUser, isLoading: isUserLoading } = useUser();
   const [isSaving, setIsSaving] = useState(false);
-  
+
   // Form State
   const [formData, setFormData] = useState({
-    circle_name: "",
-    type: "ประมูล (เปียแข่งดอก)",
-    interest_method: "ไม่หักดอก",
-    amount_per_hand: "1000",
-    total_hands: "10",
-    line_group_url: "",
+    circle_name: '',
+    type: 'ประมูล (เปียแข่งดอก)',
+    interest_method: 'ไม่หักดอก',
+    amount_per_hand: '1000',
+    total_hands: '10',
+    line_group_url: '',
     start_date: new Date().toISOString().split('T')[0],
-    bid_start_time: "08:00",
-    bid_end_time: "13:00",
-    min_bid: "200",
-    max_bid: "500",
-    notify_hours: "1",
-    close_mode: "ปิดอัตโนมัติ",
-    bid_permission: "ALL"
+    bid_start_time: '08:00',
+    bid_end_time: '13:00',
+    min_bid: '200',
+    max_bid: '500',
+    notify_hours: '1',
+    close_mode: 'ปิดอัตโนมัติ',
+    bid_permission: 'ALL',
   });
-  
-  const [message, setMessage] = useState({ type: "", text: "" });
+
+  const [message, setMessage] = useState({ type: '', text: '' });
 
   // Auto-calculate Total Amount
   const [totalAmount, setTotalAmount] = useState(0);
@@ -47,18 +48,18 @@ export default function CreateCircle() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!dbUser) {
-      setMessage({ type: "error", text: "กรุณารอข้อมูลสมาชิกโหลดสักครู่..." });
+      setMessage({ type: 'error', text: 'กรุณารอข้อมูลสมาชิกโหลดสักครู่...' });
       return;
     }
-    
+
     setIsSaving(true);
-    setMessage({ type: "", text: "" });
+    setMessage({ type: '', text: '' });
 
     const amountPerHand = parseFloat(formData.amount_per_hand);
     const totalHands = parseInt(formData.total_hands);
 
     if (isNaN(amountPerHand) || isNaN(totalHands)) {
-      setMessage({ type: "error", text: "กรุณากรอกตัวเลขให้ถูกต้อง" });
+      setMessage({ type: 'error', text: 'กรุณากรอกตัวเลขให้ถูกต้อง' });
       setIsSaving(false);
       return;
     }
@@ -66,7 +67,7 @@ export default function CreateCircle() {
     try {
       const res = await fetch('/api/action', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders(),
         body: JSON.stringify({
           action: 'create_circle',
           creator_id: dbUser.id,
@@ -84,293 +85,651 @@ export default function CreateCircle() {
           max_bid: formData.max_bid,
           notify_hours: formData.notify_hours,
           close_mode: formData.close_mode,
-          bid_permission: formData.bid_permission
-        })
+          bid_permission: formData.bid_permission,
+        }),
       });
-      
+
       const resData = await res.json();
-      
+
       if (resData.status === 'success') {
-        setMessage({ type: "success", text: "สร้างวงแชร์สำเร็จ! กำลังพาทีมไปดูวงใหม่..." });
+        setMessage({ type: 'success', text: 'สร้างวงแชร์สำเร็จ! กำลังพาทีมไปดูวงใหม่...' });
         setTimeout(() => {
-            router.push(`/circles/${resData.id}`);
+          router.push(`/circles/${resData.id}`);
         }, 1500);
       } else {
-        alert("🚨 สร้างวงแชร์ไม่สำเร็จ: " + (resData.message || "ไม่สามารถระบุสาเหตุได้"));
-        setMessage({ type: "error", text: resData.message || "สร้างล้มเหลว" });
+        alert('🚨 สร้างวงแชร์ไม่สำเร็จ: ' + (resData.message || 'ไม่สามารถระบุสาเหตุได้'));
+        setMessage({ type: 'error', text: resData.message || 'สร้างล้มเหลว' });
       }
     } catch (error) {
-      alert("⚠️ ปัญหาการเชื่อมต่อ: " + error.message);
-      setMessage({ type: "error", text: "มีปัญหาขณะส่งข้อมูล กรุณาลองใหม่" });
+      alert('⚠️ ปัญหาการเชื่อมต่อ: ' + error.message);
+      setMessage({ type: 'error', text: 'มีปัญหาขณะส่งข้อมูล กรุณาลองใหม่' });
     }
-    
+
     setIsSaving(false);
   };
 
   return (
-    <div className="animate-fade-in" style={{ backgroundColor: "#f8fafc", minHeight: "100vh" }}>
+    <div className="animate-fade-in" style={{ backgroundColor: '#f8fafc', minHeight: '100vh' }}>
       {/* Widened Container */}
-      <div style={{ margin: "0 -8px" }}>
+      <div style={{ margin: '0 -8px' }}>
         {/* Header Layout */}
-        <div style={{ 
-          background: "linear-gradient(to right, #48bb78, #38a169)", 
-          padding: "30px 20px", 
-          borderRadius: "30px 30px 0 0",
-          display: "flex",
-          alignItems: "center",
-          gap: "16px",
-          boxShadow: "0 4px 15px rgba(56, 161, 105, 0.2)",
-          marginTop: "10px"
-        }}>
-          <div style={{ 
-            background: "rgba(255, 255, 255, 0.2)", 
-            padding: "12px", 
-            borderRadius: "16px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center"
-          }}>
-            <span style={{ fontSize: "1.8rem" }}>👥</span>
+        <div
+          style={{
+            background: 'linear-gradient(to right, #48bb78, #38a169)',
+            padding: '30px 20px',
+            borderRadius: '30px 30px 0 0',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '16px',
+            boxShadow: '0 4px 15px rgba(56, 161, 105, 0.2)',
+            marginTop: '10px',
+          }}
+        >
+          <div
+            style={{
+              background: 'rgba(255, 255, 255, 0.2)',
+              padding: '12px',
+              borderRadius: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <span style={{ fontSize: '1.8rem' }}>👥</span>
           </div>
           <div>
-            <h2 style={{ fontSize: "1.4rem", fontWeight: "800", margin: 0, color: "white" }}>✨ ข้อมูลวงแชร์ ✨</h2>
-            <p style={{ color: "rgba(255, 255, 255, 0.9)", margin: "2px 0 0 0", fontSize: "0.95rem" }}>กรอกรายละเอียดให้ครบถ้วน</p>
+            <h2 style={{ fontSize: '1.4rem', fontWeight: '800', margin: 0, color: 'white' }}>
+              ✨ ข้อมูลวงแชร์ ✨
+            </h2>
+            <p
+              style={{
+                color: 'rgba(255, 255, 255, 0.9)',
+                margin: '2px 0 0 0',
+                fontSize: '0.95rem',
+              }}
+            >
+              กรอกรายละเอียดให้ครบถ้วน
+            </p>
           </div>
         </div>
 
-      <div style={{ padding: "0 0 40px 0" }}>
-        <div className="glass-panel" style={{ padding: "24px 14px", borderRadius: "0 0 30px 30px", boxShadow: "0 10px 25px rgba(0,0,0,0.05)" }}>
-          {message.text && (
-            <div style={{ padding: "14px", marginBottom: "24px", borderRadius: "12px", background: message.type === "success" ? "#dcfce7" : "#fee2e2", color: message.type === "success" ? "#166534" : "#991b1b", textAlign: "center", fontWeight: "700", fontSize: "0.9rem" }}>
-              {message.text}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-            <div>
-              <label style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px", fontWeight: "700", fontSize: "0.9rem", color: "#334155" }}>
-                <span style={{ fontSize: "1.1rem" }}>🏷️</span> ชื่อวง
-              </label>
-              <input 
-                type="text" 
-                name="circle_name" 
-                value={formData.circle_name} 
-                onChange={handleChange} 
-                required
-                className="input-glow"
-                style={{ width: "100%", padding: "16px", borderRadius: "18px", border: "1.5px solid #edf2f7", fontSize: "1rem", backgroundColor: "white", outline: "none", transition: "all 0.2s" }}
-                placeholder="เช่น วงเพื่อนซี้, วงครอบครัว"
-              />
-            </div>
-
-            <div>
-              <label style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px", fontWeight: "700", fontSize: "0.9rem", color: "#334155" }}>
-                <span style={{ fontSize: "1.1rem" }}>⚙️</span> ประเภทวง
-              </label>
-              <div style={{ position: "relative" }}>
-                <select 
-                  name="type" 
-                  value={formData.type} 
-                  onChange={handleChange}
-                  className="input-glow"
-                  style={{ width: "100%", padding: "16px", borderRadius: "18px", border: "1.5px solid #edf2f7", fontSize: "1rem", backgroundColor: "white", outline: "none", appearance: "none", backgroundImage: "url(\"data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='24'%20height='24'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='currentColor'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpolyline%20points='6%209%2012%2015%2018%209'%3E%3C/polyline%3E%3C/svg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 16px center", backgroundSize: "18px" }}
-                >
-                  <option value="ประมูล (เปียแข่งดอก)">🎯 บิงโก (ประมูลราคาสูงสุด)</option>
-                  <option value="ขั้นบันได (ดอกคงที่)">📊 ขั้นบันได (ดอกคงที่)</option>
-                </select>
+        <div style={{ padding: '0 0 40px 0' }}>
+          <div
+            className="glass-panel"
+            style={{
+              padding: '24px 14px',
+              borderRadius: '0 0 30px 30px',
+              boxShadow: '0 10px 25px rgba(0,0,0,0.05)',
+            }}
+          >
+            {message.text && (
+              <div
+                style={{
+                  padding: '14px',
+                  marginBottom: '24px',
+                  borderRadius: '12px',
+                  background: message.type === 'success' ? '#dcfce7' : '#fee2e2',
+                  color: message.type === 'success' ? '#166534' : '#991b1b',
+                  textAlign: 'center',
+                  fontWeight: '700',
+                  fontSize: '0.9rem',
+                }}
+              >
+                {message.text}
               </div>
-            </div>
+            )}
 
-            <div>
-              <label style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px", fontWeight: "700", fontSize: "0.9rem", color: "#334155" }}>
-                <span style={{ fontSize: "1.1rem" }}>⚖️</span> สิทธิประมูล (Auction Permission)
-              </label>
-              <div style={{ position: "relative" }}>
-                <select 
-                  name="bid_permission" 
-                  value={formData.bid_permission} 
-                  onChange={handleChange}
-                  className="input-glow"
-                  style={{ width: "100%", padding: "16px", borderRadius: "18px", border: "1.5px solid #edf2f7", fontSize: "1rem", backgroundColor: "white", outline: "none" }}
+            <form
+              onSubmit={handleSubmit}
+              style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}
+            >
+              <div>
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    marginBottom: '10px',
+                    fontWeight: '700',
+                    fontSize: '0.9rem',
+                    color: '#334155',
+                  }}
                 >
-                  <option value="NONE">ไม่ต้องชำระก่อน (Free to bid)</option>
-                  <option value="PARTIAL">ต้องชำระบางมือก่อนอย่างน้อย 1 มือ (Pay at least 1 hand)</option>
-                  <option value="ALL">ต้องชำระทุกมือก่อนในงวดนั้น (Pay all hands first)</option>
-                </select>
-              </div>
-            </div>
-
-            <div style={{ display: "flex", gap: "16px" }}>
-              <div style={{ flex: 1 }}>
-                <label style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px", fontWeight: "700", fontSize: "0.9rem", color: "#334155" }}>
-                  <span style={{ fontSize: "1.1rem" }}>💰</span> งวดละ (บาท)
+                  <span style={{ fontSize: '1.1rem' }}>🏷️</span> ชื่อวง
                 </label>
-                <input 
-                  type="number" 
-                  name="amount_per_hand" 
-                  value={formData.amount_per_hand} 
-                  onChange={handleChange} 
+                <input
+                  type="text"
+                  name="circle_name"
+                  value={formData.circle_name}
+                  onChange={handleChange}
                   required
                   className="input-glow"
-                  style={{ width: "100%", padding: "16px", borderRadius: "18px", border: "1.5px solid #edf2f7", fontSize: "1rem", backgroundColor: "white", outline: "none" }}
-                  placeholder="10000"
+                  style={{
+                    width: '100%',
+                    padding: '16px',
+                    borderRadius: '18px',
+                    border: '1.5px solid #edf2f7',
+                    fontSize: '1rem',
+                    backgroundColor: 'white',
+                    outline: 'none',
+                    transition: 'all 0.2s',
+                  }}
+                  placeholder="เช่น วงเพื่อนซี้, วงครอบครัว"
                 />
               </div>
-              <div style={{ flex: 1 }}>
-                <label style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px", fontWeight: "700", fontSize: "0.9rem", color: "#334155" }}>
-                  <span style={{ fontSize: "1.1rem" }}>🖐️</span> จำนวนมือ
-                </label>
-                <input 
-                  type="number" 
-                  name="total_hands" 
-                  value={formData.total_hands} 
-                  onChange={handleChange} 
-                  required
-                  className="input-glow"
-                  style={{ width: "100%", padding: "16px", borderRadius: "18px", border: "1.5px solid #edf2f7", fontSize: "1rem", backgroundColor: "white", outline: "none" }}
-                  placeholder="10"
-                />
-              </div>
-            </div>
 
-            <div>
-              <label style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px", fontWeight: "700", fontSize: "0.9rem", color: "#334155" }}>
-                <span style={{ fontSize: "1.1rem" }}>🧮</span> ยอดรวมทั้งหมด
-              </label>
-              <div style={{ 
-                width: "100%", 
-                padding: "20px", 
-                borderRadius: "18px", 
-                border: "2px dashed #cbd5e1", 
-                fontSize: "1.3rem", 
-                fontWeight: "700",
-                backgroundColor: "#f8fafc",
-                textAlign: "center",
-                color: totalAmount ? "#10b981" : "#94a3b8"
-              }}>
-                {totalAmount ? totalAmount.toLocaleString() : "คำนวณอัตโนมัติ"}
-              </div>
-            </div>
-
-            <div style={{ display: "flex", gap: "16px" }}>
-              <div style={{ flex: 1 }}>
-                <label style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px", fontWeight: "700", fontSize: "0.9rem", color: "#334155" }}>
-                  <span style={{ fontSize: "1.1rem" }}>📅</span> วันที่เริ่มต้น
-                </label>
-                <input 
-                  type="date" 
-                  name="start_date" 
-                  value={formData.start_date} 
-                  onChange={handleChange} 
-                  className="input-glow"
-                  style={{ width: "100%", padding: "16px", borderRadius: "18px", border: "1.5px solid #edf2f7", fontSize: "1rem", backgroundColor: "white", outline: "none" }}
-                />
-              </div>
-              <div style={{ flex: 1 }}>
-                <label style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px", fontWeight: "700", fontSize: "0.9rem", color: "#334155" }}>
-                  <span style={{ fontSize: "1.1rem" }}>✂️</span> วิธีคิดดอก
-                </label>
-                <select 
-                  name="interest_method" 
-                  value={formData.interest_method} 
-                  onChange={handleChange}
-                  className="input-glow"
-                  style={{ width: "100%", padding: "16px", borderRadius: "18px", border: "1.5px solid #edf2f7", fontSize: "1rem", backgroundColor: "white", outline: "none" }}
+              <div>
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    marginBottom: '10px',
+                    fontWeight: '700',
+                    fontSize: '0.9rem',
+                    color: '#334155',
+                  }}
                 >
-                  <option value="หักดอก">หักดอก (Interest Deduct)</option>
-                  <option value="ไม่หักดอก">ไม่หักดอก (Interest Add)</option>
-                </select>
-              </div>
-            </div>
-
-            <div style={{ padding: "20px 8px", borderRadius: "24px", background: "#f1f5f9", border: "1px solid #e2e8f0", margin: "0 -10px" }}>
-              <h4 style={{ margin: "0 0 16px 4px", fontSize: "1rem", color: "#475569", display: "flex", alignItems: "center", gap: "8px" }}>
-                <span>⚙️</span> ตั้งค่าการประมูลพื้นฐาน
-              </h4>
-              
-              <div style={{ display: "flex", gap: "16px", marginBottom: "20px" }}>
-                <div style={{ flex: 1 }}>
-                  <label style={{ display: "block", marginBottom: "8px", fontSize: "0.8rem", fontWeight: "700", color: "#64748b" }}>⏰ เวลาเปิดประมูล</label>
-                  <input type="time" name="bid_start_time" value={formData.bid_start_time} onChange={handleChange} className="input-glow" style={{ width: "100%", padding: "12px", borderRadius: "14px", border: "1.5px solid #edf2f7" }} />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <label style={{ display: "block", marginBottom: "8px", fontSize: "0.8rem", fontWeight: "700", color: "#64748b" }}>⏰ เวลาปิดประมูล</label>
-                  <input type="time" name="bid_end_time" value={formData.bid_end_time} onChange={handleChange} className="input-glow" style={{ width: "100%", padding: "12px", borderRadius: "14px", border: "1.5px solid #edf2f7" }} />
-                </div>
-              </div>
-
-              <div style={{ display: "flex", gap: "16px", marginBottom: "20px" }}>
-                <div style={{ flex: 1 }}>
-                  <label style={{ display: "block", marginBottom: "8px", fontSize: "0.8rem", fontWeight: "700", color: "#64748b" }}>💰 ดอกต่ำสุด</label>
-                  <input type="number" name="min_bid" value={formData.min_bid} onChange={handleChange} className="input-glow" style={{ width: "100%", padding: "12px", borderRadius: "14px", border: "1.5px solid #edf2f7" }} />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <label style={{ display: "block", marginBottom: "8px", fontSize: "0.8rem", fontWeight: "700", color: "#64748b" }}>💰 ดอกสูงสุด</label>
-                  <input type="number" name="max_bid" value={formData.max_bid} onChange={handleChange} className="input-glow" style={{ width: "100%", padding: "12px", borderRadius: "14px", border: "1.5px solid #edf2f7" }} />
-                </div>
-              </div>
-
-              <div style={{ display: "flex", gap: "16px" }}>
-                <div style={{ flex: 1 }}>
-                  <label style={{ display: "block", marginBottom: "8px", fontSize: "0.8rem", fontWeight: "700", color: "#64748b" }}>🔔 แจ้งเตือนก่อน (ชม.)</label>
-                  <input type="number" name="notify_hours" value={formData.notify_hours} onChange={handleChange} className="input-glow" style={{ width: "100%", padding: "12px", borderRadius: "14px", border: "1.5px solid #edf2f7" }} />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <label style={{ display: "block", marginBottom: "8px", fontSize: "0.8rem", fontWeight: "700", color: "#64748b" }}>🔒 โหมดปิดงวด</label>
-                  <select name="close_mode" value={formData.close_mode} onChange={handleChange} className="input-glow" style={{ width: "100%", padding: "12px", borderRadius: "14px", border: "1.5px solid #edf2f7" }}>
-                    <option value="แอดมินปิดเอง">แอดมินปิดเอง</option>
-                    <option value="ปิดอัตโนมัติ">ปิดอัตโนมัติ</option>
+                  <span style={{ fontSize: '1.1rem' }}>⚙️</span> ประเภทวง
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <select
+                    name="type"
+                    value={formData.type}
+                    onChange={handleChange}
+                    className="input-glow"
+                    style={{
+                      width: '100%',
+                      padding: '16px',
+                      borderRadius: '18px',
+                      border: '1.5px solid #edf2f7',
+                      fontSize: '1rem',
+                      backgroundColor: 'white',
+                      outline: 'none',
+                      appearance: 'none',
+                      backgroundImage:
+                        "url(\"data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='24'%20height='24'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='currentColor'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpolyline%20points='6%209%2012%2015%2018%209'%3E%3C/polyline%3E%3C/svg%3E\")",
+                      backgroundRepeat: 'no-repeat',
+                      backgroundPosition: 'right 16px center',
+                      backgroundSize: '18px',
+                    }}
+                  >
+                    <option value="ประมูล (เปียแข่งดอก)">🎯 บิงโก (ประมูลราคาสูงสุด)</option>
+                    <option value="ขั้นบันได (ดอกคงที่)">📊 ขั้นบันได (ดอกคงที่)</option>
                   </select>
                 </div>
               </div>
-            </div>
 
-            <div>
-              <label style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px", fontWeight: "700", fontSize: "0.9rem", color: "#334155" }}>
-                <span style={{ fontSize: "1.1rem" }}>🔗</span> ลิงก์กลุ่มแชท (Line group URL)
-              </label>
-              <input 
-                type="url" 
-                name="line_group_url" 
-                value={formData.line_group_url} 
-                onChange={handleChange} 
-                className="input-glow"
-                style={{ width: "100%", padding: "16px", borderRadius: "18px", border: "1.5px solid #edf2f7", fontSize: "1rem", backgroundColor: "white", outline: "none" }}
-                placeholder="https://line.me/R/ti/g/..."
-              />
-            </div>
+              <div>
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    marginBottom: '10px',
+                    fontWeight: '700',
+                    fontSize: '0.9rem',
+                    color: '#334155',
+                  }}
+                >
+                  <span style={{ fontSize: '1.1rem' }}>⚖️</span> สิทธิประมูล (Auction Permission)
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <select
+                    name="bid_permission"
+                    value={formData.bid_permission}
+                    onChange={handleChange}
+                    className="input-glow"
+                    style={{
+                      width: '100%',
+                      padding: '16px',
+                      borderRadius: '18px',
+                      border: '1.5px solid #edf2f7',
+                      fontSize: '1rem',
+                      backgroundColor: 'white',
+                      outline: 'none',
+                    }}
+                  >
+                    <option value="NONE">ไม่ต้องชำระก่อน (Free to bid)</option>
+                    <option value="PARTIAL">
+                      ต้องชำระบางมือก่อนอย่างน้อย 1 มือ (Pay at least 1 hand)
+                    </option>
+                    <option value="ALL">ต้องชำระทุกมือก่อนในงวดนั้น (Pay all hands first)</option>
+                  </select>
+                </div>
+              </div>
 
-            <button 
-              type="submit" 
-              disabled={isSaving}
-              style={{ 
-                marginTop: "10px", 
-                padding: "18px", 
-                fontSize: "1.2rem", 
-                fontWeight: "800",
-                background: "linear-gradient(to right, #48bb78, #38a169)",
-                color: "white",
-                border: "none",
-                borderRadius: "20px",
-                cursor: "pointer",
-                boxShadow: "0 10px 20px rgba(56, 161, 105, 0.3)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "10px"
+              <div style={{ display: 'flex', gap: '16px' }}>
+                <div style={{ flex: 1 }}>
+                  <label
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      marginBottom: '10px',
+                      fontWeight: '700',
+                      fontSize: '0.9rem',
+                      color: '#334155',
+                    }}
+                  >
+                    <span style={{ fontSize: '1.1rem' }}>💰</span> งวดละ (บาท)
+                  </label>
+                  <input
+                    type="number"
+                    name="amount_per_hand"
+                    value={formData.amount_per_hand}
+                    onChange={handleChange}
+                    required
+                    className="input-glow"
+                    style={{
+                      width: '100%',
+                      padding: '16px',
+                      borderRadius: '18px',
+                      border: '1.5px solid #edf2f7',
+                      fontSize: '1rem',
+                      backgroundColor: 'white',
+                      outline: 'none',
+                    }}
+                    placeholder="10000"
+                  />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      marginBottom: '10px',
+                      fontWeight: '700',
+                      fontSize: '0.9rem',
+                      color: '#334155',
+                    }}
+                  >
+                    <span style={{ fontSize: '1.1rem' }}>🖐️</span> จำนวนมือ
+                  </label>
+                  <input
+                    type="number"
+                    name="total_hands"
+                    value={formData.total_hands}
+                    onChange={handleChange}
+                    required
+                    className="input-glow"
+                    style={{
+                      width: '100%',
+                      padding: '16px',
+                      borderRadius: '18px',
+                      border: '1.5px solid #edf2f7',
+                      fontSize: '1rem',
+                      backgroundColor: 'white',
+                      outline: 'none',
+                    }}
+                    placeholder="10"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    marginBottom: '10px',
+                    fontWeight: '700',
+                    fontSize: '0.9rem',
+                    color: '#334155',
+                  }}
+                >
+                  <span style={{ fontSize: '1.1rem' }}>🧮</span> ยอดรวมทั้งหมด
+                </label>
+                <div
+                  style={{
+                    width: '100%',
+                    padding: '20px',
+                    borderRadius: '18px',
+                    border: '2px dashed #cbd5e1',
+                    fontSize: '1.3rem',
+                    fontWeight: '700',
+                    backgroundColor: '#f8fafc',
+                    textAlign: 'center',
+                    color: totalAmount ? '#10b981' : '#94a3b8',
+                  }}
+                >
+                  {totalAmount ? totalAmount.toLocaleString() : 'คำนวณอัตโนมัติ'}
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '16px' }}>
+                <div style={{ flex: 1 }}>
+                  <label
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      marginBottom: '10px',
+                      fontWeight: '700',
+                      fontSize: '0.9rem',
+                      color: '#334155',
+                    }}
+                  >
+                    <span style={{ fontSize: '1.1rem' }}>📅</span> วันที่เริ่มต้น
+                  </label>
+                  <input
+                    type="date"
+                    name="start_date"
+                    value={formData.start_date}
+                    onChange={handleChange}
+                    className="input-glow"
+                    style={{
+                      width: '100%',
+                      padding: '16px',
+                      borderRadius: '18px',
+                      border: '1.5px solid #edf2f7',
+                      fontSize: '1rem',
+                      backgroundColor: 'white',
+                      outline: 'none',
+                    }}
+                  />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      marginBottom: '10px',
+                      fontWeight: '700',
+                      fontSize: '0.9rem',
+                      color: '#334155',
+                    }}
+                  >
+                    <span style={{ fontSize: '1.1rem' }}>✂️</span> วิธีคิดดอก
+                  </label>
+                  <select
+                    name="interest_method"
+                    value={formData.interest_method}
+                    onChange={handleChange}
+                    className="input-glow"
+                    style={{
+                      width: '100%',
+                      padding: '16px',
+                      borderRadius: '18px',
+                      border: '1.5px solid #edf2f7',
+                      fontSize: '1rem',
+                      backgroundColor: 'white',
+                      outline: 'none',
+                    }}
+                  >
+                    <option value="หักดอก">หักดอก (Interest Deduct)</option>
+                    <option value="ไม่หักดอก">ไม่หักดอก (Interest Add)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div
+                style={{
+                  padding: '20px 8px',
+                  borderRadius: '24px',
+                  background: '#f1f5f9',
+                  border: '1px solid #e2e8f0',
+                  margin: '0 -10px',
+                }}
+              >
+                <h4
+                  style={{
+                    margin: '0 0 16px 4px',
+                    fontSize: '1rem',
+                    color: '#475569',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                  }}
+                >
+                  <span>⚙️</span> ตั้งค่าการประมูลพื้นฐาน
+                </h4>
+
+                <div style={{ display: 'flex', gap: '16px', marginBottom: '20px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label
+                      style={{
+                        display: 'block',
+                        marginBottom: '8px',
+                        fontSize: '0.8rem',
+                        fontWeight: '700',
+                        color: '#64748b',
+                      }}
+                    >
+                      ⏰ เวลาเปิดประมูล
+                    </label>
+                    <input
+                      type="time"
+                      name="bid_start_time"
+                      value={formData.bid_start_time}
+                      onChange={handleChange}
+                      className="input-glow"
+                      style={{
+                        width: '100%',
+                        padding: '12px',
+                        borderRadius: '14px',
+                        border: '1.5px solid #edf2f7',
+                      }}
+                    />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label
+                      style={{
+                        display: 'block',
+                        marginBottom: '8px',
+                        fontSize: '0.8rem',
+                        fontWeight: '700',
+                        color: '#64748b',
+                      }}
+                    >
+                      ⏰ เวลาปิดประมูล
+                    </label>
+                    <input
+                      type="time"
+                      name="bid_end_time"
+                      value={formData.bid_end_time}
+                      onChange={handleChange}
+                      className="input-glow"
+                      style={{
+                        width: '100%',
+                        padding: '12px',
+                        borderRadius: '14px',
+                        border: '1.5px solid #edf2f7',
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '16px', marginBottom: '20px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label
+                      style={{
+                        display: 'block',
+                        marginBottom: '8px',
+                        fontSize: '0.8rem',
+                        fontWeight: '700',
+                        color: '#64748b',
+                      }}
+                    >
+                      💰 ดอกต่ำสุด
+                    </label>
+                    <input
+                      type="number"
+                      name="min_bid"
+                      value={formData.min_bid}
+                      onChange={handleChange}
+                      className="input-glow"
+                      style={{
+                        width: '100%',
+                        padding: '12px',
+                        borderRadius: '14px',
+                        border: '1.5px solid #edf2f7',
+                      }}
+                    />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label
+                      style={{
+                        display: 'block',
+                        marginBottom: '8px',
+                        fontSize: '0.8rem',
+                        fontWeight: '700',
+                        color: '#64748b',
+                      }}
+                    >
+                      💰 ดอกสูงสุด
+                    </label>
+                    <input
+                      type="number"
+                      name="max_bid"
+                      value={formData.max_bid}
+                      onChange={handleChange}
+                      className="input-glow"
+                      style={{
+                        width: '100%',
+                        padding: '12px',
+                        borderRadius: '14px',
+                        border: '1.5px solid #edf2f7',
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '16px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label
+                      style={{
+                        display: 'block',
+                        marginBottom: '8px',
+                        fontSize: '0.8rem',
+                        fontWeight: '700',
+                        color: '#64748b',
+                      }}
+                    >
+                      🔔 แจ้งเตือนก่อน (ชม.)
+                    </label>
+                    <input
+                      type="number"
+                      name="notify_hours"
+                      value={formData.notify_hours}
+                      onChange={handleChange}
+                      className="input-glow"
+                      style={{
+                        width: '100%',
+                        padding: '12px',
+                        borderRadius: '14px',
+                        border: '1.5px solid #edf2f7',
+                      }}
+                    />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label
+                      style={{
+                        display: 'block',
+                        marginBottom: '8px',
+                        fontSize: '0.8rem',
+                        fontWeight: '700',
+                        color: '#64748b',
+                      }}
+                    >
+                      🔒 โหมดปิดงวด
+                    </label>
+                    <select
+                      name="close_mode"
+                      value={formData.close_mode}
+                      onChange={handleChange}
+                      className="input-glow"
+                      style={{
+                        width: '100%',
+                        padding: '12px',
+                        borderRadius: '14px',
+                        border: '1.5px solid #edf2f7',
+                      }}
+                    >
+                      <option value="แอดมินปิดเอง">แอดมินปิดเอง</option>
+                      <option value="ปิดอัตโนมัติ">ปิดอัตโนมัติ</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    marginBottom: '10px',
+                    fontWeight: '700',
+                    fontSize: '0.9rem',
+                    color: '#334155',
+                  }}
+                >
+                  <span style={{ fontSize: '1.1rem' }}>🔗</span> ลิงก์กลุ่มแชท (Line group URL)
+                </label>
+                <input
+                  type="url"
+                  name="line_group_url"
+                  value={formData.line_group_url}
+                  onChange={handleChange}
+                  className="input-glow"
+                  style={{
+                    width: '100%',
+                    padding: '16px',
+                    borderRadius: '18px',
+                    border: '1.5px solid #edf2f7',
+                    fontSize: '1rem',
+                    backgroundColor: 'white',
+                    outline: 'none',
+                  }}
+                  placeholder="https://line.me/R/ti/g/..."
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={isSaving}
+                style={{
+                  marginTop: '10px',
+                  padding: '18px',
+                  fontSize: '1.2rem',
+                  fontWeight: '800',
+                  background: 'linear-gradient(to right, #48bb78, #38a169)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '20px',
+                  cursor: 'pointer',
+                  boxShadow: '0 10px 20px rgba(56, 161, 105, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '10px',
+                }}
+              >
+                {isSaving ? '🔄 กำลังสร้าง...' : <span>➕ สร้างวงแชร์</span>}
+              </button>
+            </form>
+
+            <div
+              style={{
+                marginTop: '24px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                color: '#64748b',
+                fontSize: '0.9rem',
               }}
             >
-              {isSaving ? "🔄 กำลังสร้าง..." : <span>➕ สร้างวงแชร์</span>}
-            </button>
-          </form>
-
-          <div style={{ marginTop: "24px", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", color: "#64748b", fontSize: "0.9rem" }}>
-            <span style={{ fontSize: "1.1rem" }}>ℹ️</span>
-            <span>หลังสร้างวงแล้วสามารถเพิ่มสมาชิกได้ทันที</span>
+              <span style={{ fontSize: '1.1rem' }}>ℹ️</span>
+              <span>หลังสร้างวงแล้วสามารถเพิ่มสมาชิกได้ทันที</span>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
       <style jsx>{`
         .input-glow:focus {

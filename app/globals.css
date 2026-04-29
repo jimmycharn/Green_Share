@@ -8,13 +8,13 @@
   --accent: #8b5cf6;
   --background: #f1f5f9;
   --foreground: #0f172a;
-  
+
   /* Glassmorphism Tokens */
   --glass-bg: rgba(255, 255, 255, 0.7);
   --glass-border: rgba(255, 255, 255, 0.4);
   --glass-blur: blur(16px);
   --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
-  
+
   --safe-area-top: 20px;
   --safe-area-bottom: 90px; /* Space for Bottom Nav */
 }
@@ -33,7 +33,8 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-html, body {
+html,
+body {
   max-width: 100vw;
   min-height: 100vh;
   overflow-x: hidden;
@@ -63,7 +64,9 @@ html, body {
   border-radius: 24px;
   box-shadow: var(--glass-shadow);
   padding: 20px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .glass-panel:active {
@@ -84,7 +87,7 @@ html, body {
   align-items: center;
   justify-content: space-between;
   padding: 0 20px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .app-title {
@@ -100,8 +103,8 @@ html, body {
 .bottom-nav {
   position: fixed;
   bottom: 12px; /* Smaller bottom margin */
-  left: 8px;   /* Smaller side margin */
-  right: 8px;  /* Smaller side margin */
+  left: 8px; /* Smaller side margin */
+  right: 8px; /* Smaller side margin */
   height: 72px;
   background: var(--glass-bg);
   backdrop-filter: var(--glass-blur);
@@ -112,7 +115,7 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: space-around;
-  box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
 }
 
 .nav-item {
@@ -155,7 +158,7 @@ html, body {
   right: -20px;
   width: 100px;
   height: 100px;
-  background: rgba(255,255,255,0.15);
+  background: rgba(255, 255, 255, 0.15);
   border-radius: 50%;
 }
 
@@ -187,14 +190,29 @@ html, body {
   text-transform: uppercase;
 }
 
-.badge-success { background: #dcfce7; color: #166534; }
-.badge-warning { background: #fef3c7; color: #92400e; }
-.badge-danger { background: #fee2e2; color: #991b1b; }
+.badge-success {
+  background: #dcfce7;
+  color: #166534;
+}
+.badge-warning {
+  background: #fef3c7;
+  color: #92400e;
+}
+.badge-danger {
+  background: #fee2e2;
+  color: #991b1b;
+}
 
 /* Animation Utils */
 @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .animate-fade-in {
@@ -208,8 +226,9 @@ html, body {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: radial-gradient(circle at top right, rgba(16, 185, 129, 0.05), transparent),
-              radial-gradient(circle at bottom left, rgba(16, 185, 129, 0.05), transparent);
+  background:
+    radial-gradient(circle at top right, rgba(16, 185, 129, 0.05), transparent),
+    radial-gradient(circle at bottom left, rgba(16, 185, 129, 0.05), transparent);
 }
 
 .onboarding-card {
@@ -221,8 +240,9 @@ html, body {
   padding: 40px 30px;
   width: 100%;
   max-width: 460px;
-  box-shadow: 0 20px 40px rgba(16, 185, 129, 0.08),
-              0 1px 3px rgba(0, 0, 0, 0.02);
+  box-shadow:
+    0 20px 40px rgba(16, 185, 129, 0.08),
+    0 1px 3px rgba(0, 0, 0, 0.02);
   position: relative;
   overflow: hidden;
 }
@@ -246,14 +266,20 @@ html, body {
   font-size: 4rem;
   margin-bottom: 12px;
   display: inline-block;
-  filter: drop-shadow(0 5px 15px rgba(0,0,0,0.1));
+  filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.1));
   animation: float 3s ease-in-out infinite;
 }
 
 @keyframes float {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
-  100% { transform: translateY(0px); }
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
 }
 
 .onboarding-header h2 {
@@ -406,14 +432,27 @@ html, body {
   text-align: center;
   margin-bottom: 25px;
   border: 1px solid rgba(225, 29, 72, 0.1);
-  animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+  animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
 }
 
 @keyframes shake {
-  10%, 90% { transform: translate3d(-1px, 0, 0); }
-  20%, 80% { transform: translate3d(2px, 0, 0); }
-  30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
-  40%, 60% { transform: translate3d(4px, 0, 0); }
+  10%,
+  90% {
+    transform: translate3d(-1px, 0, 0);
+  }
+  20%,
+  80% {
+    transform: translate3d(2px, 0, 0);
+  }
+  30%,
+  50%,
+  70% {
+    transform: translate3d(-4px, 0, 0);
+  }
+  40%,
+  60% {
+    transform: translate3d(4px, 0, 0);
+  }
 }
 
 .animate-slide-up {
@@ -421,8 +460,14 @@ html, body {
 }
 
 @keyframes slideInUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .input-hint {

@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { createContext, useContext, useEffect, useState } from "react";
-import Script from "next/script";
+import { createContext, useContext, useEffect, useState } from 'react';
+import Script from 'next/script';
 
 const UserContext = createContext();
 
@@ -15,7 +15,7 @@ export function UserProvider({ children }) {
   const initLiff = async () => {
     try {
       const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
-      if (!liffId) throw new Error("LIFF ID missing");
+      if (!liffId) throw new Error('LIFF ID missing');
 
       await window.liff.init({ liffId });
       setLiff(window.liff);
@@ -27,14 +27,18 @@ export function UserProvider({ children }) {
         // Check if user exists in DB without registering yet
         const res = await fetch('/api/action', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${window.liff.getIDToken() || ''}`,
+          },
           body: JSON.stringify({
             action: 'check_user',
-            line_id: userProfile.userId
-          })
+            line_id: userProfile.userId,
+            name: userProfile.displayName,
+          }),
         });
         const data = await res.json();
-        
+
         if (data.status === 'success' && data.user) {
           setDbUser(data.user);
         } else {
@@ -45,7 +49,7 @@ export function UserProvider({ children }) {
         }
       }
     } catch (err) {
-      console.error("UserContext Init Error:", err);
+      console.error('UserContext Init Error:', err);
       setError(err.message);
     } finally {
       setIsLoading(false);
@@ -53,7 +57,7 @@ export function UserProvider({ children }) {
   };
 
   useEffect(() => {
-    if (typeof window !== "undefined" && window.liff) {
+    if (typeof window !== 'undefined' && window.liff) {
       initLiff();
     }
   }, []);
@@ -64,8 +68,8 @@ export function UserProvider({ children }) {
 
   return (
     <UserContext.Provider value={{ liff, profile, dbUser, isLoading, error }}>
-      <Script 
-        src="https://static.line-scdn.net/liff/edge/versions/2.22.1/sdk.js" 
+      <Script
+        src="https://static.line-scdn.net/liff/edge/versions/2.22.1/sdk.js"
         onLoad={handleScriptLoad}
         strategy="beforeInteractive"
       />

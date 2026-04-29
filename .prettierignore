@@ -1,0 +1,28 @@
+node_modules/
+.next/
+out/
+build/
+dist/
+coverage/
+
+# Archive / legacy folders ที่ไม่อยากแตะ
+Backup/
+Last Version/
+anti_version/
+scratch/
+กำลังทำ/
+Pic/
+cloudflare/
+netlify/
+public/
+
+# Generated / vendored
+package-lock.json
+*.min.js
+*.min.css
+code.gs
+index.html
+Setting.txt
+
+# Migrations (SQL formatting แล้วในไฟล์)
+supabase/migrations/
