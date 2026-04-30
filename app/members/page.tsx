@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import useSWR from 'swr';
 import {
@@ -7,9 +8,12 @@ import {
   ArrowRightLeft,
   Ban,
   Building2,
+  ChevronDown,
+  ChevronRight,
   Crown,
   Home as HomeIcon,
   Landmark,
+  Layers,
   Link2,
   Loader2,
   Pencil,
@@ -17,6 +21,7 @@ import {
   Search,
   Settings,
   ShieldCheck,
+  Target,
   Trash2,
   User as UserIcon,
 } from 'lucide-react';
@@ -400,23 +405,29 @@ export default function MembersPage() {
             </Card>
 
             {expanded && (
-              <div className="ml-2 flex flex-col gap-2 border-l-2 border-primary/40 pl-4">
-                {subMembers.length === 0 ? (
-                  <Card className="border-dashed bg-muted/30 p-4 text-sm text-muted-foreground">
-                    ยังไม่มีลูกวง
-                  </Card>
-                ) : (
-                  subMembers.map((m) => (
-                    <MemberCard
-                      key={m.id}
-                      member={m}
-                      dbUser={dbUser}
-                      onApprove={handleApprove}
-                      onSettings={openSettings}
-                      mini
-                    />
-                  ))
-                )}
+              <div className="ml-2 flex flex-col gap-4 border-l-2 border-primary/40 pl-4">
+                <div className="flex flex-col gap-2">
+                  <div className="text-xs font-bold text-muted-foreground">
+                    ลูกบ้าน ({subMembers.length})
+                  </div>
+                  {subMembers.length === 0 ? (
+                    <Card className="border-dashed bg-muted/30 p-4 text-sm text-muted-foreground">
+                      ยังไม่มีลูกวง
+                    </Card>
+                  ) : (
+                    subMembers.map((m) => (
+                      <MemberCard
+                        key={m.id}
+                        member={m}
+                        dbUser={dbUser}
+                        onApprove={handleApprove}
+                        onSettings={openSettings}
+                        mini
+                      />
+                    ))
+                  )}
+                </div>
+                <AdminCirclesSection adminId={admin.id} />
               </div>
             )}
           </div>
@@ -928,5 +939,185 @@ function SettingsDialog({
         )}
       </DialogContent>
     </Dialog>
+  );
+}
+
+/* ----- Admin Circles Section (SUPERADMIN-only drill-down) ----- */
+
+type CirclePlayer = {
+  hand_no: number;
+  status: string;
+  member_id: string;
+  name: string;
+  nickname?: string | null;
+  custom_nickname?: string | null;
+  picture_url?: string | null;
+  phone?: string | null;
+  role?: string | null;
+};
+
+type AdminCircle = {
+  id: string;
+  circle_name?: string;
+  name?: string;
+  type?: string;
+  status?: string;
+  total_hands?: number;
+  amount_per_hand?: number;
+  current_period?: number;
+  players?: CirclePlayer[];
+};
+
+const CIRCLE_STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'warning' | 'destructive' | 'outline'> = {
+  ACTIVE: 'default',
+  PENDING: 'warning',
+  CLOSED: 'secondary',
+  CANCELLED: 'destructive',
+};
+
+function isStairCircle(type?: string) {
+  return !!type && type.includes('ขั้นบันได');
+}
+
+function AdminCirclesSection({ adminId }: { adminId: string }) {
+  const { data, isLoading, error } = useSWR<{ status: string; circles?: AdminCircle[] }>(
+    ['get_admin_circles', { admin_id: adminId }],
+    swrFetcher as any,
+  );
+
+  const circles = data?.status === 'success' ? data.circles ?? [] : [];
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="text-xs font-bold text-muted-foreground">
+        วงแชร์ของบ้านนี้ ({circles.length})
+      </div>
+
+      {isLoading && (
+        <Card className="flex items-center justify-center bg-muted/30 p-4 text-sm text-muted-foreground">
+          <Loader2 className="mr-2 size-4 animate-spin" /> กำลังโหลด…
+        </Card>
+      )}
+
+      {!isLoading && error && (
+        <Card className="border-dashed bg-muted/30 p-4 text-sm text-destructive">
+          โหลดข้อมูลวงแชร์ล้มเหลว
+        </Card>
+      )}
+
+      {!isLoading && !error && circles.length === 0 && (
+        <Card className="border-dashed bg-muted/30 p-4 text-sm text-muted-foreground">
+          ยังไม่มีวงแชร์
+        </Card>
+      )}
+
+      {circles.map((c) => (
+        <CircleRow key={c.id} circle={c} />
+      ))}
+    </div>
+  );
+}
+
+function CircleRow({ circle }: { circle: AdminCircle }) {
+  const [open, setOpen] = useState(false);
+  const stair = isStairCircle(circle.type);
+  const statusVariant = CIRCLE_STATUS_VARIANT[circle.status || ''] || 'outline';
+  const players = circle.players || [];
+
+  return (
+    <Card className="overflow-hidden">
+      <div className="flex items-center transition-colors hover:bg-muted/40">
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="flex flex-1 items-center gap-3 p-3 text-left"
+        >
+          <div
+            className={cn(
+              'flex size-9 shrink-0 items-center justify-center rounded-xl text-white',
+              stair ? 'bg-blue-500' : 'bg-orange-500',
+            )}
+            aria-hidden
+          >
+            {stair ? <Layers className="size-4" /> : <Target className="size-4" />}
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 truncate text-sm font-bold">
+              <span className="truncate">{circle.circle_name || circle.name || circle.id}</span>
+              {circle.status && (
+                <Badge variant={statusVariant} className="shrink-0 text-[0.6rem]">
+                  {circle.status}
+                </Badge>
+              )}
+            </div>
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[0.7rem] text-muted-foreground">
+              <span>{stair ? '📊 ขั้นบันได' : '🎯 ประมูล'}</span>
+              <span>·</span>
+              <span>{circle.total_hands ?? '?'} มือ</span>
+              {circle.amount_per_hand != null && (
+                <>
+                  <span>·</span>
+                  <span>{circle.amount_per_hand.toLocaleString()} ฿/มือ</span>
+                </>
+              )}
+              <span>·</span>
+              <span>ผู้เล่น {players.length}</span>
+            </div>
+          </div>
+          <ChevronDown
+            className={cn(
+              'size-4 shrink-0 text-muted-foreground transition-transform',
+              open && 'rotate-180',
+            )}
+          />
+        </button>
+        <Link
+          href={`/circles/${circle.id}`}
+          className="mr-2 shrink-0 rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+          aria-label={`ดูรายละเอียดวงแชร์ ${circle.circle_name || circle.id}`}
+          title="ดูรายละเอียด"
+        >
+          <ChevronRight className="size-4" />
+        </Link>
+      </div>
+
+      {open && (
+        <div className="flex flex-col divide-y border-t bg-muted/20">
+          {players.length === 0 ? (
+            <div className="p-3 text-center text-xs text-muted-foreground">
+              ยังไม่มีผู้เล่น
+            </div>
+          ) : (
+            players.map((p) => <CirclePlayerItem key={`${p.member_id}-${p.hand_no}`} player={p} />)
+          )}
+        </div>
+      )}
+    </Card>
+  );
+}
+
+function CirclePlayerItem({ player }: { player: CirclePlayer }) {
+  const display =
+    player.custom_nickname?.trim() || player.nickname?.trim() || player.name;
+  return (
+    <div className="flex items-center gap-3 p-2.5">
+      <span className="w-7 shrink-0 text-center font-mono text-xs text-muted-foreground">
+        #{player.hand_no}
+      </span>
+      <Avatar className="size-7 shrink-0 rounded-lg">
+        {player.picture_url ? (
+          <AvatarImage src={player.picture_url} alt={display} className="object-cover" />
+        ) : null}
+        <AvatarFallback className="rounded-lg bg-slate-700 text-white">
+          <UserIcon className="size-3.5" />
+        </AvatarFallback>
+      </Avatar>
+      <div className="min-w-0 flex-1 truncate text-sm">{display}</div>
+      {player.status && player.status !== 'ACTIVE' && (
+        <Badge variant="outline" className="shrink-0 text-[0.6rem]">
+          {player.status}
+        </Badge>
+      )}
+    </div>
   );
 }
