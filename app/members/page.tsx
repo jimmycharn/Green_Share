@@ -18,6 +18,7 @@ import {
   Loader2,
   Pencil,
   Phone,
+  RefreshCw,
   Search,
   Settings,
   ShieldCheck,
@@ -1009,10 +1010,16 @@ const TYPE_FILTERS: { value: CircleTypeFilter; label: string }[] = [
 ];
 
 function AdminCirclesSection({ adminId }: { adminId: string }) {
-  const { data, isLoading, error } = useSWR<{ status: string; circles?: AdminCircle[] }>(
-    ['get_admin_circles', { admin_id: adminId }],
-    swrFetcher as any,
-  );
+  const { data, isLoading, isValidating, error, mutate } = useSWR<{
+    status: string;
+    circles?: AdminCircle[];
+  }>(['get_admin_circles', { admin_id: adminId }], swrFetcher as any, {
+    // Always re-fetch when this section mounts (admin row re-expanded),
+    // and when the user comes back to the tab — otherwise newly-created
+    // circles by the other admin won't appear until the page is reloaded.
+    revalidateOnMount: true,
+    revalidateOnFocus: true,
+  });
 
   const circles = data?.status === 'success' ? data.circles ?? [] : [];
 
@@ -1049,8 +1056,20 @@ function AdminCirclesSection({ adminId }: { adminId: string }) {
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="text-xs font-bold text-muted-foreground">
-        วงแชร์ของบ้านนี้ ({circles.length})
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-xs font-bold text-muted-foreground">
+          วงแชร์ของบ้านนี้ ({circles.length})
+        </span>
+        <button
+          type="button"
+          onClick={() => mutate()}
+          disabled={isValidating}
+          className="flex items-center gap-1 text-[0.7rem] font-medium text-muted-foreground hover:text-foreground disabled:opacity-50"
+          title="โหลดใหม่"
+        >
+          <RefreshCw className={cn('size-3', isValidating && 'animate-spin')} />
+          รีเฟรช
+        </button>
       </div>
 
       {isLoading && (
