@@ -1,6 +1,6 @@
 # Phase 6 — SUPERADMIN ดูวงแชร์ของท้าวแชร์อื่น
 
-> **สถานะ:** 🟡 Phase 1 (MVP) — กำลังเริ่ม
+> **สถานะ:** ✅ Phase 1 (MVP) เสร็จ — commit `5096faa`
 > **เริ่ม:** 2026-04-30
 > **เกี่ยวข้อง:** `app/members/page.tsx` (แท็บ "บ้านแชร์อื่น")
 
@@ -116,7 +116,7 @@
 
 | Phase | งาน | สถานะ |
 |---|---|---|
-| **1 (MVP)** | action + UI list วง + expand player + ลิงก์ `/circles/{id}` | 🟡 กำลังทำ |
+| **1 (MVP)** | action + UI list วง + expand player + ลิงก์ `/circles/{id}` | ✅ เสร็จ |
 | **2** | Filter status/type · Search ตามชื่อวง · ตัวนับ active/pending/closed | ⚪ รอ |
 | **3** | สรุปยอดเงินหมุนในบ้าน · timeline งวดล่าสุด · กราฟ insight | ⚪ รอ |
 
@@ -144,3 +144,4 @@
 ## Changelog
 
 - **2026-04-30:** เขียนแผน + เริ่ม Phase 1
+- **2026-04-30:** ✅ Phase 1 เสร็จ (`5096faa`) — `getAdminCircles` controller, schema, handler และ `AdminCirclesSection`/`CircleRow`/`CirclePlayerItem` ใน `app/members/page.tsx`
