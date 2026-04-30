@@ -964,30 +964,42 @@ type AdminCircle = {
   status?: string;
   total_hands?: number;
   amount_per_hand?: number;
+  total_amount?: number;
   current_period?: number;
   players?: CirclePlayer[];
 };
 
+function circleVolume(c: AdminCircle): number {
+  if (typeof c.total_amount === 'number' && c.total_amount > 0) return c.total_amount;
+  const perHand = Number(c.amount_per_hand || 0);
+  const hands = Number(c.total_hands || 0);
+  return perHand * hands;
+}
+
+function formatBaht(n: number): string {
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(n % 1_000_000 === 0 ? 0 : 1) + ' ล้าน';
+  if (n >= 1_000) return (n / 1_000).toFixed(n % 1_000 === 0 ? 0 : 1) + ' พัน';
+  return n.toLocaleString();
+}
+
 const CIRCLE_STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'warning' | 'destructive' | 'outline'> = {
+  OPEN: 'warning',
   ACTIVE: 'default',
-  PENDING: 'warning',
   CLOSED: 'secondary',
-  CANCELLED: 'destructive',
 };
 
 function isStairCircle(type?: string) {
   return !!type && type.includes('ขั้นบันได');
 }
 
-type CircleStatusFilter = 'ALL' | 'ACTIVE' | 'PENDING' | 'CLOSED' | 'CANCELLED';
+type CircleStatusFilter = 'ALL' | 'OPEN' | 'ACTIVE' | 'CLOSED';
 type CircleTypeFilter = 'ALL' | 'BIDDING' | 'STAIR';
 
 const STATUS_FILTERS: { value: CircleStatusFilter; label: string }[] = [
   { value: 'ALL', label: 'ทั้งหมด' },
+  { value: 'OPEN', label: 'รอเริ่ม' },
   { value: 'ACTIVE', label: 'กำลังเล่น' },
-  { value: 'PENDING', label: 'รอเริ่ม' },
   { value: 'CLOSED', label: 'จบแล้ว' },
-  { value: 'CANCELLED', label: 'ยกเลิก' },
 ];
 
 const TYPE_FILTERS: { value: CircleTypeFilter; label: string }[] = [
@@ -1008,12 +1020,18 @@ function AdminCirclesSection({ adminId }: { adminId: string }) {
   const [statusFilter, setStatusFilter] = useState<CircleStatusFilter>('ALL');
   const [typeFilter, setTypeFilter] = useState<CircleTypeFilter>('ALL');
 
-  // Pre-compute counts per status (for chip badges).
+  // Pre-compute counts per status (for chip badges) and aggregate volume.
   const statusCounts = circles.reduce<Record<string, number>>((acc, c) => {
     const s = (c.status || 'UNKNOWN').toUpperCase();
     acc[s] = (acc[s] || 0) + 1;
     return acc;
   }, {});
+  const totalVolume = circles.reduce((sum, c) => sum + circleVolume(c), 0);
+  const activeVolume = circles
+    .filter((c) => (c.status || '').toUpperCase() === 'ACTIVE')
+    .reduce((sum, c) => sum + circleVolume(c), 0);
+  const uniquePlayerIds = new Set<string>();
+  for (const c of circles) for (const p of c.players || []) uniquePlayerIds.add(p.member_id);
 
   const filtered = circles.filter((c) => {
     if (statusFilter !== 'ALL' && (c.status || '').toUpperCase() !== statusFilter) return false;
@@ -1055,6 +1073,32 @@ function AdminCirclesSection({ adminId }: { adminId: string }) {
 
       {!isLoading && circles.length > 0 && (
         <>
+          <Card className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 bg-gradient-to-br from-primary/5 to-primary/10 p-3">
+            <div className="flex flex-col">
+              <span className="text-[0.65rem] font-semibold uppercase tracking-wide text-muted-foreground">
+                ยอดเงินหมุนรวม
+              </span>
+              <span className="text-base font-extrabold text-primary">
+                {formatBaht(totalVolume)} ฿
+              </span>
+              {activeVolume > 0 && activeVolume !== totalVolume && (
+                <span className="text-[0.65rem] text-muted-foreground">
+                  กำลังเล่นอยู่: {formatBaht(activeVolume)} ฿
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-3 text-xs">
+              <div className="flex flex-col items-end">
+                <span className="font-bold">{circles.length}</span>
+                <span className="text-[0.6rem] text-muted-foreground">วงรวม</span>
+              </div>
+              <div className="flex flex-col items-end">
+                <span className="font-bold">{uniquePlayerIds.size}</span>
+                <span className="text-[0.6rem] text-muted-foreground">ผู้เล่น</span>
+              </div>
+            </div>
+          </Card>
+
           <div className="relative">
             <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -1168,6 +1212,23 @@ function CircleRow({ circle }: { circle: AdminCircle }) {
               <span>·</span>
               <span>ผู้เล่น {players.length}</span>
             </div>
+            {(circle.status || '').toUpperCase() === 'ACTIVE' &&
+              !!circle.total_hands &&
+              !!circle.current_period && (
+                <div className="mt-1 flex items-center gap-2">
+                  <div className="h-1 flex-1 overflow-hidden rounded-full bg-muted">
+                    <div
+                      className="h-full bg-primary transition-all"
+                      style={{
+                        width: `${Math.min(100, ((circle.current_period - 1) / circle.total_hands) * 100)}%`,
+                      }}
+                    />
+                  </div>
+                  <span className="shrink-0 font-mono text-[0.65rem] text-muted-foreground">
+                    {circle.current_period - 1}/{circle.total_hands}
+                  </span>
+                </div>
+              )}
           </div>
           <ChevronDown
             className={cn(

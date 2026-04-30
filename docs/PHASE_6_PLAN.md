@@ -1,6 +1,6 @@
 # Phase 6 — SUPERADMIN ดูวงแชร์ของท้าวแชร์อื่น
 
-> **สถานะ:** ✅ Phase 1 + 2 เสร็จ
+> **สถานะ:** ✅ เสร็จทั้ง 3 phase
 > **เริ่ม:** 2026-04-30
 > **เกี่ยวข้อง:** `app/members/page.tsx` (แท็บ "บ้านแชร์อื่น")
 
@@ -118,7 +118,7 @@
 |---|---|---|
 | **1 (MVP)** | action + UI list วง + expand player + ลิงก์ `/circles/{id}` | ✅ เสร็จ |
 | **2** | Filter status/type · Search ตามชื่อวง · ตัวนับ active/pending/closed | ✅ เสร็จ |
-| **3** | สรุปยอดเงินหมุนในบ้าน · timeline งวดล่าสุด · กราฟ insight | ⚪ รอ |
+| **3** | Summary card (ยอดหมุน+ผู้เล่น) · progress bar งวดปัจจุบันของวง ACTIVE · ปรับ status ให้ตรงจริง (OPEN/ACTIVE/CLOSED) | ✅ เสร็จ |
 
 ---
 
@@ -146,3 +146,4 @@
 - **2026-04-30:** เขียนแผน + เริ่ม Phase 1
 - **2026-04-30:** ✅ Phase 1 เสร็จ (`5096faa`) — `getAdminCircles` controller, schema, handler และ `AdminCirclesSection`/`CircleRow`/`CirclePlayerItem` ใน `app/members/page.tsx`
 - **2026-04-30:** ✅ Phase 2 เสร็จ — เพิ่ม search input + status/type filter chips พร้อม count ใน `AdminCirclesSection`
+- **2026-04-30:** ✅ Phase 3 เสร็จ — summary card (ยอดเงินหมุน+ผู้เล่น unique), progress bar ปัจจุบัน/ทั้งหมดสำหรับวง ACTIVE, และปรับ status filter ให้ตรง schema จริง (OPEN/ACTIVE/CLOSED)
