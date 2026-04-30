@@ -147,3 +147,4 @@
 - **2026-04-30:** ✅ Phase 1 เสร็จ (`5096faa`) — `getAdminCircles` controller, schema, handler และ `AdminCirclesSection`/`CircleRow`/`CirclePlayerItem` ใน `app/members/page.tsx`
 - **2026-04-30:** ✅ Phase 2 เสร็จ — เพิ่ม search input + status/type filter chips พร้อม count ใน `AdminCirclesSection`
 - **2026-04-30:** ✅ Phase 3 เสร็จ — summary card (ยอดเงินหมุน+ผู้เล่น unique), progress bar ปัจจุบัน/ทั้งหมดสำหรับวง ACTIVE, และปรับ status filter ให้ตรง schema จริง (OPEN/ACTIVE/CLOSED)
+- **2026-04-30:** 🐛 Bug fix สำคัญใน `getCircles` — เดิมแสดงทุกวงแบบ global ทำให้ ADMIN/MEMBER เห็นวงของบ้านอื่นด้วย ปรับเป็น scope ตามบทบาท: SUPERADMIN เห็นทั้งหมด · ADMIN เห็นวงตัวเอง + วงที่ join เป็นผู้เล่น · MEMBER เห็นวงของบ้านที่ตัวเองอยู่ (active) + วงที่ join เป็นผู้เล่น (ลบ debug logs ใน `getAdminCircles` ด้วย)
