@@ -979,6 +979,23 @@ function isStairCircle(type?: string) {
   return !!type && type.includes('ขั้นบันได');
 }
 
+type CircleStatusFilter = 'ALL' | 'ACTIVE' | 'PENDING' | 'CLOSED' | 'CANCELLED';
+type CircleTypeFilter = 'ALL' | 'BIDDING' | 'STAIR';
+
+const STATUS_FILTERS: { value: CircleStatusFilter; label: string }[] = [
+  { value: 'ALL', label: 'ทั้งหมด' },
+  { value: 'ACTIVE', label: 'กำลังเล่น' },
+  { value: 'PENDING', label: 'รอเริ่ม' },
+  { value: 'CLOSED', label: 'จบแล้ว' },
+  { value: 'CANCELLED', label: 'ยกเลิก' },
+];
+
+const TYPE_FILTERS: { value: CircleTypeFilter; label: string }[] = [
+  { value: 'ALL', label: 'ทุกประเภท' },
+  { value: 'BIDDING', label: '🎯 ประมูล' },
+  { value: 'STAIR', label: '📊 ขั้นบันได' },
+];
+
 function AdminCirclesSection({ adminId }: { adminId: string }) {
   const { data, isLoading, error } = useSWR<{ status: string; circles?: AdminCircle[] }>(
     ['get_admin_circles', { admin_id: adminId }],
@@ -986,6 +1003,31 @@ function AdminCirclesSection({ adminId }: { adminId: string }) {
   );
 
   const circles = data?.status === 'success' ? data.circles ?? [] : [];
+
+  const [query, setQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<CircleStatusFilter>('ALL');
+  const [typeFilter, setTypeFilter] = useState<CircleTypeFilter>('ALL');
+
+  // Pre-compute counts per status (for chip badges).
+  const statusCounts = circles.reduce<Record<string, number>>((acc, c) => {
+    const s = (c.status || 'UNKNOWN').toUpperCase();
+    acc[s] = (acc[s] || 0) + 1;
+    return acc;
+  }, {});
+
+  const filtered = circles.filter((c) => {
+    if (statusFilter !== 'ALL' && (c.status || '').toUpperCase() !== statusFilter) return false;
+    const stair = isStairCircle(c.type);
+    if (typeFilter === 'STAIR' && !stair) return false;
+    if (typeFilter === 'BIDDING' && stair) return false;
+    const q = query.trim().toLowerCase();
+    if (!q) return true;
+    return (
+      (c.circle_name || '').toLowerCase().includes(q) ||
+      (c.name || '').toLowerCase().includes(q) ||
+      c.id.toLowerCase().includes(q)
+    );
+  });
 
   return (
     <div className="flex flex-col gap-2">
@@ -1011,9 +1053,72 @@ function AdminCirclesSection({ adminId }: { adminId: string }) {
         </Card>
       )}
 
-      {circles.map((c) => (
-        <CircleRow key={c.id} circle={c} />
-      ))}
+      {!isLoading && circles.length > 0 && (
+        <>
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="ค้นหาชื่อวงหรือ ID…"
+              className="h-9 pl-9 text-sm"
+            />
+          </div>
+
+          <div className="flex flex-wrap gap-1.5">
+            {STATUS_FILTERS.map((f) => {
+              const count = f.value === 'ALL' ? circles.length : statusCounts[f.value] || 0;
+              const active = statusFilter === f.value;
+              return (
+                <button
+                  key={f.value}
+                  type="button"
+                  onClick={() => setStatusFilter(f.value)}
+                  disabled={count === 0 && f.value !== 'ALL'}
+                  className={cn(
+                    'rounded-full border px-2.5 py-0.5 text-[0.7rem] font-medium transition-colors',
+                    active
+                      ? 'border-primary bg-primary text-primary-foreground'
+                      : 'border-border bg-background text-muted-foreground hover:bg-muted',
+                    count === 0 && f.value !== 'ALL' && 'opacity-40',
+                  )}
+                >
+                  {f.label} ({count})
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="flex flex-wrap gap-1.5">
+            {TYPE_FILTERS.map((f) => {
+              const active = typeFilter === f.value;
+              return (
+                <button
+                  key={f.value}
+                  type="button"
+                  onClick={() => setTypeFilter(f.value)}
+                  className={cn(
+                    'rounded-full border px-2.5 py-0.5 text-[0.7rem] font-medium transition-colors',
+                    active
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-border bg-background text-muted-foreground hover:bg-muted',
+                  )}
+                >
+                  {f.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {filtered.length === 0 ? (
+            <Card className="border-dashed bg-muted/30 p-4 text-center text-sm text-muted-foreground">
+              ไม่พบวงแชร์ตามเงื่อนไข
+            </Card>
+          ) : (
+            filtered.map((c) => <CircleRow key={c.id} circle={c} />)
+          )}
+        </>
+      )}
     </div>
   );
 }
