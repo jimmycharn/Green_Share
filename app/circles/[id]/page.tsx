@@ -770,6 +770,56 @@ export default function CircleDetail() {
             </span>
             <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>ประเภท: {circle.type}</span>
           </div>
+
+          {/* Notify button for step-interest circles */}
+          {isCircleAdmin && circle.type === 'ขั้นบันได (ดอกคงที่)' && circle.status === 'OPEN' && (
+            <button
+              onClick={async () => {
+                const ok = await confirm({
+                  title: '📣 แจ้งเตือนสมาชิกทาง LINE',
+                  description: 'ระบบจะส่งการแจ้งเตือนวงแชร์นี้ไปยังสมาชิกทุกคนในบ้านแชร์ทันที ยืนยันหรือไม่?',
+                });
+                if (!ok) return;
+                try {
+                  const res = await fetch('/api/action', {
+                    method: 'POST',
+                    headers: authHeaders(),
+                    body: JSON.stringify({
+                      action: 'notify_circle_members',
+                      circle_id: circleId,
+                      caller_role: dbUser.role,
+                    }),
+                  });
+                  const data = await res.json();
+                  if (data.status === 'success') {
+                    toast.success(data.message);
+                  } else {
+                    toast.error(data.message);
+                  }
+                } catch {
+                  toast.error('การเชื่อมต่อขัดข้อง');
+                }
+              }}
+              style={{
+                marginTop: '12px',
+                width: '100%',
+                padding: '12px',
+                borderRadius: '14px',
+                border: 'none',
+                background: 'linear-gradient(135deg, #00B900 0%, #00a000 100%)',
+                color: 'white',
+                fontWeight: '700',
+                fontSize: '0.95rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+              }}
+            >
+              📣 แจ้งเตือนสมาชิกให้มาจองมือทาง LINE
+            </button>
+          )}
         </div>
 
         {message.text && (
