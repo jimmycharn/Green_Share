@@ -51,6 +51,7 @@ export default function CircleDetail() {
   const [bids, setBids] = useState<Bid[]>([]);
   const [slips, setSlips] = useState<Slip[]>([]);
   const [payouts, setPayouts] = useState<Payout[]>([]);
+  const [periodDates, setPeriodDates] = useState<any[]>([]);
   const [message, setMessage] = useState<{ type: string; text: string }>({ type: '', text: '' });
   const [activeTab, setActiveTab] = useState<string>('');
 
@@ -161,6 +162,7 @@ export default function CircleDetail() {
       setBids(data.bids || []);
       setSlips(data.slips || []);
       setPayouts(data.payouts || []);
+      setPeriodDates(data.periodDates || []);
       setMyBank(data.myBank);
 
       // Conditional Default Tab
@@ -476,7 +478,11 @@ export default function CircleDetail() {
           caller_role: dbUser.role,
           ...settingsData,
           period_config: configModal.period
-            ? { period: configModal.period, assigned_to: settingsData.assigned_to }
+            ? {
+                period: configModal.period,
+                assigned_to: settingsData.assigned_to,
+                amount: settingsData.amount,
+              }
             : null,
         }),
       });
@@ -1090,11 +1096,13 @@ export default function CircleDetail() {
                           onClick={(e) => {
                             e.stopPropagation();
                             const assignedTo = getAssignedTo(period) || 'NONE';
+                            const pDate = periodDates.find(p => p.period === period);
                             setSettingsData({
                               ...circle,
                               close_mode:
                                 circle.close_mode === 'AUTO' ? 'ปิดอัตโนมัติ' : 'แอดมินปิดเอง',
                               assigned_to: assignedTo,
+                              amount: pDate?.amount ?? circle?.amount_per_hand ?? 0,
                             });
                             setConfigModal({ open: true, period });
                           }}
@@ -2077,85 +2085,102 @@ export default function CircleDetail() {
               </>
             )}
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormField label="⏰ เวลาเปิด" boxed={false}>
-                <input
-                  type="time"
-                  value={settingsData.bid_start_time}
-                  onChange={(e) =>
-                    setSettingsData({ ...settingsData, bid_start_time: e.target.value })
-                  }
-                  className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm"
-                />
-              </FormField>
-              <FormField label="⏰ เวลาปิด" boxed={false}>
-                <input
-                  type="time"
-                  value={settingsData.bid_end_time}
-                  onChange={(e) =>
-                    setSettingsData({ ...settingsData, bid_end_time: e.target.value })
-                  }
-                  className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm"
-                />
-              </FormField>
-            </div>
+            {circle?.type !== 'ขั้นบันได (ดอกคงที่)' && (
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField label="⏰ เวลาเปิด" boxed={false}>
+                    <input
+                      type="time"
+                      value={settingsData.bid_start_time}
+                      onChange={(e) =>
+                        setSettingsData({ ...settingsData, bid_start_time: e.target.value })
+                      }
+                      className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm"
+                    />
+                  </FormField>
+                  <FormField label="⏰ เวลาปิด" boxed={false}>
+                    <input
+                      type="time"
+                      value={settingsData.bid_end_time}
+                      onChange={(e) =>
+                        setSettingsData({ ...settingsData, bid_end_time: e.target.value })
+                      }
+                      className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm"
+                    />
+                  </FormField>
+                </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormField label="💰 ดอกต่ำสุด" boxed={false}>
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField label="💰 ดอกต่ำสุด" boxed={false}>
+                    <input
+                      type="number"
+                      value={settingsData.min_bid}
+                      onChange={(e) => setSettingsData({ ...settingsData, min_bid: e.target.value })}
+                      className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm"
+                    />
+                  </FormField>
+                  <FormField label="💰 ดอกสูงสุด" boxed={false}>
+                    <input
+                      type="number"
+                      value={settingsData.max_bid}
+                      onChange={(e) => setSettingsData({ ...settingsData, max_bid: e.target.value })}
+                      className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm"
+                    />
+                  </FormField>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField label="🔔 แจ้งเตือน (ชม.)" boxed={false}>
+                    <input
+                      type="number"
+                      value={settingsData.notify_hours}
+                      onChange={(e) =>
+                        setSettingsData({ ...settingsData, notify_hours: e.target.value })
+                      }
+                      className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm"
+                    />
+                  </FormField>
+                  <FormField label="🔒 โหมดปิด" boxed={false}>
+                    <select
+                      value={settingsData.close_mode}
+                      onChange={(e) =>
+                        setSettingsData({ ...settingsData, close_mode: e.target.value })
+                      }
+                      className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm"
+                    >
+                      <option value="แอดมินปิดเอง">แอดมินปิดเอง</option>
+                      <option value="ปิดอัตโนมัติ">ปิดอัตโนมัติ (AUTO)</option>
+                    </select>
+                  </FormField>
+                </div>
+
+                <FormField label="✂️ วิธีคิดดอก" boxed={false}>
+                  <select
+                    value={settingsData.interest_method}
+                    onChange={(e) =>
+                      setSettingsData({ ...settingsData, interest_method: e.target.value })
+                    }
+                    className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm"
+                  >
+                    <option value="หักดอก">หักดอก (Interest Deduct)</option>
+                    <option value="ไม่หักดอก">ไม่หักดอก (Interest Add)</option>
+                  </select>
+                </FormField>
+              </>
+            )}
+
+            {circle?.type === 'ขั้นบันได (ดอกคงที่)' && configModal.period && (
+              <FormField label="จำนวนเงินชำระต่องวด (บาท)" boxed={false}>
                 <input
                   type="number"
-                  value={settingsData.min_bid}
-                  onChange={(e) => setSettingsData({ ...settingsData, min_bid: e.target.value })}
-                  className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm"
-                />
-              </FormField>
-              <FormField label="💰 ดอกสูงสุด" boxed={false}>
-                <input
-                  type="number"
-                  value={settingsData.max_bid}
-                  onChange={(e) => setSettingsData({ ...settingsData, max_bid: e.target.value })}
-                  className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm"
-                />
-              </FormField>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <FormField label="🔔 แจ้งเตือน (ชม.)" boxed={false}>
-                <input
-                  type="number"
-                  value={settingsData.notify_hours}
+                  value={settingsData.amount}
                   onChange={(e) =>
-                    setSettingsData({ ...settingsData, notify_hours: e.target.value })
+                    setSettingsData({ ...settingsData, amount: e.target.value })
                   }
                   className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm"
                 />
               </FormField>
-              <FormField label="🔒 โหมดปิด" boxed={false}>
-                <select
-                  value={settingsData.close_mode}
-                  onChange={(e) =>
-                    setSettingsData({ ...settingsData, close_mode: e.target.value })
-                  }
-                  className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm"
-                >
-                  <option value="แอดมินปิดเอง">แอดมินปิดเอง</option>
-                  <option value="ปิดอัตโนมัติ">ปิดอัตโนมัติ (AUTO)</option>
-                </select>
-              </FormField>
-            </div>
-
-            <FormField label="✂️ วิธีคิดดอก" boxed={false}>
-              <select
-                value={settingsData.interest_method}
-                onChange={(e) =>
-                  setSettingsData({ ...settingsData, interest_method: e.target.value })
-                }
-                className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm"
-              >
-                <option value="หักดอก">หักดอก (Interest Deduct)</option>
-                <option value="ไม่หักดอก">ไม่หักดอก (Interest Add)</option>
-              </select>
-            </FormField>
+            )}
 
             {configModal.period && (
               <FormField label="งวดนี้กำหนดไว้ให้กับ">

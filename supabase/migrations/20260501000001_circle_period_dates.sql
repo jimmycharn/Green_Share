@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS public.circle_period_dates (
   circle_id    TEXT    NOT NULL REFERENCES public.circles(id) ON DELETE CASCADE,
   period       INTEGER NOT NULL,
   period_date  DATE    NOT NULL,
+  amount       NUMERIC,
   is_manual    BOOLEAN DEFAULT false,
   created_at   TIMESTAMPTZ DEFAULT now(),
   PRIMARY KEY (circle_id, period)

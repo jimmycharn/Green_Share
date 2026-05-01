@@ -38,7 +38,7 @@ const formSchema = z.object({
   circle_name: z.string().min(1, 'กรุณากรอกชื่อวง').max(120),
   type: z.enum(['ประมูล (เปียแข่งดอก)', 'ขั้นบันได (ดอกคงที่)']),
   bid_permission: z.enum(['NONE', 'PARTIAL', 'ALL']),
-  amount_per_hand: z.coerce.number().positive('ยอดงวดต้องมากกว่า 0'),
+  amount_per_hand: z.coerce.number().min(0, 'ยอดงวดต้องไม่ติดลบ'),
   total_hands: z.coerce.number().int().positive('จำนวนมือต้องมากกว่า 0'),
   start_date: z.string().min(1, 'กรุณาเลือกวันที่เริ่มต้น'),
   period_type: z.enum(['MONTHLY', 'BIMONTHLY', 'DAILY']),
@@ -113,9 +113,11 @@ export default function CreateCirclePage() {
   const bimonthlyDay1 = watch('bimonthly_day1');
   const bimonthlyDay2 = watch('bimonthly_day2');
   const bimonthlyMode = watch('bimonthly_mode');
+  const circleType = watch('type');
+  const isStepInterest = circleType === 'ขั้นบันได (ดอกคงที่)';
 
   const totalAmount =
-    Number.isFinite(amountPerHand) && Number.isFinite(totalHands)
+    !isStepInterest && Number.isFinite(amountPerHand) && Number.isFinite(totalHands)
       ? Number(amountPerHand) * Number(totalHands)
       : 0;
 
@@ -271,32 +273,41 @@ export default function CreateCirclePage() {
             </select>
           </Field>
 
-          <Field
-            icon={<Scale className="size-4" />}
-            label="สิทธิประมูล (Auction Permission)"
-            error={errors.bid_permission?.message}
-          >
-            <select {...register('bid_permission')} className={inputClass}>
-              <option value="NONE">ไม่ต้องชำระก่อน (Free to bid)</option>
-              <option value="PARTIAL">ต้องชำระบางมือก่อนอย่างน้อย 1 มือ</option>
-              <option value="ALL">ต้องชำระทุกมือก่อนในงวดนั้น</option>
-            </select>
-          </Field>
+          {!isStepInterest && (
+            <Field
+              icon={<Scale className="size-4" />}
+              label="สิทธิประมูล (Auction Permission)"
+              error={errors.bid_permission?.message}
+            >
+              <select {...register('bid_permission')} className={inputClass}>
+                <option value="NONE">ไม่ต้องชำระก่อน (Free to bid)</option>
+                <option value="PARTIAL">ต้องชำระบางมือก่อนอย่างน้อย 1 มือ</option>
+                <option value="ALL">ต้องชำระทุกมือก่อนในงวดนั้น</option>
+              </select>
+            </Field>
+          )}
 
           <div className="grid grid-cols-2 gap-4">
-            <Field
-              icon={<Coins className="size-4" />}
-              label="งวดละ (บาท)"
-              error={errors.amount_per_hand?.message}
-            >
-              <Input
-                {...register('amount_per_hand')}
-                type="number"
-                inputMode="numeric"
-                placeholder="10000"
-                className="h-12 rounded-2xl border-2 px-4 text-base"
-              />
-            </Field>
+            {!isStepInterest ? (
+              <Field
+                icon={<Coins className="size-4" />}
+                label="งวดละ (บาท)"
+                error={errors.amount_per_hand?.message}
+              >
+                <Input
+                  {...register('amount_per_hand')}
+                  type="number"
+                  inputMode="numeric"
+                  placeholder="10000"
+                  className="h-12 rounded-2xl border-2 px-4 text-base"
+                />
+              </Field>
+            ) : (
+              <div className="flex flex-col justify-center rounded-2xl border-2 border-dashed border-muted-foreground/30 bg-muted/20 px-4 text-sm text-muted-foreground">
+                <span className="font-bold text-foreground">ยอดชำระต่องวด:</span>
+                ตั้งค่าเองในแต่ละงวด
+              </div>
+            )}
             <Field
               icon={<Hand className="size-4" />}
               label="จำนวนมือ"
@@ -323,7 +334,7 @@ export default function CreateCirclePage() {
             </div>
           </Field>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className={cn("grid gap-4", isStepInterest ? "grid-cols-1" : "grid-cols-2")}>
             <Field
               icon={<CalendarDays className="size-4" />}
               label="วันที่เริ่มต้น"
@@ -335,16 +346,18 @@ export default function CreateCirclePage() {
                 className="h-12 rounded-2xl border-2 px-4 text-base"
               />
             </Field>
-            <Field
-              icon={<Scissors className="size-4" />}
-              label="วิธีคิดดอก"
-              error={errors.interest_method?.message}
-            >
-              <select {...register('interest_method')} className={inputClass}>
-                <option value="หักดอก">หักดอก (Interest Deduct)</option>
-                <option value="ไม่หักดอก">ไม่หักดอก (Interest Add)</option>
-              </select>
-            </Field>
+            {!isStepInterest && (
+              <Field
+                icon={<Scissors className="size-4" />}
+                label="วิธีคิดดอก"
+                error={errors.interest_method?.message}
+              >
+                <select {...register('interest_method')} className={inputClass}>
+                  <option value="หักดอก">หักดอก (Interest Deduct)</option>
+                  <option value="ไม่หักดอก">ไม่หักดอก (Interest Add)</option>
+                </select>
+              </Field>
+            )}
           </div>
 
           {/* ───── Frequency Picker ───── */}
@@ -452,80 +465,82 @@ export default function CreateCirclePage() {
           </div>
 
           {/* Bidding settings group */}
-          <div className="-mx-2.5 rounded-3xl border border-border bg-muted/40 p-5">
-            <h4 className="m-0 mb-4 flex items-center gap-2 px-1 text-base font-bold text-muted-foreground">
-              <Settings2 className="size-4" /> ตั้งค่าการประมูลพื้นฐาน
-            </h4>
+          {!isStepInterest && (
+            <div className="-mx-2.5 rounded-3xl border border-border bg-muted/40 p-5">
+              <h4 className="m-0 mb-4 flex items-center gap-2 px-1 text-base font-bold text-muted-foreground">
+                <Settings2 className="size-4" /> ตั้งค่าการประมูลพื้นฐาน
+              </h4>
 
-            <div className="grid grid-cols-2 gap-4">
-              <CompactField
-                icon={<Clock className="size-3.5" />}
-                label="เวลาเปิดประมูล"
-                error={errors.bid_start_time?.message}
-              >
-                <Input {...register('bid_start_time')} type="time" className={compactClass} />
-              </CompactField>
-              <CompactField
-                icon={<Clock className="size-3.5" />}
-                label="เวลาปิดประมูล"
-                error={errors.bid_end_time?.message}
-              >
-                <Input {...register('bid_end_time')} type="time" className={compactClass} />
-              </CompactField>
-            </div>
+              <div className="grid grid-cols-2 gap-4">
+                <CompactField
+                  icon={<Clock className="size-3.5" />}
+                  label="เวลาเปิดประมูล"
+                  error={errors.bid_start_time?.message}
+                >
+                  <Input {...register('bid_start_time')} type="time" className={compactClass} />
+                </CompactField>
+                <CompactField
+                  icon={<Clock className="size-3.5" />}
+                  label="เวลาปิดประมูล"
+                  error={errors.bid_end_time?.message}
+                >
+                  <Input {...register('bid_end_time')} type="time" className={compactClass} />
+                </CompactField>
+              </div>
 
-            <div className="mt-4 grid grid-cols-2 gap-4">
-              <CompactField
-                icon={<Coins className="size-3.5" />}
-                label="ดอกต่ำสุด"
-                error={errors.min_bid?.message}
-              >
-                <Input
-                  {...register('min_bid')}
-                  type="number"
-                  inputMode="numeric"
-                  className={compactClass}
-                />
-              </CompactField>
-              <CompactField
-                icon={<Coins className="size-3.5" />}
-                label="ดอกสูงสุด"
-                error={errors.max_bid?.message}
-              >
-                <Input
-                  {...register('max_bid')}
-                  type="number"
-                  inputMode="numeric"
-                  className={compactClass}
-                />
-              </CompactField>
-            </div>
+              <div className="mt-4 grid grid-cols-2 gap-4">
+                <CompactField
+                  icon={<Coins className="size-3.5" />}
+                  label="ดอกต่ำสุด"
+                  error={errors.min_bid?.message}
+                >
+                  <Input
+                    {...register('min_bid')}
+                    type="number"
+                    inputMode="numeric"
+                    className={compactClass}
+                  />
+                </CompactField>
+                <CompactField
+                  icon={<Coins className="size-3.5" />}
+                  label="ดอกสูงสุด"
+                  error={errors.max_bid?.message}
+                >
+                  <Input
+                    {...register('max_bid')}
+                    type="number"
+                    inputMode="numeric"
+                    className={compactClass}
+                  />
+                </CompactField>
+              </div>
 
-            <div className="mt-4 grid grid-cols-2 gap-4">
-              <CompactField
-                icon={<Clock className="size-3.5" />}
-                label="แจ้งเตือนก่อน (ชม.)"
-                error={errors.notify_hours?.message}
-              >
-                <Input
-                  {...register('notify_hours')}
-                  type="number"
-                  inputMode="numeric"
-                  className={compactClass}
-                />
-              </CompactField>
-              <CompactField
-                icon={<Settings2 className="size-3.5" />}
-                label="โหมดปิดงวด"
-                error={errors.close_mode?.message}
-              >
-                <select {...register('close_mode')} className={compactClass}>
-                  <option value="แอดมินปิดเอง">แอดมินปิดเอง</option>
-                  <option value="ปิดอัตโนมัติ">ปิดอัตโนมัติ</option>
-                </select>
-              </CompactField>
+              <div className="mt-4 grid grid-cols-2 gap-4">
+                <CompactField
+                  icon={<Clock className="size-3.5" />}
+                  label="แจ้งเตือนก่อน (ชม.)"
+                  error={errors.notify_hours?.message}
+                >
+                  <Input
+                    {...register('notify_hours')}
+                    type="number"
+                    inputMode="numeric"
+                    className={compactClass}
+                  />
+                </CompactField>
+                <CompactField
+                  icon={<Settings2 className="size-3.5" />}
+                  label="โหมดปิดงวด"
+                  error={errors.close_mode?.message}
+                >
+                  <select {...register('close_mode')} className={compactClass}>
+                    <option value="แอดมินปิดเอง">แอดมินปิดเอง</option>
+                    <option value="ปิดอัตโนมัติ">ปิดอัตโนมัติ</option>
+                  </select>
+                </CompactField>
+              </div>
             </div>
-          </div>
+          )}
 
           <Field
             icon={<LinkIcon className="size-4" />}
