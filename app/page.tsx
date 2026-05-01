@@ -30,6 +30,7 @@ type Circle = {
   name: string;
   status: 'OPEN' | 'ACTIVE' | 'CLOSED' | string;
   amount_per_hand: number;
+  type?: string;
   is_participant?: boolean;
 };
 
@@ -273,6 +274,17 @@ function CircleRow({
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <span className="truncate font-bold">{circle.name}</span>
+          {/* Circle type badge */}
+          <span
+            className={cn(
+              'shrink-0 rounded-full px-1.5 py-0.5 text-[0.55rem] font-bold leading-tight',
+              circle.type === 'ขั้นบันได (ดอกคงที่)'
+                ? 'bg-amber-100 text-amber-700'
+                : 'bg-blue-100 text-blue-700'
+            )}
+          >
+            {circle.type === 'ขั้นบันได (ดอกคงที่)' ? '📊 ขั้นบันได' : '🎯 บิงโก'}
+          </span>
           {showStatus && (
             <Badge variant="success" className="text-[0.55rem]">
               {circle.status}
@@ -295,7 +307,11 @@ function CircleRow({
         </div>
         <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
           <Wallet className="size-3.5" />
-          <span>ส่งงวดละ {circle.amount_per_hand.toLocaleString()} ฿</span>
+          {circle.type === 'ขั้นบันได (ดอกคงที่)' ? (
+            <span>กำหนดยอดชำระต่องวด</span>
+          ) : (
+            <span>ส่งงวดละ {circle.amount_per_hand.toLocaleString()} ฿</span>
+          )}
         </div>
       </div>
       <ChevronRight className="size-5 text-muted-foreground/60 transition-transform group-hover:translate-x-0.5" />
