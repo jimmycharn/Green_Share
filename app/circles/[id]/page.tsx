@@ -482,6 +482,7 @@ export default function CircleDetail() {
                 period: configModal.period,
                 assigned_to: settingsData.assigned_to,
                 amount: settingsData.amount,
+                period_date: settingsData.period_date,
               }
             : null,
         }),
@@ -1016,8 +1017,19 @@ export default function CircleDetail() {
                         {period}
                       </div>
                       <div>
-                        <div style={{ fontWeight: '700', fontSize: '0.95rem' }}>
-                          งวดที่ {period}
+                        <div style={{ fontWeight: '700', fontSize: '0.95rem', display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
+                          <span style={{ marginRight: '8px' }}>งวดที่ {period}</span>
+                          {(() => {
+                            const pDateObj = periodDates.find((p) => p.period === period);
+                            if (pDateObj?.period_date) {
+                              return (
+                                <span style={{ fontSize: '0.75rem', fontWeight: '500', color: 'var(--primary)', background: 'var(--primary-light, #e0e7ff)', padding: '2px 6px', borderRadius: '4px', marginRight: '8px' }}>
+                                  📅 {new Date(pDateObj.period_date).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                </span>
+                              );
+                            }
+                            return null;
+                          })()}
                           {circle.status === 'OPEN' ? (
                             <span
                               style={{
@@ -1103,6 +1115,7 @@ export default function CircleDetail() {
                                 circle.close_mode === 'AUTO' ? 'ปิดอัตโนมัติ' : 'แอดมินปิดเอง',
                               assigned_to: assignedTo,
                               amount: pDate?.amount ?? circle?.amount_per_hand ?? 0,
+                              period_date: pDate?.period_date || '',
                             });
                             setConfigModal({ open: true, period });
                           }}
@@ -2183,7 +2196,18 @@ export default function CircleDetail() {
             )}
 
             {configModal.period && (
-              <FormField label="งวดนี้กำหนดไว้ให้กับ">
+              <>
+                <FormField label="วันที่งวด" boxed={false}>
+                  <input
+                    type="date"
+                    value={settingsData.period_date}
+                    onChange={(e) =>
+                      setSettingsData({ ...settingsData, period_date: e.target.value })
+                    }
+                    className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm"
+                  />
+                </FormField>
+                <FormField label="งวดนี้กำหนดไว้ให้กับ">
                 <select
                   value={settingsData.assigned_to || 'NONE'}
                   onChange={(e) =>
@@ -2209,21 +2233,24 @@ export default function CircleDetail() {
                   })}
                 </select>
               </FormField>
+            </>
             )}
 
-            <FormField label="⚖️ สิทธิประมูล (Auction Permission)">
-              <select
-                value={settingsData.bid_permission}
-                onChange={(e) =>
-                  setSettingsData({ ...settingsData, bid_permission: e.target.value })
-                }
-                className="w-full rounded-lg border-2 border-muted bg-background px-3 py-2.5 text-sm outline-none focus:border-primary"
-              >
-                <option value="NONE">ไม่ต้องชำระก่อน</option>
-                <option value="PARTIAL">ต้องชำระบางมือก่อนอย่างน้อย 1 มือ</option>
-                <option value="ALL">ต้องชำระทุกมือก่อนในงวดนั้น</option>
-              </select>
-            </FormField>
+            {circle?.type !== 'ขั้นบันได (ดอกคงที่)' && (
+              <FormField label="⚖️ สิทธิประมูล (Auction Permission)">
+                <select
+                  value={settingsData.bid_permission}
+                  onChange={(e) =>
+                    setSettingsData({ ...settingsData, bid_permission: e.target.value })
+                  }
+                  className="w-full rounded-lg border-2 border-muted bg-background px-3 py-2.5 text-sm outline-none focus:border-primary"
+                >
+                  <option value="NONE">ไม่ต้องชำระก่อน</option>
+                  <option value="PARTIAL">ต้องชำระบางมือก่อนอย่างน้อย 1 มือ</option>
+                  <option value="ALL">ต้องชำระทุกมือก่อนในงวดนั้น</option>
+                </select>
+              </FormField>
+            )}
 
             <Button type="submit" size="lg" className="mt-2 w-full">
               บันทึกข้อมูล
