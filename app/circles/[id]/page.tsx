@@ -958,11 +958,20 @@ export default function CircleDetail() {
                         >
                           {player ? player.member_name : canClick ? 'ว่าง (แตะเพื่อจอง)' : 'ว่าง'}
                         </div>
-                        {player && (
-                          <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
-                            ส่งงวดละ {circle.amount_per_hand.toLocaleString()} ฿
-                          </div>
-                        )}
+                        {/* Amount display for this hand's period */}
+                        {(() => {
+                          const pDate = periodDates.find((p) => p.period === hand);
+                          const amt =
+                            circle.type === 'ขั้นบันได (ดอกคงที่)'
+                              ? pDate?.amount
+                              : circle.amount_per_hand;
+                          if (!amt && amt !== 0) return null;
+                          return (
+                            <div style={{ fontSize: '0.75rem', color: amt ? 'var(--primary)' : '#94a3b8', fontWeight: '600' }}>
+                              ส่งงวดละ {Number(amt).toLocaleString()} ฿
+                            </div>
+                          );
+                        })()}
                       </div>
                     </div>
                     {player && isCircleAdmin && (
@@ -1148,6 +1157,20 @@ export default function CircleDetail() {
                             🏆 {winner.member_name}
                           </div>
                         )}
+                        {/* Amount for this period */}
+                        {(() => {
+                          const pDate = periodDates.find((p) => p.period === period);
+                          const amt =
+                            circle.type === '\u0e02\u0e31\u0e49\u0e19\u0e1a\u0e31\u0e19\u0e44\u0e14 (\u0e14\u0e2d\u0e01\u0e04\u0e07\u0e17\u0e35\u0e48)'
+                              ? pDate?.amount
+                              : circle.amount_per_hand;
+                          if (!amt && amt !== 0) return null;
+                          return (
+                            <div style={{ fontSize: '0.78rem', color: 'var(--primary)', fontWeight: '700', marginTop: '2px' }}>
+                              💰 {Number(amt).toLocaleString()} \u0e3f/\u0e07\u0e27\u0e14
+                            </div>
+                          );
+                        })()}
                       </div>
                     </div>
 
