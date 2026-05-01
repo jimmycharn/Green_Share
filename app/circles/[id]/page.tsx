@@ -1848,11 +1848,15 @@ export default function CircleDetail() {
               <option value={dbUser.id}>จองให้ตัวเอง ({dbUser.name})</option>
             )}
             {(() => {
-              // Only show members who belong to this circle's creator house
+              // Only show regular MEMBERs (not ADMIN/SUPERADMIN) who are
+              // actively linked to this circle's creator's house.
+              // The creator/dbUser is already covered by "จองให้ตัวเอง" above.
               const eligibleMembers = allMembers.filter((m) => {
-                // Always include the creator/admin themselves
-                if (m.id === circle?.creator_id) return true;
-                // Include members linked to this circle's creator's house
+                // Skip the logged-in user (already shown as "จองให้ตัวเอง")
+                if (m.id === dbUser?.id) return false;
+                // Skip admins and superadmins — they are house owners, not players
+                if (['ADMIN', 'SUPERADMIN'].includes(m.role)) return false;
+                // Must have an ACTIVE link to this circle's creator house
                 return m.member_houses?.some(
                   (h) => h.admin_id === circle?.creator_id && h.status === 'ACTIVE'
                 );
