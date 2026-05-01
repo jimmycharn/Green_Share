@@ -302,12 +302,8 @@ export default function CreateCirclePage() {
                   className="h-12 rounded-2xl border-2 px-4 text-base"
                 />
               </Field>
-            ) : (
-              <div className="flex flex-col justify-center rounded-2xl border-2 border-dashed border-muted-foreground/30 bg-muted/20 px-4 text-sm text-muted-foreground">
-                <span className="font-bold text-foreground">ยอดชำระต่องวด:</span>
-                ตั้งค่าเองในแต่ละงวด
-              </div>
-            )}
+            ) : null}
+
             <Field
               icon={<Hand className="size-4" />}
               label="จำนวนมือ"
@@ -323,16 +319,18 @@ export default function CreateCirclePage() {
             </Field>
           </div>
 
-          <Field icon={<Calculator className="size-4" />} label="ยอดรวมทั้งหมด">
-            <div
-              className={cn(
-                'flex items-center justify-center rounded-2xl border-2 border-dashed border-muted-foreground/30 bg-muted/30 px-5 py-5 text-2xl font-bold',
-                totalAmount ? 'text-primary' : 'text-muted-foreground/60',
-              )}
-            >
-              {totalAmount ? totalAmount.toLocaleString() : 'คำนวณอัตโนมัติ'}
-            </div>
-          </Field>
+          {!isStepInterest && (
+            <Field icon={<Calculator className="size-4" />} label="ยอดรวมทั้งหมด">
+              <div
+                className={cn(
+                  'flex items-center justify-center rounded-2xl border-2 border-dashed border-muted-foreground/30 bg-muted/30 px-5 py-5 text-2xl font-bold',
+                  totalAmount ? 'text-primary' : 'text-muted-foreground/60',
+                )}
+              >
+                {totalAmount ? totalAmount.toLocaleString() : 'คำนวณอัตโนมัติ'}
+              </div>
+            </Field>
+          )}
 
           <div className={cn("grid gap-4", isStepInterest ? "grid-cols-1" : "grid-cols-2")}>
             <Field
