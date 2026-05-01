@@ -1847,11 +1847,22 @@ export default function CircleDetail() {
             {adminModal.mode === 'JOIN' && dbUser && (
               <option value={dbUser.id}>จองให้ตัวเอง ({dbUser.name})</option>
             )}
-            {allMembers.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.name} ({m.nickname})
-              </option>
-            ))}
+            {(() => {
+              // Only show members who belong to this circle's creator house
+              const eligibleMembers = allMembers.filter((m) => {
+                // Always include the creator/admin themselves
+                if (m.id === circle?.creator_id) return true;
+                // Include members linked to this circle's creator's house
+                return m.member_houses?.some(
+                  (h) => h.admin_id === circle?.creator_id && h.status === 'ACTIVE'
+                );
+              });
+              return eligibleMembers.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.name} ({m.nickname || m.id})
+                </option>
+              ));
+            })()}
           </select>
           <DialogFooter className="gap-2 sm:gap-2">
             <Button
