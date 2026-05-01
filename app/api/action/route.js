@@ -22,6 +22,9 @@ import {
   deleteCircle,
   createPayout,
   verifyPayout,
+  updatePeriodDate,
+  regeneratePeriodDates,
+  getPeriodDates,
 } from '@/lib/controllers/circle';
 import {
   manageSlot,
@@ -78,6 +81,9 @@ const HANDLERS = {
   set_default_bank: setDefaultBank,
   manage_slot: manageSlot,
   approve_payment: approvePayment,
+  update_period_date: updatePeriodDate,
+  regenerate_period_dates: regeneratePeriodDates,
+  get_period_dates: getPeriodDates,
 };
 
 function errorResponse(message, status = 400, extra = {}) {
