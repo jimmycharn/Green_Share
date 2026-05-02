@@ -14,6 +14,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { useUser } from '@/contexts/UserContext';
 import { authHeaders } from '@/lib/authHeaders';
+import { callAction } from '@/lib/api';
 import { useConfirm } from '@/components/providers/ConfirmProvider';
 import {
   Dialog,
@@ -132,12 +133,7 @@ export default function CircleDetail() {
 
   useEffect(() => {
     if (isCircleAdmin && allMembers.length === 0) {
-      fetch('/api/action', {
-        method: 'POST',
-        headers: authHeaders(),
-        body: JSON.stringify({ action: 'get_members', member_id: dbUser.id }),
-      })
-        .then((res) => res.json())
+      callAction('get_members', { member_id: dbUser.id })
         .then((data) => {
           if (data.status === 'success') setAllMembers(data.members);
         })
@@ -146,16 +142,10 @@ export default function CircleDetail() {
   }, [isCircleAdmin, dbUser]);
 
   const fetchCircleDetail = async () => {
-    const res = await fetch('/api/action', {
-      method: 'POST',
-      headers: authHeaders(),
-      body: JSON.stringify({
-        action: 'get_circle_detail',
-        circle_id: circleId,
-        member_id: dbUser?.id,
-      }),
+    const data = await callAction('get_circle_detail', {
+      circle_id: circleId,
+      member_id: dbUser?.id,
     });
-    const data = await res.json();
     if (data.status === 'success') {
       setCircle(data.circle);
       setPlayers(data.players || []);
@@ -182,17 +172,11 @@ export default function CircleDetail() {
     });
     if (!ok) return;
     try {
-      const res = await fetch('/api/action', {
-        method: 'POST',
-        headers: authHeaders(),
-        body: JSON.stringify({
-          action: 'join_circle',
-          circle_id: circleId,
-          hand_no: handNo,
-          member_id: dbUser.id,
-        }),
+      const resData = await callAction('join_circle', {
+        circle_id: circleId,
+        hand_no: handNo,
+        member_id: dbUser.id,
       });
-      const resData = await res.json();
       if (resData.status === 'success') {
         setMessage({ type: 'success', text: 'จองมือสำเร็จ!' });
         fetchCircleDetail();
@@ -229,12 +213,7 @@ export default function CircleDetail() {
             caller_role: dbUser.role,
           };
 
-      const res = await fetch('/api/action', {
-        method: 'POST',
-        headers: authHeaders(),
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json();
+      const data = await callAction(payload.action, { ...payload, action: undefined });
       if (data.status === 'success') {
         setAdminModal({ open: false, mode: '', handNo: '' });
         fetchCircleDetail();
@@ -253,16 +232,10 @@ export default function CircleDetail() {
     });
     if (!ok) return;
     try {
-      const res = await fetch('/api/action', {
-        method: 'POST',
-        headers: authHeaders(),
-        body: JSON.stringify({
-          action: 'start_circle',
-          circle_id: circleId,
-          caller_role: dbUser.role,
-        }),
+      const data = await callAction('start_circle', {
+        circle_id: circleId,
+        caller_role: dbUser.role,
       });
-      const data = await res.json();
       if (data.status === 'success') fetchCircleDetail();
       setMessage({ type: data.status, text: data.message });
     } catch {
@@ -279,18 +252,12 @@ export default function CircleDetail() {
     });
     if (!ok) return;
     try {
-      const res = await fetch('/api/action', {
-        method: 'POST',
-        headers: authHeaders(),
-        body: JSON.stringify({
-          action: 'cancel_hand',
-          circle_id: circleId,
-          hand_no: handNo,
-          caller_id: dbUser.id,
-          caller_role: dbUser.role,
-        }),
+      const data = await callAction('cancel_hand', {
+        circle_id: circleId,
+        hand_no: handNo,
+        caller_id: dbUser.id,
+        caller_role: dbUser.role,
       });
-      const data = await res.json();
       if (data.status === 'success') fetchCircleDetail();
       setMessage({ type: data.status, text: data.message });
     } catch {
@@ -321,12 +288,7 @@ export default function CircleDetail() {
     });
     if (!ok) return;
     try {
-      const res = await fetch('/api/action', {
-        method: 'POST',
-        headers: authHeaders(),
-        body: JSON.stringify({ action: 'verify_slip', slip_id: slipId, caller_role: dbUser.role }),
-      });
-      const data = await res.json();
+      const data = await callAction('verify_slip', { slip_id: slipId, caller_role: dbUser.role });
       if (data.status === 'success') fetchCircleDetail();
     } catch {
       toast.error('การเชื่อมต่อขัดข้อง');
@@ -371,21 +333,15 @@ export default function CircleDetail() {
       }
 
       // 2. Submit Action
-      const res = await fetch('/api/action', {
-        method: 'POST',
-        headers: authHeaders(),
-        body: JSON.stringify({
-          action: 'upload_slip',
-          circle_id: circleId,
-          member_id: dbUser.id,
-          period: slipModal.period,
-          amount: uploadData.amount,
-          note: uploadData.note,
-          image_url: finalImageUrl,
-          is_cash: paymentMode === 'CASH',
-        }),
+      const data = await callAction('upload_slip', {
+        circle_id: circleId,
+        member_id: dbUser.id,
+        period: slipModal.period,
+        amount: uploadData.amount,
+        note: uploadData.note,
+        image_url: finalImageUrl,
+        is_cash: paymentMode === 'CASH',
       });
-      const data = await res.json();
       if (data.status === 'success') {
         setUploadData({ amount: '', note: '', image_url: '' });
         setSelectedFile(null);
@@ -417,18 +373,12 @@ export default function CircleDetail() {
     }
 
     try {
-      const res = await fetch('/api/action', {
-        method: 'POST',
-        headers: authHeaders(),
-        body: JSON.stringify({
-          action: 'submit_bid',
-          circle_id: circleId,
-          period: bidModal.period,
-          member_id: dbUser.id,
-          bid_amount: amount,
-        }),
+      const data = await callAction('submit_bid', {
+        circle_id: circleId,
+        period: bidModal.period,
+        member_id: dbUser.id,
+        bid_amount: amount,
       });
-      const data = await res.json();
       if (data.status === 'success') {
         setBidModal({ open: false, period: null });
         setBidAmount('');
@@ -443,20 +393,14 @@ export default function CircleDetail() {
   const handleAdminAutoPay = async (period) => {
     const amt = getRequiredAmount(period);
     try {
-      const res = await fetch('/api/action', {
-        method: 'POST',
-        headers: authHeaders(),
-        body: JSON.stringify({
-          action: 'upload_slip',
-          circle_id: circleId,
-          member_id: dbUser.id,
-          period: period,
-          amount: amt,
-          status: 'APPROVED',
-          caller_role: dbUser.role,
-        }),
+      const data = await callAction('upload_slip', {
+        circle_id: circleId,
+        member_id: dbUser.id,
+        period: period,
+        amount: amt,
+        status: 'APPROVED',
+        caller_role: dbUser.role,
       });
-      const data = await res.json();
       if (data.status === 'success') {
         fetchCircleDetail();
         setMessage({ type: 'success', text: 'แอดมินชำระเงินเรียบร้อย!' });
@@ -469,25 +413,19 @@ export default function CircleDetail() {
   const handleUpdateSettings = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch('/api/action', {
-        method: 'POST',
-        headers: authHeaders(),
-        body: JSON.stringify({
-          action: 'update_circle_settings',
-          circle_id: circleId,
-          caller_role: dbUser.role,
-          ...settingsData,
-          period_config: configModal.period
-            ? {
-                period: configModal.period,
-                assigned_to: settingsData.assigned_to,
-                amount: settingsData.amount,
-                period_date: settingsData.period_date,
-              }
-            : null,
-        }),
+      const data = await callAction('update_circle_settings', {
+        circle_id: circleId,
+        caller_role: dbUser.role,
+        ...settingsData,
+        period_config: configModal.period
+          ? {
+              period: configModal.period,
+              assigned_to: settingsData.assigned_to,
+              amount: settingsData.amount,
+              period_date: settingsData.period_date,
+            }
+          : null,
       });
-      const data = await res.json();
       if (data.status === 'success') {
         setConfigModal({ open: false, period: null });
         fetchCircleDetail();
@@ -511,17 +449,11 @@ export default function CircleDetail() {
     }
 
     try {
-      const res = await fetch('/api/action', {
-        method: 'POST',
-        headers: authHeaders(),
-        body: JSON.stringify({
-          action,
-          circle_id: circleId,
-          period,
-          caller_role: dbUser.role,
-        }),
+      const data = await callAction(action, {
+        circle_id: circleId,
+        period,
+        caller_role: dbUser.role,
       });
-      const data = await res.json();
       if (data.status === 'success') {
         setMessage({ type: 'success', text: data.message });
         fetchCircleDetail();
@@ -640,21 +572,15 @@ export default function CircleDetail() {
         finalImg = publicUrl;
       }
 
-      const res = await fetch('/api/action', {
-        method: 'POST',
-        headers: authHeaders(),
-        body: JSON.stringify({
-          action: 'create_payout',
-          circle_id: circleId,
-          member_id: payoutModal.winner_id,
-          period: payoutModal.period,
-          amount: payoutModal.amount,
-          image_url: finalImg,
-          is_cash: paymentMode === 'CASH',
-          caller_role: dbUser.role,
-        }),
+      const data = await callAction('create_payout', {
+        circle_id: circleId,
+        member_id: payoutModal.winner_id,
+        period: payoutModal.period,
+        amount: payoutModal.amount,
+        image_url: finalImg,
+        is_cash: paymentMode === 'CASH',
+        caller_role: dbUser.role,
       });
-      const data = await res.json();
       if (data.status === 'success') {
         setMessage({ type: 'success', text: data.message });
         setPayoutModal({ ...payoutModal, open: false });
@@ -673,17 +599,11 @@ export default function CircleDetail() {
 
   const handleVerifyPayout = async (payoutId, status) => {
     try {
-      const res = await fetch('/api/action', {
-        method: 'POST',
-        headers: authHeaders(),
-        body: JSON.stringify({
-          action: 'verify_payout',
-          payout_id: payoutId,
-          status,
-          caller_id: dbUser.id,
-        }),
+      const data = await callAction('verify_payout', {
+        payout_id: payoutId,
+        status,
+        caller_id: dbUser.id,
       });
-      const data = await res.json();
       if (data.status === 'success') {
         setMessage({ type: 'success', text: data.message });
         setInspectPayoutModal({ open: false, payout: null });
@@ -781,16 +701,10 @@ export default function CircleDetail() {
                 });
                 if (!ok) return;
                 try {
-                  const res = await fetch('/api/action', {
-                    method: 'POST',
-                    headers: authHeaders(),
-                    body: JSON.stringify({
-                      action: 'notify_circle_members',
-                      circle_id: circleId,
-                      caller_role: dbUser.role,
-                    }),
+                  const data = await callAction('notify_circle_members', {
+                    circle_id: circleId,
+                    caller_role: dbUser.role,
                   });
-                  const data = await res.json();
                   if (data.status === 'success') {
                     toast.success(data.message);
                   } else {

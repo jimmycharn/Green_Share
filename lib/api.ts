@@ -29,11 +29,24 @@ export async function callAction<T = Record<string, unknown>>(
     data = { status: 'error', message: 'Invalid server response' };
   }
 
-  if (data?.forceLogout && typeof window !== 'undefined' && window.liff?.logout) {
+  if (data?.forceLogout && typeof window !== 'undefined' && window.liff) {
     try {
-      window.liff.logout();
+      // Try to silently re-initialise LIFF so it refreshes the ID token.
+      // If the LINE session is still alive, the user won't notice anything.
+      const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
+      if (liffId && window.liff.init) {
+        await window.liff.init({ liffId });
+      }
+      // If LIFF is still not logged in after reinit, force a proper logout so
+      // the user is redirected to the LINE login screen rather than left in a
+      // broken state.
+      if (!window.liff.isLoggedIn?.()) {
+        window.liff.logout?.();
+        window.liff.login?.();
+      }
     } catch {
-      /* ignore */
+      // Last resort: full page reload so LIFF re-initialises from scratch.
+      window.location.reload();
     }
   }
 

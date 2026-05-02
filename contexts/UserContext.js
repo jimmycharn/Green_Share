@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from 'react';
 import Script from 'next/script';
+import { callAction } from '@/lib/api';
 
 const UserContext = createContext();
 
@@ -25,20 +26,11 @@ export function UserProvider({ children }) {
         setProfile(userProfile);
 
         // Check if user exists in DB without registering yet
-        const res = await fetch('/api/action', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${window.liff.getIDToken() || ''}`,
-          },
-          body: JSON.stringify({
-            action: 'check_user',
-            line_id: userProfile.userId,
-            name: userProfile.displayName,
-            picture_url: userProfile.pictureUrl || null,
-          }),
+        const data = await callAction('check_user', {
+          line_id: userProfile.userId,
+          name: userProfile.displayName,
+          picture_url: userProfile.pictureUrl || null,
         });
-        const data = await res.json();
 
         if (data.status === 'success' && data.user) {
           setDbUser(data.user);
