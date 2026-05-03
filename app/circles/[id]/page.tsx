@@ -1316,7 +1316,7 @@ export default function CircleDetail() {
                           })()}
                         </div>
                       ) : (
-                        isCurrent && (
+                        (isCurrent || isCompleted) && (
                           <div
                             style={{
                               display: 'flex',
@@ -1328,93 +1328,94 @@ export default function CircleDetail() {
                             {/* Bingo/Auction Logic */}
                             {circle.type === 'ประมูล (เปียแข่งดอก)' && (
                               <>
-                                {!isBiddingClosed(period) ? (
-                                  (() => {
-                                    const assignedTo = getAssignedTo(period) || 'NONE';
+                                {isCurrent &&
+                                  (!isBiddingClosed(period) ? (
+                                    (() => {
+                                      const assignedTo = getAssignedTo(period) || 'NONE';
 
-                                    if (assignedTo !== 'NONE') {
-                                      return (
-                                        <div
+                                      if (assignedTo !== 'NONE') {
+                                        return (
+                                          <div
+                                            style={{
+                                              flex: '1 1 45%',
+                                              padding: '12px',
+                                              fontSize: '0.85rem',
+                                              background: 'rgba(16, 185, 129, 0.1)',
+                                              borderRadius: '12px',
+                                              color: 'var(--primary)',
+                                              display: 'flex',
+                                              alignItems: 'center',
+                                              justifyContent: 'center',
+                                              gap: '6px',
+                                              border: '1px dashed var(--primary)',
+                                            }}
+                                          >
+                                            🔒 งวดนี้กำหนดผู้ชนะไว้แล้ว
+                                          </div>
+                                        );
+                                      }
+
+                                      return canUserBid(period) ? (
+                                        <button
+                                          onClick={() => setBidModal({ open: true, period })}
+                                          className="btn-primary"
                                           style={{
                                             flex: '1 1 45%',
                                             padding: '12px',
                                             fontSize: '0.85rem',
-                                            background: 'rgba(16, 185, 129, 0.1)',
-                                            borderRadius: '12px',
-                                            color: 'var(--primary)',
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
                                             gap: '6px',
-                                            border: '1px dashed var(--primary)',
                                           }}
                                         >
-                                          🔒 งวดนี้กำหนดผู้ชนะไว้แล้ว
-                                        </div>
+                                          🔨 ประมูล (เปีย)
+                                        </button>
+                                      ) : (
+                                        <button
+                                          onClick={() =>
+                                            toast.error(
+                                              circle.bid_permission === 'PARTIAL'
+                                                ? 'กรุณาชำระเงินอย่างน้อย 1 มือก่อนประมูล'
+                                                : 'กรุณาชำระเงินให้ครบทุกมือก่อนประมูล'
+                                            )
+                                          }
+                                          className="btn-primary"
+                                          style={{
+                                            flex: '1 1 45%',
+                                            padding: '12px',
+                                            fontSize: '0.85rem',
+                                            background: '#cbd5e1',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            gap: '6px',
+                                            cursor: 'not-allowed',
+                                          }}
+                                        >
+                                          🔨 ประมูล (ติดเงื่อนไขจ่าย)
+                                        </button>
                                       );
-                                    }
-
-                                    return canUserBid(period) ? (
-                                      <button
-                                        onClick={() => setBidModal({ open: true, period })}
-                                        className="btn-primary"
-                                        style={{
-                                          flex: '1 1 45%',
-                                          padding: '12px',
-                                          fontSize: '0.85rem',
-                                          display: 'flex',
-                                          alignItems: 'center',
-                                          justifyContent: 'center',
-                                          gap: '6px',
-                                        }}
-                                      >
-                                        🔨 ประมูล (เปีย)
-                                      </button>
-                                    ) : (
-                                      <button
-                                        onClick={() =>
-                                          toast.error(
-                                            circle.bid_permission === 'PARTIAL'
-                                              ? 'กรุณาชำระเงินอย่างน้อย 1 มือก่อนประมูล'
-                                              : 'กรุณาชำระเงินให้ครบทุกมือก่อนประมูล'
-                                          )
-                                        }
-                                        className="btn-primary"
-                                        style={{
-                                          flex: '1 1 45%',
-                                          padding: '12px',
-                                          fontSize: '0.85rem',
-                                          background: '#cbd5e1',
-                                          display: 'flex',
-                                          alignItems: 'center',
-                                          justifyContent: 'center',
-                                          gap: '6px',
-                                          cursor: 'not-allowed',
-                                        }}
-                                      >
-                                        🔨 ประมูล (ติดเงื่อนไขจ่าย)
-                                      </button>
-                                    );
-                                  })()
-                                ) : (
-                                  <div
-                                    style={{
-                                      flex: '1 1 45%',
-                                      padding: '12px',
-                                      fontSize: '0.85rem',
-                                      background: '#f1f5f9',
-                                      borderRadius: '12px',
-                                      color: '#64748b',
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      justifyContent: 'center',
-                                      gap: '6px',
-                                      border: '1px solid #e2e8f0',
-                                    }}
-                                  >
-                                    🔒 ปิดรับการประมูลแล้ว
-                                  </div>
-                                )}
+                                    })()
+                                  ) : (
+                                    <div
+                                      style={{
+                                        flex: '1 1 45%',
+                                        padding: '12px',
+                                        fontSize: '0.85rem',
+                                        background: '#f1f5f9',
+                                        borderRadius: '12px',
+                                        color: '#64748b',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '6px',
+                                        border: '1px solid #e2e8f0',
+                                      }}
+                                    >
+                                      🔒 ปิดรับการประมูลแล้ว
+                                    </div>
+                                  ))}
 
                                 <button
                                   onClick={async () => {
@@ -1448,7 +1449,7 @@ export default function CircleDetail() {
 
                                 {isCircleAdmin && (
                                   <>
-                                    {!isBiddingClosed(period) && (
+                                    {isCurrent && !isBiddingClosed(period) && (
                                       <>
                                         {(() => {
                                           const isAssigned = Boolean(getAssignedTo(period));
