@@ -1787,35 +1787,7 @@ export default function CircleDetail() {
                                     <div
                                       style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
                                     >
-                                      {isWinner ? (
-                                        <div
-                                          style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '8px',
-                                          }}
-                                        >
-                                          {/* Status Text for Others */}
-                                          <span
-                                            style={{
-                                              fontSize: '0.75rem',
-                                              fontWeight: '700',
-                                              color:
-                                                currentPayout?.status === 'APPROVED'
-                                                  ? '#16a34a'
-                                                  : currentPayout?.status === 'PENDING'
-                                                    ? '#ea580c'
-                                                    : '#dc2626',
-                                            }}
-                                          >
-                                            {currentPayout?.status === 'APPROVED'
-                                              ? '✅ รับแล้ว'
-                                              : currentPayout?.status === 'PENDING'
-                                                ? '⏳ รอตรวจสอบ'
-                                                : '❌ ยังไม่รับ'}
-                                          </span>
-                                        </div>
-                                      ) : pSlip ? (
+                                      {pSlip ? (
                                         <span
                                           style={{
                                             fontSize: '0.7rem',
@@ -1866,23 +1838,9 @@ export default function CircleDetail() {
                                           (เปีย {periodWinner.bid_amount.toLocaleString()})
                                         </span>
                                       )}
-                                      {currentPayout?.status === 'APPROVED' && (
-                                        <span
-                                          style={{
-                                            background: '#dcfce7',
-                                            color: '#166534',
-                                            padding: '1px 7px',
-                                            borderRadius: '6px',
-                                            fontWeight: '700',
-                                            fontSize: '0.7rem',
-                                          }}
-                                        >
-                                          ✅ รับแล้ว
-                                        </span>
-                                      )}
-                                      {/* Admin Action: Pay Winner — placed here to clearly separate from member dues */}
-                                      {isCircleAdmin &&
-                                        (!currentPayout || currentPayout.status === 'REJECTED') && (
+                                      {/* Admin: pay button or status */}
+                                      {isCircleAdmin ? (
+                                        !currentPayout || currentPayout.status === 'REJECTED' ? (
                                           <button
                                             onClick={(e) => {
                                               e.stopPropagation();
@@ -1907,30 +1865,115 @@ export default function CircleDetail() {
                                           >
                                             💸 จ่ายเงินให้ผู้ชนะ
                                           </button>
-                                        )}
-                                      {/* Winner Action: Verify Admin's Slip */}
-                                      {isMe && currentPayout?.status === 'PENDING' && (
-                                        <button
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            setInspectPayoutModal({
-                                              open: true,
-                                              payout: currentPayout,
-                                            });
-                                          }}
+                                        ) : currentPayout.status === 'PENDING' ? (
+                                          <span
+                                            style={{
+                                              fontSize: '0.72rem',
+                                              fontWeight: '700',
+                                              color: '#ea580c',
+                                              background: '#fff7ed',
+                                              padding: '2px 8px',
+                                              borderRadius: '6px',
+                                            }}
+                                          >
+                                            ⏳ รอตรวจสอบ
+                                          </span>
+                                        ) : (
+                                          <span
+                                            style={{
+                                              fontSize: '0.72rem',
+                                              fontWeight: '700',
+                                              color: '#166534',
+                                              background: '#dcfce7',
+                                              padding: '2px 8px',
+                                              borderRadius: '6px',
+                                            }}
+                                          >
+                                            ✅ รับแล้ว
+                                          </span>
+                                        )
+                                      ) : isMe ? (
+                                        /* Winner member: ยังไม่ได้รับ / ตรวจสอบ / รับแล้ว */
+                                        !currentPayout || currentPayout.status === 'REJECTED' ? (
+                                          <span
+                                            style={{
+                                              fontSize: '0.72rem',
+                                              fontWeight: '700',
+                                              color: '#dc2626',
+                                              background: '#fee2e2',
+                                              padding: '2px 8px',
+                                              borderRadius: '6px',
+                                            }}
+                                          >
+                                            ❌ ยังไม่ได้รับ
+                                          </span>
+                                        ) : currentPayout.status === 'PENDING' ? (
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              setInspectPayoutModal({
+                                                open: true,
+                                                payout: currentPayout,
+                                              });
+                                            }}
+                                            style={{
+                                              background: '#3b82f6',
+                                              color: 'white',
+                                              border: 'none',
+                                              padding: '4px 12px',
+                                              borderRadius: '8px',
+                                              fontSize: '0.75rem',
+                                              fontWeight: '700',
+                                              cursor: 'pointer',
+                                            }}
+                                          >
+                                            🔍 ตรวจสอบ
+                                          </button>
+                                        ) : (
+                                          <span
+                                            style={{
+                                              fontSize: '0.72rem',
+                                              fontWeight: '700',
+                                              color: '#166534',
+                                              background: '#dcfce7',
+                                              padding: '2px 8px',
+                                              borderRadius: '6px',
+                                            }}
+                                          >
+                                            ✅ รับแล้ว
+                                          </span>
+                                        )
+                                      ) : /* Other members: read-only payout status */
+                                      !currentPayout || currentPayout.status === 'REJECTED' ? (
+                                        <span
                                           style={{
-                                            background: '#3b82f6',
-                                            color: 'white',
-                                            border: 'none',
-                                            padding: '4px 12px',
-                                            borderRadius: '8px',
-                                            fontSize: '0.75rem',
-                                            fontWeight: '700',
-                                            cursor: 'pointer',
+                                            fontSize: '0.72rem',
+                                            fontWeight: '600',
+                                            color: '#dc2626',
                                           }}
                                         >
-                                          🔍 ตรวจสอบ
-                                        </button>
+                                          ❌ ยังไม่ได้รับ
+                                        </span>
+                                      ) : currentPayout.status === 'PENDING' ? (
+                                        <span
+                                          style={{
+                                            fontSize: '0.72rem',
+                                            fontWeight: '600',
+                                            color: '#ea580c',
+                                          }}
+                                        >
+                                          ⏳ รอตรวจสอบ
+                                        </span>
+                                      ) : (
+                                        <span
+                                          style={{
+                                            fontSize: '0.72rem',
+                                            fontWeight: '600',
+                                            color: '#166534',
+                                          }}
+                                        >
+                                          ✅ ได้รับแล้ว
+                                        </span>
                                       )}
                                     </div>
                                   )}
