@@ -126,19 +126,27 @@ export default function CircleDetail() {
     (['SUPERADMIN', 'ADMIN'].includes(dbUser.role) || dbUser.id === circle.creator_id);
 
   useEffect(() => {
-    if (dbUser && circleId) {
-      fetchCircleDetail();
+    if (!dbUser || !circleId) return;
+    fetchCircleDetail();
+    // Pre-fetch member list in parallel for admins (needed for booking modal)
+    if (['ADMIN', 'SUPERADMIN'].includes(dbUser.role) && allMembers.length === 0) {
+      callAction('get_members', { member_id: dbUser.id })
+        .then((d) => {
+          if (d.status === 'success') setAllMembers(d.members);
+        })
+        .catch(() => {});
     }
   }, [dbUser, circleId]);
 
   useEffect(() => {
-    if (isCircleAdmin && allMembers.length === 0) {
-      callAction('get_members', { member_id: dbUser.id })
-        .then((data) => {
-          if (data.status === 'success') setAllMembers(data.members);
-        })
-        .catch((err) => console.log(err));
-    }
+    // Covers the rare case: a MEMBER-role user who is the circle creator
+    if (!isCircleAdmin || allMembers.length > 0) return;
+    if (['ADMIN', 'SUPERADMIN'].includes(dbUser?.role)) return; // already fetched above
+    callAction('get_members', { member_id: dbUser.id })
+      .then((data) => {
+        if (data.status === 'success') setAllMembers(data.members);
+      })
+      .catch((err) => console.log(err));
   }, [isCircleAdmin, dbUser]);
 
   const fetchCircleDetail = async () => {
@@ -179,7 +187,8 @@ export default function CircleDetail() {
       });
       if (resData.status === 'success') {
         setMessage({ type: 'success', text: 'จองมือสำเร็จ!' });
-        fetchCircleDetail();
+        if (resData.players) setPlayers(resData.players as Player[]);
+        else fetchCircleDetail();
       } else setMessage({ type: 'error', text: resData.message });
     } catch (err) {
       setMessage({ type: 'error', text: 'การเชื่อมต่อขัดข้อง' });
@@ -216,7 +225,8 @@ export default function CircleDetail() {
       const data = await callAction(payload.action, { ...payload, action: undefined });
       if (data.status === 'success') {
         setAdminModal({ open: false, mode: '', handNo: '' });
-        fetchCircleDetail();
+        if (isJoin && (data as any).players) setPlayers((data as any).players as Player[]);
+        else fetchCircleDetail();
         setMessage({ type: 'success', text: data.message });
       } else setMessage({ type: 'error', text: data.message });
     } catch {
@@ -227,8 +237,7 @@ export default function CircleDetail() {
   const handleStartCircle = async () => {
     const ok = await confirm({
       title: 'เริ่มวงแชร์',
-      description:
-        'ยืนยันการเริ่มวงแชร์? ระบบจะปิดรับการจองมือตามปกติและเปลี่ยนสถานะเป็น ACTIVE',
+      description: 'ยืนยันการเริ่มวงแชร์? ระบบจะปิดรับการจองมือตามปกติและเปลี่ยนสถานะเป็น ACTIVE',
     });
     if (!ok) return;
     try {
@@ -258,7 +267,10 @@ export default function CircleDetail() {
         caller_id: dbUser.id,
         caller_role: dbUser.role,
       });
-      if (data.status === 'success') fetchCircleDetail();
+      if (data.status === 'success') {
+        if ((data as any).players) setPlayers((data as any).players as Player[]);
+        else fetchCircleDetail();
+      }
       setMessage({ type: data.status, text: data.message });
     } catch {
       setMessage({ type: 'error', text: 'การเชื่อมต่อขัดข้อง' });
@@ -517,7 +529,7 @@ export default function CircleDetail() {
   };
 
   const isBiddingClosed = (period) =>
-    circle?.current_period === period && !!circle?.current_period_bidding_closed;
+    circle?.current_period === period && Boolean(circle?.current_period_bidding_closed);
 
   const canUserBid = (period) => {
     if (!circle || !dbUser) return false;
@@ -697,7 +709,8 @@ export default function CircleDetail() {
               onClick={async () => {
                 const ok = await confirm({
                   title: '📣 แจ้งเตือนสมาชิกทาง LINE',
-                  description: 'ระบบจะส่งการแจ้งเตือนวงแชร์นี้ไปยังสมาชิกทุกคนในบ้านแชร์ทันที ยืนยันหรือไม่?',
+                  description:
+                    'ระบบจะส่งการแจ้งเตือนวงแชร์นี้ไปยังสมาชิกทุกคนในบ้านแชร์ทันที ยืนยันหรือไม่?',
                 });
                 if (!ok) return;
                 try {
@@ -879,14 +892,22 @@ export default function CircleDetail() {
                           const amt = isStepType ? pDate?.amount : circle.amount_per_hand;
                           if (isStepType && (amt === undefined || amt === null)) {
                             return (
-                              <div style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: '500' }}>
+                              <div
+                                style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: '500' }}
+                              >
                                 ยังไม่กำหนดยอดชำระ
                               </div>
                             );
                           }
                           if (amt === undefined || amt === null) return null;
                           return (
-                            <div style={{ fontSize: '0.75rem', color: 'var(--primary)', fontWeight: '600' }}>
+                            <div
+                              style={{
+                                fontSize: '0.75rem',
+                                color: 'var(--primary)',
+                                fontWeight: '600',
+                              }}
+                            >
                               ส่งงวดละ {Number(amt).toLocaleString()} ฿
                             </div>
                           );
@@ -995,14 +1016,37 @@ export default function CircleDetail() {
                         {period}
                       </div>
                       <div>
-                        <div style={{ fontWeight: '700', fontSize: '0.95rem', display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
+                        <div
+                          style={{
+                            fontWeight: '700',
+                            fontSize: '0.95rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            flexWrap: 'wrap',
+                          }}
+                        >
                           <span style={{ marginRight: '8px' }}>งวดที่ {period}</span>
                           {(() => {
                             const pDateObj = periodDates.find((p) => p.period === period);
                             if (pDateObj?.period_date) {
                               return (
-                                <span style={{ fontSize: '0.75rem', fontWeight: '500', color: 'var(--primary)', background: 'var(--primary-light, #e0e7ff)', padding: '2px 6px', borderRadius: '4px', marginRight: '8px' }}>
-                                  📅 {new Date(pDateObj.period_date).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                <span
+                                  style={{
+                                    fontSize: '0.75rem',
+                                    fontWeight: '500',
+                                    color: 'var(--primary)',
+                                    background: 'var(--primary-light, #e0e7ff)',
+                                    padding: '2px 6px',
+                                    borderRadius: '4px',
+                                    marginRight: '8px',
+                                  }}
+                                >
+                                  📅{' '}
+                                  {new Date(pDateObj.period_date).toLocaleDateString('th-TH', {
+                                    day: 'numeric',
+                                    month: 'short',
+                                    year: 'numeric',
+                                  })}
                                 </span>
                               );
                             }
@@ -1083,14 +1127,28 @@ export default function CircleDetail() {
                           const amt = isStepType ? pDate?.amount : circle.amount_per_hand;
                           if (isStepType && (amt === undefined || amt === null)) {
                             return (
-                              <div style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: '500', marginTop: '2px' }}>
+                              <div
+                                style={{
+                                  fontSize: '0.72rem',
+                                  color: '#94a3b8',
+                                  fontWeight: '500',
+                                  marginTop: '2px',
+                                }}
+                              >
                                 ยังไม่กำหนดยอดชำระ
                               </div>
                             );
                           }
                           if (amt === undefined || amt === null) return null;
                           return (
-                            <div style={{ fontSize: '0.78rem', color: 'var(--primary)', fontWeight: '700', marginTop: '2px' }}>
+                            <div
+                              style={{
+                                fontSize: '0.78rem',
+                                color: 'var(--primary)',
+                                fontWeight: '700',
+                                marginTop: '2px',
+                              }}
+                            >
                               💰 {Number(amt).toLocaleString()} ฿/งวด
                             </div>
                           );
@@ -1105,7 +1163,7 @@ export default function CircleDetail() {
                           onClick={(e) => {
                             e.stopPropagation();
                             const assignedTo = getAssignedTo(period) || 'NONE';
-                            const pDate = periodDates.find(p => p.period === period);
+                            const pDate = periodDates.find((p) => p.period === period);
                             setSettingsData({
                               ...circle,
                               close_mode:
@@ -1371,7 +1429,7 @@ export default function CircleDetail() {
                                     {!isBiddingClosed(period) && (
                                       <>
                                         {(() => {
-                                          const isAssigned = !!getAssignedTo(period);
+                                          const isAssigned = Boolean(getAssignedTo(period));
                                           return (
                                             !isAssigned && (
                                               <button
@@ -1589,7 +1647,7 @@ export default function CircleDetail() {
                             (po) => po.period === period && po.member_id === winnerMemberId
                           );
                           const biddingIsClosed =
-                            isCompleted || isBiddingClosed(period) || !!currentPayout;
+                            isCompleted || isBiddingClosed(period) || Boolean(currentPayout);
 
                           return players.map((p) => {
                             const pBid = bids.find(
@@ -1954,11 +2012,7 @@ export default function CircleDetail() {
                 <span className="text-base font-extrabold text-foreground">
                   {myBank.bank_name} {myBank.account_no}
                 </span>
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={() => copyToClipboard(myBank.account_no)}
-                >
+                <Button type="button" size="sm" onClick={() => copyToClipboard(myBank.account_no)}>
                   คัดลอก
                 </Button>
               </div>
@@ -2140,7 +2194,9 @@ export default function CircleDetail() {
                     <input
                       type="number"
                       value={settingsData.min_bid}
-                      onChange={(e) => setSettingsData({ ...settingsData, min_bid: e.target.value })}
+                      onChange={(e) =>
+                        setSettingsData({ ...settingsData, min_bid: e.target.value })
+                      }
                       className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm"
                     />
                   </FormField>
@@ -2148,7 +2204,9 @@ export default function CircleDetail() {
                     <input
                       type="number"
                       value={settingsData.max_bid}
-                      onChange={(e) => setSettingsData({ ...settingsData, max_bid: e.target.value })}
+                      onChange={(e) =>
+                        setSettingsData({ ...settingsData, max_bid: e.target.value })
+                      }
                       className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm"
                     />
                   </FormField>
@@ -2199,9 +2257,7 @@ export default function CircleDetail() {
                 <input
                   type="number"
                   value={settingsData.amount}
-                  onChange={(e) =>
-                    setSettingsData({ ...settingsData, amount: e.target.value })
-                  }
+                  onChange={(e) => setSettingsData({ ...settingsData, amount: e.target.value })}
                   className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm"
                 />
               </FormField>
@@ -2220,32 +2276,32 @@ export default function CircleDetail() {
                   />
                 </FormField>
                 <FormField label="งวดนี้กำหนดไว้ให้กับ">
-                <select
-                  value={settingsData.assigned_to || 'NONE'}
-                  onChange={(e) =>
-                    setSettingsData({ ...settingsData, assigned_to: e.target.value })
-                  }
-                  className="w-full rounded-lg border-2 border-muted bg-background px-3 py-2.5 text-sm outline-none focus:border-primary"
-                >
-                  <option value="NONE">ไม่กำหนด</option>
-                  <option value={circle.creator_id}>ท้าวแชร์</option>
-                  {Array.from(
-                    new Set(
-                      players
-                        .filter((p) => p.member_id !== circle.creator_id)
-                        .map((p) => p.member_id)
-                    )
-                  ).map((mId) => {
-                    const m = players.find((p) => p.member_id === mId);
-                    return (
-                      <option key={mId} value={mId}>
-                        {m?.member_name}
-                      </option>
-                    );
-                  })}
-                </select>
-              </FormField>
-            </>
+                  <select
+                    value={settingsData.assigned_to || 'NONE'}
+                    onChange={(e) =>
+                      setSettingsData({ ...settingsData, assigned_to: e.target.value })
+                    }
+                    className="w-full rounded-lg border-2 border-muted bg-background px-3 py-2.5 text-sm outline-none focus:border-primary"
+                  >
+                    <option value="NONE">ไม่กำหนด</option>
+                    <option value={circle.creator_id}>ท้าวแชร์</option>
+                    {Array.from(
+                      new Set(
+                        players
+                          .filter((p) => p.member_id !== circle.creator_id)
+                          .map((p) => p.member_id)
+                      )
+                    ).map((mId) => {
+                      const m = players.find((p) => p.member_id === mId);
+                      return (
+                        <option key={mId} value={mId}>
+                          {m?.member_name}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </FormField>
+              </>
             )}
 
             {circle?.type !== 'ขั้นบันได (ดอกคงที่)' && (
