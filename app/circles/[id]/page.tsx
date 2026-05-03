@@ -206,15 +206,14 @@ export default function CircleDetail() {
       if (!ok) return;
     }
     try {
+      const actionName = isJoin ? 'join_circle' : 'change_hand_owner';
       const payload = isJoin
         ? {
-            action: 'join_circle',
             circle_id: circleId,
             hand_no: adminModal.handNo,
             member_id: adminSelectedUserId,
           }
         : {
-            action: 'change_hand_owner',
             circle_id: circleId,
             hand_no: adminModal.handNo,
             new_member_id: adminSelectedUserId,
@@ -222,7 +221,7 @@ export default function CircleDetail() {
             caller_role: dbUser.role,
           };
 
-      const data = await callAction(payload.action, { ...payload, action: undefined });
+      const data = await callAction(actionName, payload);
       if (data.status === 'success') {
         setAdminModal({ open: false, mode: '', handNo: '' });
         if (isJoin && (data as any).players) setPlayers((data as any).players as Player[]);
