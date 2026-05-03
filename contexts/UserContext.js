@@ -55,6 +55,27 @@ export function UserProvider({ children }) {
     }
   }, []);
 
+  // Silently refresh the LIFF ID token whenever the user returns to this tab.
+  // LINE sessions last weeks/months, so liff.init() will get a fresh token
+  // without redirecting — keeping the 1-hour token from expiring unnoticed.
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState !== 'visible') return;
+      if (typeof window === 'undefined' || !window.liff) return;
+      const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
+      if (!liffId) return;
+      try {
+        await window.liff.init({ liffId });
+      } catch {
+        // If reinit fails (LINE session expired) let the next API call
+        // trigger the forceLogout flow normally.
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
+
   const handleScriptLoad = () => {
     if (window.liff) initLiff();
   };
