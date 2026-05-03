@@ -31,6 +31,7 @@ type Circle = {
   status: 'OPEN' | 'ACTIVE' | 'CLOSED' | string;
   amount_per_hand: number;
   type?: string;
+  creator_id?: string;
   is_participant?: boolean;
 };
 
@@ -54,7 +55,10 @@ export default function Home() {
   const isAdmin = dbUser?.role === 'SUPERADMIN' || dbUser?.role === 'ADMIN';
   const newCircles = circles.filter((c) => c.status === 'OPEN').slice(0, 5);
   const joinedCircles = circles
-    .filter((c) => c.is_participant && (c.status === 'ACTIVE' || c.status === 'OPEN'))
+    .filter((c) => {
+      const isCreator = isAdmin && c.creator_id === dbUser?.id;
+      return (isCreator || c.is_participant) && (c.status === 'ACTIVE' || c.status === 'OPEN');
+    })
     .slice(0, 5);
 
   const handleDeleteCircle = async () => {
