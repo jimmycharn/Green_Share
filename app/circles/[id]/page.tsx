@@ -944,6 +944,7 @@ export default function CircleDetail() {
             style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
           >
             {totalHandsArray.map((period) => {
+              const isStairType = circle.type === 'ขั้นบันได (ดอกคงที่)';
               const winnerBid = bids
                 .filter((b) => b.period === period)
                 .sort((a, b) => b.bid_amount - a.bid_amount)[0];
@@ -954,6 +955,9 @@ export default function CircleDetail() {
               const isCurrent = period === circle.current_period;
               const isFuture = period > circle.current_period;
               const isExpanded = expandedPeriod === period;
+              const winnerPayout = payouts.find(
+                (po) => po.period === period && po.member_id === winnerBid?.member_id
+              );
 
               // Calculate Received Amount
               const deadHands = period - 1;
@@ -1211,17 +1215,34 @@ export default function CircleDetail() {
                         borderBottom: isExpanded ? '1px solid #f1f5f9' : 'none',
                       }}
                     >
-                      <div>
-                        <span style={{ color: '#94a3b8' }}>ยอดเปีย:</span>{' '}
-                        <strong style={{ color: 'var(--primary)' }}>
-                          {winnerBid.bid_amount.toLocaleString()}
-                        </strong>
-                      </div>
+                      {!isStairType && winnerBid?.bid_amount > 0 && (
+                        <div>
+                          <span style={{ color: '#94a3b8' }}>ยอดเปีย:</span>{' '}
+                          <strong style={{ color: 'var(--primary)' }}>
+                            {winnerBid.bid_amount.toLocaleString()}
+                          </strong>
+                        </div>
+                      )}
                       <div>
                         <span style={{ color: '#94a3b8' }}>รับสุทธิ:</span>{' '}
                         <strong style={{ color: 'var(--secondary)' }}>
                           {receivedAmount.toLocaleString()}
                         </strong>
+                        {winnerPayout?.status === 'APPROVED' && (
+                          <span
+                            style={{
+                              marginLeft: '6px',
+                              background: '#dcfce7',
+                              color: '#166534',
+                              padding: '1px 6px',
+                              borderRadius: '5px',
+                              fontWeight: '700',
+                              fontSize: '0.72rem',
+                            }}
+                          >
+                            ✅ รับแล้ว
+                          </span>
+                        )}
                       </div>
                     </div>
                   )}
@@ -1574,16 +1595,44 @@ export default function CircleDetail() {
                             }}
                           >
                             <img
-                              src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${winner.member_id}`}
+                              src={
+                                winner.picture_url ||
+                                `https://api.dicebear.com/7.x/avataaars/svg?seed=${winner.member_id}`
+                              }
                               alt="winner"
-                              style={{ width: '100%', height: '100%' }}
+                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                             />
                           </div>
                           <div style={{ flex: 1 }}>
                             <div style={{ fontWeight: '700' }}>🏆 {winner.member_name}</div>
-                            <div style={{ fontSize: '0.8rem', color: '#166534' }}>
-                              รับสุทธิ {receivedAmount.toLocaleString()} ฿ (ดอก{' '}
-                              {winnerBid.bid_amount.toLocaleString()})
+                            <div
+                              style={{
+                                fontSize: '0.8rem',
+                                color: '#166534',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                flexWrap: 'wrap',
+                              }}
+                            >
+                              รับสุทธิ {receivedAmount.toLocaleString()} ฿
+                              {!isStairType && winnerBid?.bid_amount > 0 && (
+                                <span>(ดอก {winnerBid.bid_amount.toLocaleString()})</span>
+                              )}
+                              {winnerPayout?.status === 'APPROVED' && (
+                                <span
+                                  style={{
+                                    background: '#dcfce7',
+                                    color: '#166534',
+                                    padding: '1px 7px',
+                                    borderRadius: '6px',
+                                    fontWeight: '700',
+                                    fontSize: '0.75rem',
+                                  }}
+                                >
+                                  ✅ รับแล้ว
+                                </span>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -1650,137 +1699,163 @@ export default function CircleDetail() {
                           const biddingIsClosed =
                             isCompleted || isBiddingClosed(period) || Boolean(currentPayout);
 
-                          return players.map((p) => {
-                            const pBid = bids.find(
-                              (b) => b.period === period && b.member_id === p.member_id
-                            );
-                            const pSlip = slips.find(
-                              (s) => s.period === period && s.member_id === p.member_id
-                            );
-                            const isMe = dbUser && p.member_id === dbUser.id;
-                            const status = handStatus[p.hand_no];
-                            const isDead = status === 'DEAD';
-                            const isActive = status === 'ACTIVE';
-                            const isWinner =
-                              p.member_id === winnerMemberId && isActive && biddingIsClosed;
+                          return [...players]
+                            .sort((a, b) => a.hand_no - b.hand_no)
+                            .map((p) => {
+                              const pBid = bids.find(
+                                (b) => b.period === period && b.member_id === p.member_id
+                              );
+                              const pSlip = slips.find(
+                                (s) => s.period === period && s.member_id === p.member_id
+                              );
+                              const isMe = dbUser && p.member_id === dbUser.id;
+                              const status = handStatus[p.hand_no];
+                              const isDead = status === 'DEAD';
+                              const isActive = status === 'ACTIVE';
+                              const isWinner =
+                                p.member_id === winnerMemberId && isActive && biddingIsClosed;
 
-                            // Net Amount Calculation for winner: (Total Hands * Amount Per Hand) - (My Bid Amount)
-                            // This depends on the circle rules, but usually:
-                            const netAmount =
-                              circle.total_hands * circle.amount_per_hand -
-                              (periodWinner?.bid_amount || 0);
+                              // Net Amount Calculation for winner: (Total Hands * Amount Per Hand) - (My Bid Amount)
+                              // This depends on the circle rules, but usually:
+                              const netAmount =
+                                circle.total_hands * circle.amount_per_hand -
+                                (periodWinner?.bid_amount || 0);
 
-                            return (
-                              <div
-                                key={p.id}
-                                style={{
-                                  display: 'flex',
-                                  flexDirection: 'column',
-                                  gap: '4px',
-                                  padding: '12px',
-                                  borderRadius: '14px',
-                                  background: isWinner ? '#fffbeb' : '#f8fafc',
-                                  border: isWinner
-                                    ? '1.5px solid #fbbf24'
-                                    : isMe
-                                      ? '1.5px solid #cbd5e1'
-                                      : '1px solid #f1f5f9',
-                                  opacity: isDead ? 0.6 : 1,
-                                  marginBottom: '8px',
-                                }}
-                              >
+                              return (
                                 <div
+                                  key={p.id}
                                   style={{
                                     display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center',
+                                    flexDirection: 'column',
+                                    gap: '4px',
+                                    padding: '12px',
+                                    borderRadius: '14px',
+                                    background: isWinner ? '#fffbeb' : '#f8fafc',
+                                    border: isWinner
+                                      ? '1.5px solid #fbbf24'
+                                      : isMe
+                                        ? '1.5px solid #cbd5e1'
+                                        : '1px solid #f1f5f9',
+                                    opacity: isDead ? 0.6 : 1,
+                                    marginBottom: '8px',
                                   }}
                                 >
                                   <div
                                     style={{
                                       display: 'flex',
+                                      justifyContent: 'space-between',
                                       alignItems: 'center',
-                                      gap: '8px',
-                                      fontSize: '0.95rem',
                                     }}
                                   >
-                                    <span
+                                    <div
                                       style={{
-                                        fontWeight: isActive || isWinner ? '800' : '500',
-                                        color: isWinner
-                                          ? '#92400e'
-                                          : isDead
-                                            ? '#94a3b8'
-                                            : '#1e293b',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px',
+                                        fontSize: '0.95rem',
                                       }}
                                     >
-                                      {isWinner ? '🏆 ' : ''}
-                                      {p.member_name} {isDead ? '(มือตาย)' : ''}
-                                    </span>
-                                    {pBid && !isWinner && isActive && (
                                       <span
                                         style={{
-                                          fontSize: '0.75rem',
-                                          color: 'var(--primary)',
-                                          fontWeight: '600',
+                                          fontWeight: isActive || isWinner ? '800' : '500',
+                                          color: isWinner
+                                            ? '#92400e'
+                                            : isDead
+                                              ? '#94a3b8'
+                                              : '#1e293b',
                                         }}
                                       >
-                                        (เปีย{' '}
-                                        {isCompleted || isCircleAdmin || isMe
-                                          ? pBid.bid_amount.toLocaleString()
-                                          : '***'}
-                                        )
+                                        {isWinner ? '🏆 ' : ''}
+                                        {p.member_name} {isDead ? '(มือตาย)' : ''}
                                       </span>
-                                    )}
-                                  </div>
-                                  <div
-                                    style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
-                                  >
-                                    {isWinner ? (
-                                      <div
-                                        style={{
-                                          display: 'flex',
-                                          alignItems: 'center',
-                                          gap: '8px',
-                                        }}
-                                      >
-                                        {/* Status Text for Others */}
+                                      {!isStairType && pBid && !isWinner && isActive && (
                                         <span
                                           style={{
                                             fontSize: '0.75rem',
-                                            fontWeight: '700',
-                                            color:
-                                              currentPayout?.status === 'APPROVED'
-                                                ? '#16a34a'
-                                                : currentPayout?.status === 'PENDING'
-                                                  ? '#ea580c'
-                                                  : '#dc2626',
+                                            color: 'var(--primary)',
+                                            fontWeight: '600',
                                           }}
                                         >
-                                          {currentPayout?.status === 'APPROVED'
-                                            ? '✅ จ่ายแล้ว'
-                                            : currentPayout?.status === 'PENDING'
-                                              ? '⏳ รอตรวจสอบ'
-                                              : '❌ ยังไม่จ่าย'}
+                                          (เปีย{' '}
+                                          {isCompleted || isCircleAdmin || isMe
+                                            ? pBid.bid_amount.toLocaleString()
+                                            : '***'}
+                                          )
                                         </span>
+                                      )}
+                                    </div>
+                                    <div
+                                      style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                                    >
+                                      {isWinner ? (
+                                        <div
+                                          style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px',
+                                          }}
+                                        >
+                                          {/* Status Text for Others */}
+                                          <span
+                                            style={{
+                                              fontSize: '0.75rem',
+                                              fontWeight: '700',
+                                              color:
+                                                currentPayout?.status === 'APPROVED'
+                                                  ? '#16a34a'
+                                                  : currentPayout?.status === 'PENDING'
+                                                    ? '#ea580c'
+                                                    : '#dc2626',
+                                            }}
+                                          >
+                                            {currentPayout?.status === 'APPROVED'
+                                              ? '✅ จ่ายแล้ว'
+                                              : currentPayout?.status === 'PENDING'
+                                                ? '⏳ รอตรวจสอบ'
+                                                : '❌ ยังไม่จ่าย'}
+                                          </span>
 
-                                        {/* Admin Action: Pay Winner */}
-                                        {isCircleAdmin &&
-                                          (!currentPayout ||
-                                            currentPayout.status === 'REJECTED') && (
+                                          {/* Admin Action: Pay Winner */}
+                                          {isCircleAdmin &&
+                                            (!currentPayout ||
+                                              currentPayout.status === 'REJECTED') && (
+                                              <button
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  setPayoutModal({
+                                                    open: true,
+                                                    period,
+                                                    winner_id: p.member_id,
+                                                    winner_name: p.member_name,
+                                                    amount: netAmount,
+                                                  });
+                                                }}
+                                                style={{
+                                                  background: 'var(--primary-gradient)',
+                                                  color: 'white',
+                                                  border: 'none',
+                                                  padding: '4px 10px',
+                                                  borderRadius: '8px',
+                                                  fontSize: '0.75rem',
+                                                  fontWeight: '700',
+                                                }}
+                                              >
+                                                💸 จ่ายเงิน
+                                              </button>
+                                            )}
+
+                                          {/* Winner Action: Verify Admin's Slip */}
+                                          {isMe && currentPayout?.status === 'PENDING' && (
                                             <button
                                               onClick={(e) => {
                                                 e.stopPropagation();
-                                                setPayoutModal({
+                                                setInspectPayoutModal({
                                                   open: true,
-                                                  period,
-                                                  winner_id: p.member_id,
-                                                  winner_name: p.member_name,
-                                                  amount: netAmount,
+                                                  payout: currentPayout,
                                                 });
                                               }}
                                               style={{
-                                                background: 'var(--primary-gradient)',
+                                                background: '#3b82f6',
                                                 color: 'white',
                                                 border: 'none',
                                                 padding: '4px 10px',
@@ -1789,87 +1864,80 @@ export default function CircleDetail() {
                                                 fontWeight: '700',
                                               }}
                                             >
-                                              💸 จ่ายเงิน
+                                              🔍 ตรวจสอบ
                                             </button>
                                           )}
-
-                                        {/* Winner Action: Verify Admin's Slip */}
-                                        {isMe && currentPayout?.status === 'PENDING' && (
-                                          <button
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              setInspectPayoutModal({
-                                                open: true,
-                                                payout: currentPayout,
-                                              });
-                                            }}
-                                            style={{
-                                              background: '#3b82f6',
-                                              color: 'white',
-                                              border: 'none',
-                                              padding: '4px 10px',
-                                              borderRadius: '8px',
-                                              fontSize: '0.75rem',
-                                              fontWeight: '700',
-                                            }}
-                                          >
-                                            🔍 ตรวจสอบ
-                                          </button>
-                                        )}
-                                      </div>
-                                    ) : pSlip ? (
-                                      <span
-                                        style={{
-                                          fontSize: '0.7rem',
-                                          padding: '2px 8px',
-                                          borderRadius: '6px',
-                                          background:
-                                            pSlip.status === 'APPROVED' ? '#dcfce7' : '#fef3c7',
-                                          color:
-                                            pSlip.status === 'APPROVED' ? '#166534' : '#92400e',
-                                        }}
-                                      >
-                                        {pSlip.status === 'APPROVED'
-                                          ? '✅ จ่ายแล้ว'
-                                          : '⏳ รออนุมัติ'}
-                                      </span>
-                                    ) : (
-                                      <span
-                                        style={{
-                                          fontSize: '0.7rem',
-                                          padding: '2px 8px',
-                                          borderRadius: '6px',
-                                          background: '#fee2e2',
-                                          color: '#991b1b',
-                                        }}
-                                      >
-                                        ❌ ยังไม่จ่าย
-                                      </span>
-                                    )}
+                                        </div>
+                                      ) : pSlip ? (
+                                        <span
+                                          style={{
+                                            fontSize: '0.7rem',
+                                            padding: '2px 8px',
+                                            borderRadius: '6px',
+                                            background:
+                                              pSlip.status === 'APPROVED' ? '#dcfce7' : '#fef3c7',
+                                            color:
+                                              pSlip.status === 'APPROVED' ? '#166534' : '#92400e',
+                                          }}
+                                        >
+                                          {pSlip.status === 'APPROVED'
+                                            ? '✅ จ่ายแล้ว'
+                                            : '⏳ รออนุมัติ'}
+                                        </span>
+                                      ) : (
+                                        <span
+                                          style={{
+                                            fontSize: '0.7rem',
+                                            padding: '2px 8px',
+                                            borderRadius: '6px',
+                                            background: '#fee2e2',
+                                            color: '#991b1b',
+                                          }}
+                                        >
+                                          ❌ ยังไม่จ่าย
+                                        </span>
+                                      )}
+                                    </div>
                                   </div>
+
+                                  {isWinner && (
+                                    <div
+                                      style={{
+                                        fontSize: '0.8rem',
+                                        color: '#92400e',
+                                        fontWeight: '600',
+                                        marginTop: '2px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '6px',
+                                        flexWrap: 'wrap',
+                                      }}
+                                    >
+                                      <span>ยอดรับสุทธิ: {netAmount.toLocaleString()} ฿</span>
+                                      {!isStairType && periodWinner?.bid_amount > 0 && (
+                                        <span style={{ fontSize: '0.7rem', opacity: 0.8 }}>
+                                          (เปีย {periodWinner.bid_amount.toLocaleString()})
+                                        </span>
+                                      )}
+                                      {currentPayout?.status === 'APPROVED' && (
+                                        <span
+                                          style={{
+                                            background: '#dcfce7',
+                                            color: '#166534',
+                                            padding: '1px 7px',
+                                            borderRadius: '6px',
+                                            fontWeight: '700',
+                                            fontSize: '0.7rem',
+                                          }}
+                                        >
+                                          ✅ รับแล้ว
+                                        </span>
+                                      )}
+                                    </div>
+                                  )}
                                 </div>
-
-                                {isWinner && (
-                                  <div
-                                    style={{
-                                      fontSize: '0.8rem',
-                                      color: '#92400e',
-                                      fontWeight: '600',
-                                      marginTop: '2px',
-                                      display: 'flex',
-                                      justifyContent: 'space-between',
-                                    }}
-                                  >
-                                    <span>ยอดรับสุทธิ: {netAmount.toLocaleString()} ฿</span>
-                                    <span style={{ fontSize: '0.7rem', opacity: 0.8 }}>
-                                      {' '}
-                                      (เปีย {periodWinner.bid_amount.toLocaleString()})
-                                    </span>
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          });
+                              );
+                            });
                         })()}
                       </div>
                     </div>
