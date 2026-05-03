@@ -187,7 +187,7 @@ export default function CircleDetail() {
       });
       if (resData.status === 'success') {
         setMessage({ type: 'success', text: 'จองมือสำเร็จ!' });
-        if (resData.players) setPlayers(resData.players as Player[]);
+        if ((resData as any).newPlayer) setPlayers((prev) => [...prev, (resData as any).newPlayer]);
         else fetchCircleDetail();
       } else setMessage({ type: 'error', text: resData.message });
     } catch (err) {
@@ -224,7 +224,8 @@ export default function CircleDetail() {
       const data = await callAction(actionName, payload);
       if (data.status === 'success') {
         setAdminModal({ open: false, mode: '', handNo: '' });
-        if (isJoin && (data as any).players) setPlayers((data as any).players as Player[]);
+        if (isJoin && (data as any).newPlayer)
+          setPlayers((prev) => [...prev, (data as any).newPlayer]);
         else fetchCircleDetail();
         setMessage({ type: 'success', text: data.message });
       } else setMessage({ type: 'error', text: data.message });
@@ -267,7 +268,8 @@ export default function CircleDetail() {
         caller_role: dbUser.role,
       });
       if (data.status === 'success') {
-        if ((data as any).players) setPlayers((data as any).players as Player[]);
+        if ((data as any).deletedPlayerId)
+          setPlayers((prev) => prev.filter((p) => p.id !== (data as any).deletedPlayerId));
         else fetchCircleDetail();
       }
       setMessage({ type: data.status, text: data.message });
