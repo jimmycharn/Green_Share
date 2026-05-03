@@ -1225,8 +1225,8 @@ export default function CircleDetail() {
                       )}
                       <div>
                         <span style={{ color: '#94a3b8' }}>รับสุทธิ:</span>{' '}
-                        <strong style={{ color: 'var(--secondary)' }}>
-                          {receivedAmount.toLocaleString()}
+                        <strong style={{ color: '#166534' }}>
+                          {receivedAmount.toLocaleString()} ฿
                         </strong>
                         {winnerPayout?.status === 'APPROVED' && (
                           <span
@@ -1809,64 +1809,11 @@ export default function CircleDetail() {
                                             }}
                                           >
                                             {currentPayout?.status === 'APPROVED'
-                                              ? '✅ จ่ายแล้ว'
+                                              ? '✅ รับแล้ว'
                                               : currentPayout?.status === 'PENDING'
                                                 ? '⏳ รอตรวจสอบ'
-                                                : '❌ ยังไม่จ่าย'}
+                                                : '❌ ยังไม่รับ'}
                                           </span>
-
-                                          {/* Admin Action: Pay Winner */}
-                                          {isCircleAdmin &&
-                                            (!currentPayout ||
-                                              currentPayout.status === 'REJECTED') && (
-                                              <button
-                                                onClick={(e) => {
-                                                  e.stopPropagation();
-                                                  setPayoutModal({
-                                                    open: true,
-                                                    period,
-                                                    winner_id: p.member_id,
-                                                    winner_name: p.member_name,
-                                                    amount: netAmount,
-                                                  });
-                                                }}
-                                                style={{
-                                                  background: 'var(--primary-gradient)',
-                                                  color: 'white',
-                                                  border: 'none',
-                                                  padding: '4px 10px',
-                                                  borderRadius: '8px',
-                                                  fontSize: '0.75rem',
-                                                  fontWeight: '700',
-                                                }}
-                                              >
-                                                💸 จ่ายเงิน
-                                              </button>
-                                            )}
-
-                                          {/* Winner Action: Verify Admin's Slip */}
-                                          {isMe && currentPayout?.status === 'PENDING' && (
-                                            <button
-                                              onClick={(e) => {
-                                                e.stopPropagation();
-                                                setInspectPayoutModal({
-                                                  open: true,
-                                                  payout: currentPayout,
-                                                });
-                                              }}
-                                              style={{
-                                                background: '#3b82f6',
-                                                color: 'white',
-                                                border: 'none',
-                                                padding: '4px 10px',
-                                                borderRadius: '8px',
-                                                fontSize: '0.75rem',
-                                                fontWeight: '700',
-                                              }}
-                                            >
-                                              🔍 ตรวจสอบ
-                                            </button>
-                                          )}
                                         </div>
                                       ) : pSlip ? (
                                         <span
@@ -1932,6 +1879,58 @@ export default function CircleDetail() {
                                         >
                                           ✅ รับแล้ว
                                         </span>
+                                      )}
+                                      {/* Admin Action: Pay Winner — placed here to clearly separate from member dues */}
+                                      {isCircleAdmin &&
+                                        (!currentPayout || currentPayout.status === 'REJECTED') && (
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              setPayoutModal({
+                                                open: true,
+                                                period,
+                                                winner_id: p.member_id,
+                                                winner_name: p.member_name,
+                                                amount: netAmount,
+                                              });
+                                            }}
+                                            style={{
+                                              background: 'var(--primary-gradient)',
+                                              color: 'white',
+                                              border: 'none',
+                                              padding: '4px 12px',
+                                              borderRadius: '8px',
+                                              fontSize: '0.75rem',
+                                              fontWeight: '700',
+                                              cursor: 'pointer',
+                                            }}
+                                          >
+                                            💸 จ่ายเงินให้ผู้ชนะ
+                                          </button>
+                                        )}
+                                      {/* Winner Action: Verify Admin's Slip */}
+                                      {isMe && currentPayout?.status === 'PENDING' && (
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setInspectPayoutModal({
+                                              open: true,
+                                              payout: currentPayout,
+                                            });
+                                          }}
+                                          style={{
+                                            background: '#3b82f6',
+                                            color: 'white',
+                                            border: 'none',
+                                            padding: '4px 12px',
+                                            borderRadius: '8px',
+                                            fontSize: '0.75rem',
+                                            fontWeight: '700',
+                                            cursor: 'pointer',
+                                          }}
+                                        >
+                                          🔍 ตรวจสอบ
+                                        </button>
                                       )}
                                     </div>
                                   )}
