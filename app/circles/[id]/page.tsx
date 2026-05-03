@@ -100,6 +100,10 @@ export default function CircleDetail() {
     open: boolean;
     payout: Payout | null;
   }>({ open: false, payout: null });
+  const [reviewSlipModal, setReviewSlipModal] = useState<{
+    open: boolean;
+    slip: AnyRecord | null;
+  }>({ open: false, slip: null });
   const [bidAmount, setBidAmount] = useState<string>('');
   const [paymentMode, setPaymentMode] = useState<'TRANSFER' | 'CASH'>('TRANSFER');
   const [myBank, setMyBank] = useState<Bank | null>(null);
@@ -302,7 +306,10 @@ export default function CircleDetail() {
     if (!ok) return;
     try {
       const data = await callAction('verify_slip', { slip_id: slipId, caller_role: dbUser.role });
-      if (data.status === 'success') fetchCircleDetail();
+      if (data.status === 'success') {
+        setReviewSlipModal({ open: false, slip: null });
+        fetchCircleDetail();
+      }
     } catch {
       toast.error('การเชื่อมต่อขัดข้อง');
     }
@@ -1795,21 +1802,50 @@ export default function CircleDetail() {
                                       style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
                                     >
                                       {pSlip ? (
-                                        <span
-                                          style={{
-                                            fontSize: '0.7rem',
-                                            padding: '2px 8px',
-                                            borderRadius: '6px',
-                                            background:
-                                              pSlip.status === 'APPROVED' ? '#dcfce7' : '#fef3c7',
-                                            color:
-                                              pSlip.status === 'APPROVED' ? '#166534' : '#92400e',
-                                          }}
-                                        >
-                                          {pSlip.status === 'APPROVED'
-                                            ? '✅ จ่ายแล้ว'
-                                            : '⏳ รออนุมัติ'}
-                                        </span>
+                                        pSlip.status === 'APPROVED' ? (
+                                          <span
+                                            style={{
+                                              fontSize: '0.7rem',
+                                              padding: '2px 8px',
+                                              borderRadius: '6px',
+                                              background: '#dcfce7',
+                                              color: '#166534',
+                                            }}
+                                          >
+                                            ✅ จ่ายแล้ว
+                                          </span>
+                                        ) : isCircleAdmin ? (
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              setReviewSlipModal({ open: true, slip: pSlip });
+                                            }}
+                                            style={{
+                                              fontSize: '0.72rem',
+                                              padding: '3px 10px',
+                                              borderRadius: '6px',
+                                              background: '#f59e0b',
+                                              color: 'white',
+                                              border: 'none',
+                                              fontWeight: '700',
+                                              cursor: 'pointer',
+                                            }}
+                                          >
+                                            🔍 ตรวจสอบสลิป
+                                          </button>
+                                        ) : (
+                                          <span
+                                            style={{
+                                              fontSize: '0.7rem',
+                                              padding: '2px 8px',
+                                              borderRadius: '6px',
+                                              background: '#fef3c7',
+                                              color: '#92400e',
+                                            }}
+                                          >
+                                            ⏳ รออนุมัติ
+                                          </span>
+                                        )
                                       ) : (
                                         <span
                                           style={{
@@ -2578,6 +2614,56 @@ export default function CircleDetail() {
                   onClick={() => handleVerifyPayout(inspectPayoutModal.payout.id, 'APPROVED')}
                 >
                   ✅ ได้รับเงินแล้ว
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Review Slip Modal — Admin approves member payment slip */}
+      <Dialog
+        open={reviewSlipModal.open}
+        onOpenChange={(o) => !o && setReviewSlipModal({ open: false, slip: null })}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>🔍 ตรวจสอบหลักฐานการชำระเงิน</DialogTitle>
+          </DialogHeader>
+          {reviewSlipModal.slip && (
+            <>
+              <div className="text-center">
+                <div className="mb-1 text-sm text-muted-foreground">ยอดที่สมาชิกแจ้งชำระ</div>
+                <div className="text-2xl font-extrabold text-primary">
+                  {parseFloat(reviewSlipModal.slip.amount || 0).toLocaleString()} ฿
+                </div>
+                {reviewSlipModal.slip.note && (
+                  <div className="mt-1 text-sm text-muted-foreground">
+                    {reviewSlipModal.slip.note}
+                  </div>
+                )}
+              </div>
+              {reviewSlipModal.slip.image_url ? (
+                <div className="overflow-hidden rounded-2xl border border-border bg-muted/40">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={reviewSlipModal.slip.image_url}
+                    alt="Payment Slip"
+                    className="max-h-[350px] w-full object-contain"
+                  />
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-border bg-muted/40 p-6 text-center text-sm text-muted-foreground">
+                  ไม่มีรูปสลิปแนบมา
+                </div>
+              )}
+              <DialogFooter className="gap-2 sm:gap-2">
+                <Button
+                  type="button"
+                  className="flex-1"
+                  onClick={() => handleVerifySlip(reviewSlipModal.slip!.id)}
+                >
+                  ✅ อนุมัติ
                 </Button>
               </DialogFooter>
             </>
