@@ -12,7 +12,7 @@ export type ApiResponse<T = unknown> = {
  */
 export async function callAction<T = Record<string, unknown>>(
   action: string,
-  payload: Record<string, unknown> = {},
+  payload: Record<string, unknown> = {}
 ): Promise<ApiResponse<T>> {
   const res = await fetch('/api/action', {
     method: 'POST',
@@ -31,21 +31,9 @@ export async function callAction<T = Record<string, unknown>>(
 
   if (data?.forceLogout && typeof window !== 'undefined' && window.liff) {
     try {
-      // Try to silently re-initialise LIFF so it refreshes the ID token.
-      // If the LINE session is still alive, the user won't notice anything.
-      const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
-      if (liffId && window.liff.init) {
-        await window.liff.init({ liffId });
-      }
-      // If LIFF is still not logged in after reinit, force a proper logout so
-      // the user is redirected to the LINE login screen rather than left in a
-      // broken state.
-      if (!window.liff.isLoggedIn?.()) {
-        window.liff.logout?.();
-        window.liff.login?.();
-      }
+      window.liff.logout?.();
+      window.liff.login?.();
     } catch {
-      // Last resort: full page reload so LIFF re-initialises from scratch.
       window.location.reload();
     }
   }
