@@ -54,11 +54,7 @@ const formSchema = z.object({
   max_bid: z.coerce.number().min(0),
   notify_hours: z.coerce.number().min(0),
   close_mode: z.enum(['แอดมินปิดเอง', 'ปิดอัตโนมัติ']),
-  line_group_url: z
-    .string()
-    .url('กรุณากรอก URL ที่ถูกต้อง')
-    .optional()
-    .or(z.literal('')),
+  line_group_url: z.string().url('กรุณากรอก URL ที่ถูกต้อง').optional().or(z.literal('')),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -147,14 +143,18 @@ export default function CreateCirclePage() {
     const start = new Date(startDate + 'T00:00:00');
     if (isNaN(start.getTime())) return [];
 
-    const fmt = (d: Date) => d.toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const fmt = (d: Date) =>
+      d.toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric' });
     const daysIn = (y: number, m: number) => new Date(y, m + 1, 0).getDate();
     const dates: { period: number; label: string }[] = [];
 
     if (periodType === 'MONTHLY') {
       const dayOfMonth = start.getDate();
       for (let i = 0; i < hands; i++) {
-        if (i === 0) { dates.push({ period: 1, label: fmt(start) }); continue; }
+        if (i === 0) {
+          dates.push({ period: 1, label: fmt(start) });
+          continue;
+        }
         const d = new Date(start);
         d.setMonth(d.getMonth() + i * interval);
         d.setDate(Math.min(dayOfMonth, daysIn(d.getFullYear(), d.getMonth())));
@@ -162,10 +162,11 @@ export default function CreateCirclePage() {
       }
     } else if (periodType === 'BIMONTHLY') {
       const isFL = bimonthlyMode === 'FIRST_LAST';
-      let d1 = isFL ? 1 : (bimonthlyDay1 || 1);
-      let d2 = isFL ? -1 : (bimonthlyDay2 || 15);
+      let d1 = isFL ? 1 : bimonthlyDay1 || 1;
+      let d2 = isFL ? -1 : bimonthlyDay2 || 15;
       if (!isFL && d1 > d2) [d1, d2] = [d2, d1];
-      let year = start.getFullYear(), month = start.getMonth();
+      let year = start.getFullYear(),
+        month = start.getMonth();
       const allDates: Date[] = [];
       for (let m = 0; m < hands && allDates.length < hands; m++) {
         const dv1 = Math.min(d1, daysIn(year, month));
@@ -173,16 +174,26 @@ export default function CreateCirclePage() {
         const dt1 = new Date(year, month, dv1);
         const dt2 = new Date(year, month, dv2);
         if (dt1 >= start && allDates.length < hands) allDates.push(dt1);
-        if (dt2 >= start && dt2.getTime() !== dt1.getTime() && allDates.length < hands) allDates.push(dt2);
-        month++; if (month > 11) { month = 0; year++; }
+        if (dt2 >= start && dt2.getTime() !== dt1.getTime() && allDates.length < hands)
+          allDates.push(dt2);
+        month++;
+        if (month > 11) {
+          month = 0;
+          year++;
+        }
       }
       while (allDates.length < hands) {
         const dv1 = Math.min(d1, daysIn(year, month));
         const dv2 = isFL ? daysIn(year, month) : Math.min(d2, daysIn(year, month));
         allDates.push(new Date(year, month, dv1));
         if (allDates.length < hands && dv2 !== dv1) allDates.push(new Date(year, month, dv2));
-        month++; if (month > 11) { month = 0; year++; }
+        month++;
+        if (month > 11) {
+          month = 0;
+          year++;
+        }
       }
+      allDates.sort((a, b) => a.getTime() - b.getTime());
       for (let i = 0; i < Math.min(hands, allDates.length); i++) {
         dates.push({ period: i + 1, label: fmt(allDates[i]!) });
       }
@@ -195,7 +206,15 @@ export default function CreateCirclePage() {
       }
     }
     return dates;
-  }, [startDate, totalHands, periodType, periodInterval, bimonthlyDay1, bimonthlyDay2, bimonthlyMode]);
+  }, [
+    startDate,
+    totalHands,
+    periodType,
+    periodInterval,
+    bimonthlyDay1,
+    bimonthlyDay2,
+    bimonthlyMode,
+  ]);
 
   useEffect(() => {
     if (!dbUser) return;
@@ -254,7 +273,11 @@ export default function CreateCirclePage() {
 
       <Card className="rounded-t-none rounded-b-3xl px-3.5 py-6 shadow-sm sm:px-6">
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
-          <Field icon={<Tag className="size-4" />} label="ชื่อวง" error={errors.circle_name?.message}>
+          <Field
+            icon={<Tag className="size-4" />}
+            label="ชื่อวง"
+            error={errors.circle_name?.message}
+          >
             <Input
               {...register('circle_name')}
               placeholder="เช่น วงเพื่อนซี้, วงครอบครัว"
@@ -324,7 +347,7 @@ export default function CreateCirclePage() {
               <div
                 className={cn(
                   'flex items-center justify-center rounded-2xl border-2 border-dashed border-muted-foreground/30 bg-muted/30 px-5 py-5 text-2xl font-bold',
-                  totalAmount ? 'text-primary' : 'text-muted-foreground/60',
+                  totalAmount ? 'text-primary' : 'text-muted-foreground/60'
                 )}
               >
                 {totalAmount ? totalAmount.toLocaleString() : 'คำนวณอัตโนมัติ'}
@@ -332,7 +355,7 @@ export default function CreateCirclePage() {
             </Field>
           )}
 
-          <div className={cn("grid gap-4", isStepInterest ? "grid-cols-1" : "grid-cols-2")}>
+          <div className={cn('grid gap-4', isStepInterest ? 'grid-cols-1' : 'grid-cols-2')}>
             <Field
               icon={<CalendarDays className="size-4" />}
               label="วันที่เริ่มต้น"
@@ -366,18 +389,20 @@ export default function CreateCirclePage() {
 
             {/* Segmented Control */}
             <div className="mb-4 grid grid-cols-3 gap-1 rounded-2xl bg-muted/60 p-1">
-              {([
-                { value: 'MONTHLY', label: '🗓️ รายเดือน' },
-                { value: 'BIMONTHLY', label: '📆 ครึ่งเดือน' },
-                { value: 'DAILY', label: '📋 รายวัน' },
-              ] as const).map((opt) => (
+              {(
+                [
+                  { value: 'MONTHLY', label: '🗓️ รายเดือน' },
+                  { value: 'BIMONTHLY', label: '📆 ครึ่งเดือน' },
+                  { value: 'DAILY', label: '📋 รายวัน' },
+                ] as const
+              ).map((opt) => (
                 <label
                   key={opt.value}
                   className={cn(
                     'flex cursor-pointer items-center justify-center rounded-xl px-2 py-2.5 text-center text-xs font-bold transition-all',
                     periodType === opt.value
                       ? 'bg-white text-primary shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground',
+                      : 'text-muted-foreground hover:text-foreground'
                   )}
                 >
                   <input
@@ -395,9 +420,14 @@ export default function CreateCirclePage() {
             {periodType === 'MONTHLY' && (
               <div className="flex items-center gap-2 text-sm">
                 <span className="text-muted-foreground">ทุก</span>
-                <select {...register('period_interval')} className="h-9 w-16 rounded-xl border-2 border-muted bg-background px-2 text-center text-sm font-bold outline-none focus:border-primary">
+                <select
+                  {...register('period_interval')}
+                  className="h-9 w-16 rounded-xl border-2 border-muted bg-background px-2 text-center text-sm font-bold outline-none focus:border-primary"
+                >
                   {[1, 2, 3, 4, 6].map((v) => (
-                    <option key={v} value={v}>{v}</option>
+                    <option key={v} value={v}>
+                      {v}
+                    </option>
                   ))}
                 </select>
                 <span className="text-muted-foreground">เดือน</span>
@@ -407,21 +437,59 @@ export default function CreateCirclePage() {
             {periodType === 'BIMONTHLY' && (
               <div className="flex flex-col gap-3">
                 <div className="flex items-center gap-3">
-                  <label className={cn('flex cursor-pointer items-center gap-2 rounded-xl border-2 px-3 py-2 text-sm transition-all', bimonthlyMode === 'CUSTOM' ? 'border-primary bg-primary/5 font-bold text-primary' : 'border-muted text-muted-foreground')}>
-                    <input type="radio" {...register('bimonthly_mode')} value="CUSTOM" className="sr-only" />
+                  <label
+                    className={cn(
+                      'flex cursor-pointer items-center gap-2 rounded-xl border-2 px-3 py-2 text-sm transition-all',
+                      bimonthlyMode === 'CUSTOM'
+                        ? 'border-primary bg-primary/5 font-bold text-primary'
+                        : 'border-muted text-muted-foreground'
+                    )}
+                  >
+                    <input
+                      type="radio"
+                      {...register('bimonthly_mode')}
+                      value="CUSTOM"
+                      className="sr-only"
+                    />
                     กำหนดวันเอง
                   </label>
-                  <label className={cn('flex cursor-pointer items-center gap-2 rounded-xl border-2 px-3 py-2 text-sm transition-all', bimonthlyMode === 'FIRST_LAST' ? 'border-primary bg-primary/5 font-bold text-primary' : 'border-muted text-muted-foreground')}>
-                    <input type="radio" {...register('bimonthly_mode')} value="FIRST_LAST" className="sr-only" />
+                  <label
+                    className={cn(
+                      'flex cursor-pointer items-center gap-2 rounded-xl border-2 px-3 py-2 text-sm transition-all',
+                      bimonthlyMode === 'FIRST_LAST'
+                        ? 'border-primary bg-primary/5 font-bold text-primary'
+                        : 'border-muted text-muted-foreground'
+                    )}
+                  >
+                    <input
+                      type="radio"
+                      {...register('bimonthly_mode')}
+                      value="FIRST_LAST"
+                      className="sr-only"
+                    />
                     ต้นเดือน + สิ้นเดือน
                   </label>
                 </div>
                 {bimonthlyMode === 'CUSTOM' && (
                   <div className="flex items-center gap-2 text-sm">
                     <span className="text-muted-foreground">วันที่</span>
-                    <Input {...register('bimonthly_day1')} type="number" inputMode="numeric" min={1} max={31} className="h-9 w-14 rounded-xl border-2 px-2 text-center text-sm font-bold" />
+                    <Input
+                      {...register('bimonthly_day1')}
+                      type="number"
+                      inputMode="numeric"
+                      min={1}
+                      max={31}
+                      className="h-9 w-14 rounded-xl border-2 px-2 text-center text-sm font-bold"
+                    />
                     <span className="text-muted-foreground">กับ</span>
-                    <Input {...register('bimonthly_day2')} type="number" inputMode="numeric" min={1} max={31} className="h-9 w-14 rounded-xl border-2 px-2 text-center text-sm font-bold" />
+                    <Input
+                      {...register('bimonthly_day2')}
+                      type="number"
+                      inputMode="numeric"
+                      min={1}
+                      max={31}
+                      className="h-9 w-14 rounded-xl border-2 px-2 text-center text-sm font-bold"
+                    />
                     <span className="text-muted-foreground">ของทุกเดือน</span>
                   </div>
                 )}
@@ -431,9 +499,14 @@ export default function CreateCirclePage() {
             {periodType === 'DAILY' && (
               <div className="flex items-center gap-2 text-sm">
                 <span className="text-muted-foreground">ทุก</span>
-                <select {...register('period_interval')} className="h-9 w-16 rounded-xl border-2 border-muted bg-background px-2 text-center text-sm font-bold outline-none focus:border-primary">
+                <select
+                  {...register('period_interval')}
+                  className="h-9 w-16 rounded-xl border-2 border-muted bg-background px-2 text-center text-sm font-bold outline-none focus:border-primary"
+                >
                   {[1, 2, 3, 5, 7, 10, 14, 15, 30].map((v) => (
-                    <option key={v} value={v}>{v}</option>
+                    <option key={v} value={v}>
+                      {v}
+                    </option>
                   ))}
                 </select>
                 <span className="text-muted-foreground">วัน</span>
@@ -449,13 +522,22 @@ export default function CreateCirclePage() {
                 <div className="flex flex-col gap-1">
                   {previewDates.slice(0, 5).map((pd) => (
                     <div key={pd.period} className="flex items-center gap-2 text-sm">
-                      <span className="inline-flex size-6 items-center justify-center rounded-lg bg-primary/10 text-xs font-bold text-primary">{pd.period}</span>
+                      <span className="inline-flex size-6 items-center justify-center rounded-lg bg-primary/10 text-xs font-bold text-primary">
+                        {pd.period}
+                      </span>
                       <span className="text-foreground">{pd.label}</span>
-                      {pd.period === 1 && <span className="rounded-md bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700">เริ่มต้น</span>}
+                      {pd.period === 1 && (
+                        <span className="rounded-md bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700">
+                          เริ่มต้น
+                        </span>
+                      )}
                     </div>
                   ))}
                   {previewDates.length > 5 && (
-                    <p className="m-0 mt-1 text-xs text-muted-foreground">...อีก {previewDates.length - 5} งวด (จนถึง {previewDates[previewDates.length - 1]!.label})</p>
+                    <p className="m-0 mt-1 text-xs text-muted-foreground">
+                      ...อีก {previewDates.length - 5} งวด (จนถึง{' '}
+                      {previewDates[previewDates.length - 1]!.label})
+                    </p>
                   )}
                 </div>
               </div>
