@@ -958,6 +958,8 @@ export default function CircleDetail() {
               const winnerPayout = payouts.find(
                 (po) => po.period === period && po.member_id === winnerBid?.member_id
               );
+              const mySlip = slips.find((s) => s.period === period && s.member_id === dbUser?.id);
+              const canPay = !mySlip || mySlip.status === 'REJECTED';
 
               // Calculate Received Amount
               const deadHands = period - 1;
@@ -1417,35 +1419,37 @@ export default function CircleDetail() {
                                     </div>
                                   ))}
 
-                                <button
-                                  onClick={async () => {
-                                    if (isCircleAdmin) {
-                                      const ok = await confirm({
-                                        title: 'ชำระเงิน',
-                                        description:
-                                          'ยืนยันการชำระเงินทุกมือสำหรับงวดนี้? (แอดมินชำระให้ตนเอง)',
-                                      });
-                                      if (ok) handleAdminAutoPay(period);
-                                    } else {
-                                      const amt = getRequiredAmount(period);
-                                      setUploadData({ ...uploadData, amount: amt });
-                                      setSlipModal({ open: true, period });
-                                    }
-                                  }}
-                                  className="btn-primary"
-                                  style={{
-                                    flex: '1 1 45%',
-                                    padding: '12px',
-                                    fontSize: '0.85rem',
-                                    background: 'var(--secondary)',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: '6px',
-                                  }}
-                                >
-                                  🗳️ ชำระเงิน
-                                </button>
+                                {canPay && (
+                                  <button
+                                    onClick={async () => {
+                                      if (isCircleAdmin) {
+                                        const ok = await confirm({
+                                          title: 'ชำระเงิน',
+                                          description:
+                                            'ยืนยันการชำระเงินทุกมือสำหรับงวดนี้? (แอดมินชำระให้ตนเอง)',
+                                        });
+                                        if (ok) handleAdminAutoPay(period);
+                                      } else {
+                                        const amt = getRequiredAmount(period);
+                                        setUploadData({ ...uploadData, amount: amt });
+                                        setSlipModal({ open: true, period });
+                                      }
+                                    }}
+                                    className="btn-primary"
+                                    style={{
+                                      flex: '1 1 45%',
+                                      padding: '12px',
+                                      fontSize: '0.85rem',
+                                      background: '#0d9488',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      gap: '6px',
+                                    }}
+                                  >
+                                    🗳️ ชำระเงิน
+                                  </button>
+                                )}
 
                                 {isCircleAdmin && (
                                   <>
@@ -1520,35 +1524,37 @@ export default function CircleDetail() {
                             {/* Staircase/Fixed Interest Logic */}
                             {circle.type === 'ขั้นบันได (ดอกคงที่)' && (
                               <>
-                                <button
-                                  onClick={async () => {
-                                    if (isCircleAdmin) {
-                                      const ok = await confirm({
-                                        title: 'ชำระเงิน',
-                                        description:
-                                          'ยืนยันการชำระเงินทุกมือสำหรับงวดนี้? (แอดมินชำระให้ตนเอง)',
-                                      });
-                                      if (ok) handleAdminAutoPay(period);
-                                    } else {
-                                      const amt = getRequiredAmount(period);
-                                      setUploadData({ ...uploadData, amount: amt });
-                                      setSlipModal({ open: true, period });
-                                    }
-                                  }}
-                                  className="btn-primary"
-                                  style={{
-                                    flex: '1 1 100%',
-                                    padding: '14px',
-                                    fontSize: '1rem',
-                                    background: 'var(--secondary)',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: '8px',
-                                  }}
-                                >
-                                  🗳️ ชำระเงิน
-                                </button>
+                                {canPay && (
+                                  <button
+                                    onClick={async () => {
+                                      if (isCircleAdmin) {
+                                        const ok = await confirm({
+                                          title: 'ชำระเงิน',
+                                          description:
+                                            'ยืนยันการชำระเงินทุกมือำหรับงวดนี้? (แอดมินชำระให้ตนเอง)',
+                                        });
+                                        if (ok) handleAdminAutoPay(period);
+                                      } else {
+                                        const amt = getRequiredAmount(period);
+                                        setUploadData({ ...uploadData, amount: amt });
+                                        setSlipModal({ open: true, period });
+                                      }
+                                    }}
+                                    className="btn-primary"
+                                    style={{
+                                      flex: '1 1 100%',
+                                      padding: '14px',
+                                      fontSize: '1rem',
+                                      background: '#0d9488',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      gap: '8px',
+                                    }}
+                                  >
+                                    🗳️ ชำระเงิน
+                                  </button>
+                                )}
 
                                 {isCircleAdmin && (
                                   <button
