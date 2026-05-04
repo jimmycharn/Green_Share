@@ -586,13 +586,26 @@ export default function CircleDetail() {
     return now >= start && now <= end;
   };
 
+  const isBiddingWindowExpired = (period: number): boolean => {
+    const pDate = periodDates.find((pd) => pd.period === period);
+    if (!pDate?.period_date) return false; // no date set → never considered expired
+    const bidEnd = (circle?.bid_end_time || '23:59').substring(0, 5);
+    const end = new Date(`${pDate.period_date}T${bidEnd}:00`);
+    return new Date() > end;
+  };
+
+  const toSecond = (t: string): string => new Date(t).toISOString().substring(0, 19);
+
   const getHasNoClearWinner = (period: number): boolean => {
     const periodBids = bids
       .filter((b) => b.period === period)
       .sort((a, b) => b.bid_amount - a.bid_amount);
     if (periodBids.length === 0) return true; // no bids → need random
     if (periodBids.length === 1) return false; // single bidder → clear winner
-    return periodBids[0].bid_amount === periodBids[1].bid_amount; // tie → need random
+    const topAmount = periodBids[0].bid_amount;
+    const topTime = toSecond(periodBids[0].bid_time);
+    // tie only when same amount AND same second
+    return periodBids[1].bid_amount === topAmount && toSecond(periodBids[1].bid_time) === topTime;
   };
 
   const copyToClipboard = (text) => {
@@ -2243,9 +2256,9 @@ export default function CircleDetail() {
                                         )}
                                       </>
                                     )}
-                                    {/* สุ่มผู้ชนะ: after window expires or bidding closed, when no clear winner */}
+                                    {/* สุ่มผู้ชนะ: only after window time has expired (or admin closed), no clear winner */}
                                     {isCurrent &&
-                                      (isBiddingClosed(period) || !isBiddingWindowOpen(period)) &&
+                                      (isBiddingWindowExpired(period) || isBiddingClosed(period)) &&
                                       !Boolean(getAssignedTo(period)) &&
                                       getHasNoClearWinner(period) && (
                                         <button
