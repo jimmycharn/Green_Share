@@ -1278,18 +1278,39 @@ export default function CircleDetail() {
                                     💸 จ่ายเงิน
                                   </button>
                                 ) : stairPayout.status === 'PENDING' ? (
-                                  <span
-                                    style={{
-                                      background: '#fef9c3',
-                                      color: '#92400e',
-                                      padding: '1px 6px',
-                                      borderRadius: '5px',
-                                      fontWeight: '700',
-                                      fontSize: '0.7rem',
-                                    }}
-                                  >
-                                    ⏳ รอตรวจสอบ
-                                  </span>
+                                  stairIsMe ? (
+                                    <span
+                                      style={{
+                                        background: '#dcfce7',
+                                        color: '#166534',
+                                        padding: '1px 6px',
+                                        borderRadius: '5px',
+                                        fontWeight: '700',
+                                        fontSize: '0.7rem',
+                                      }}
+                                    >
+                                      ✅ รับแล้ว
+                                    </span>
+                                  ) : (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setInspectPayoutModal({ open: true, payout: stairPayout });
+                                      }}
+                                      style={{
+                                        background: '#f59e0b',
+                                        color: 'white',
+                                        border: 'none',
+                                        padding: '2px 8px',
+                                        borderRadius: '6px',
+                                        fontSize: '0.7rem',
+                                        fontWeight: '700',
+                                        cursor: 'pointer',
+                                      }}
+                                    >
+                                      🔍 ตรวจสอบ
+                                    </button>
+                                  )
                                 ) : (
                                   <span
                                     style={{
@@ -1580,18 +1601,39 @@ export default function CircleDetail() {
                                   💸 จ่ายเงิน
                                 </button>
                               ) : winnerPayout.status === 'PENDING' ? (
-                                <span
-                                  style={{
-                                    background: '#fef9c3',
-                                    color: '#92400e',
-                                    padding: '1px 6px',
-                                    borderRadius: '5px',
-                                    fontWeight: '700',
-                                    fontSize: '0.7rem',
-                                  }}
-                                >
-                                  ⏳ รอตรวจสอบ
-                                </span>
+                                winner.member_id === dbUser?.id ? (
+                                  <span
+                                    style={{
+                                      background: '#dcfce7',
+                                      color: '#166534',
+                                      padding: '1px 6px',
+                                      borderRadius: '5px',
+                                      fontWeight: '700',
+                                      fontSize: '0.7rem',
+                                    }}
+                                  >
+                                    ✅ รับแล้ว
+                                  </span>
+                                ) : (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setInspectPayoutModal({ open: true, payout: winnerPayout });
+                                    }}
+                                    style={{
+                                      background: '#f59e0b',
+                                      color: 'white',
+                                      border: 'none',
+                                      padding: '2px 8px',
+                                      borderRadius: '6px',
+                                      fontSize: '0.7rem',
+                                      fontWeight: '700',
+                                      cursor: 'pointer',
+                                    }}
+                                  >
+                                    🔍 ตรวจสอบ
+                                  </button>
+                                )
                               ) : (
                                 <span
                                   style={{
@@ -2071,7 +2113,7 @@ export default function CircleDetail() {
                                   </button>
                                 )}
 
-                                {isCircleAdmin && (
+                                {isCircleAdmin && !isCompleted && (
                                   <>
                                     {isCurrent && !isBiddingClosed(period) && (
                                       <>
@@ -2176,7 +2218,7 @@ export default function CircleDetail() {
                                   </button>
                                 )}
 
-                                {isCircleAdmin && (
+                                {isCircleAdmin && !isCompleted && (
                                   <button
                                     onClick={() => handleCircleAction('close_period', period)}
                                     className="btn-primary"
@@ -2191,7 +2233,7 @@ export default function CircleDetail() {
                                       gap: '8px',
                                     }}
                                   >
-                                    <span>🎌</span> ปิดงวดการส่งเงิน
+                                    <span>🇭</span> ปิดงวดการส่งเงิน
                                   </button>
                                 )}
                               </>
