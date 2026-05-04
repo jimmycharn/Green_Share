@@ -705,7 +705,11 @@ export default function CircleDetail() {
             <span style={{ fontSize: '0.9rem', color: '#64748b' }}>
               ยอดวงรวม:{' '}
               <strong style={{ color: 'var(--primary)' }}>
-                {circle.total_amount.toLocaleString()} ฿
+                {(circle.type === 'ขั้นบันได (ดอกคงที่)' && periodDates.length > 0
+                  ? periodDates.reduce((s, pd) => s + (Number(pd.amount) || 0), 0)
+                  : circle.total_amount
+                ).toLocaleString()}{' '}
+                ฿
               </strong>
             </span>
             <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>ประเภท: {circle.type}</span>
@@ -979,7 +983,9 @@ export default function CircleDetail() {
               const stairWinnerPic = stairWinnerPlayer?.picture_url || null;
               const pDateObj = periodDates.find((p) => p.period === period);
               const amountPerPeriod = pDateObj?.amount ?? circle.amount_per_hand;
-              const stairReceivedAmount = players.length * (Number(amountPerPeriod) || 0);
+              const stairReceivedAmount = isStairType
+                ? periodDates.reduce((s, pd) => s + (Number(pd.amount) || 0), 0)
+                : 0;
               const stairPayout =
                 isStairType && stairAssignedId && stairAssignedId !== 'NONE'
                   ? payouts.find((po) => po.period === period && po.member_id === stairAssignedId)
