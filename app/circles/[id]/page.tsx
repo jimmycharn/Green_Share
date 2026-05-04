@@ -32,7 +32,12 @@ type Player = AnyRecord & { member_id?: string; member_name?: string };
 type Bid = AnyRecord;
 type Slip = AnyRecord;
 type Payout = AnyRecord & { id?: string; image_url?: string; amount?: number | string };
-type Member = AnyRecord & { id: string; name?: string; nickname?: string };
+type Member = AnyRecord & {
+  id: string;
+  name?: string;
+  nickname?: string;
+  custom_nickname?: string | null;
+};
 type Bank = AnyRecord & {
   bank_name?: string;
   account_no?: string;
@@ -896,7 +901,7 @@ export default function CircleDetail() {
                           }}
                         >
                           {player
-                            ? allMembers.find((m) => m.id === player.member_id)?.nickname ||
+                            ? allMembers.find((m) => m.id === player.member_id)?.custom_nickname ||
                               player.member_name
                             : canClick
                               ? 'ว่าง (แตะเพื่อจอง)'
@@ -985,7 +990,7 @@ export default function CircleDetail() {
                   : players.find((p) => p.hand_no === period)
                 : null;
               const stairWinnerName =
-                allMembers.find((m) => m.id === stairWinnerPlayer?.member_id)?.nickname ||
+                allMembers.find((m) => m.id === stairWinnerPlayer?.member_id)?.custom_nickname ||
                 stairWinnerPlayer?.member_name ||
                 '';
               const stairWinnerPic = stairWinnerPlayer?.picture_url || null;
@@ -1966,8 +1971,8 @@ export default function CircleDetail() {
                                         }}
                                       >
                                         {isWinner ? '🏆 ' : ''}
-                                        {allMembers.find((m) => m.id === p.member_id)?.nickname ||
-                                          p.member_name}{' '}
+                                        {allMembers.find((m) => m.id === p.member_id)
+                                          ?.custom_nickname || p.member_name}{' '}
                                         {isDead ? '(มือตาย)' : ''}
                                       </span>
                                       {!isStairType && pBid && !isWinner && isActive && (
