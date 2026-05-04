@@ -1002,7 +1002,17 @@ export default function CircleDetail() {
               const stairPayout =
                 isStairType && stairAssignedId && stairAssignedId !== 'NONE'
                   ? payouts.find((po) => po.period === period && po.member_id === stairAssignedId)
-                  : null;
+                  : isStairType
+                    ? payouts.find(
+                        (po) =>
+                          po.period === period && po.member_id === stairWinnerPlayer?.member_id
+                      )
+                    : null;
+              const stairWinnerId =
+                stairAssignedId && stairAssignedId !== 'NONE'
+                  ? stairAssignedId
+                  : stairWinnerPlayer?.member_id;
+              const stairIsMe = dbUser?.id === stairWinnerId;
 
               // Calculate Received Amount
               const deadHands = period - 1;
@@ -1204,22 +1214,60 @@ export default function CircleDetail() {
                             </div>
                           )}
                           {/* Line 4: รับสุทธิ */}
-                          {stairAssignedId &&
-                            stairAssignedId !== 'NONE' &&
-                            stairReceivedAmount > 0 && (
-                              <div
-                                style={{
-                                  fontSize: '0.78rem',
-                                  color: '#166534',
-                                  fontWeight: '700',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: '6px',
-                                  flexWrap: 'wrap',
-                                }}
-                              >
-                                🏦 รับสุทธิ: {stairReceivedAmount.toLocaleString()} ฿
-                                {stairPayout?.status === 'APPROVED' && (
+                          {stairWinnerId && stairReceivedAmount > 0 && (
+                            <div
+                              style={{
+                                fontSize: '0.78rem',
+                                color: '#166534',
+                                fontWeight: '700',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                flexWrap: 'wrap',
+                              }}
+                            >
+                              🏦 รับสุทธิ: {stairReceivedAmount.toLocaleString()} ฿
+                              {/* Admin view */}
+                              {isCircleAdmin ? (
+                                !stairPayout || stairPayout.status === 'REJECTED' ? (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setPayoutModal({
+                                        open: true,
+                                        period,
+                                        winner_id: stairWinnerId,
+                                        winner_name: stairWinnerName,
+                                        amount: stairReceivedAmount,
+                                      });
+                                    }}
+                                    style={{
+                                      background: 'var(--primary)',
+                                      color: 'white',
+                                      border: 'none',
+                                      padding: '2px 8px',
+                                      borderRadius: '6px',
+                                      fontSize: '0.7rem',
+                                      fontWeight: '700',
+                                      cursor: 'pointer',
+                                    }}
+                                  >
+                                    💸 จ่ายเงิน
+                                  </button>
+                                ) : stairPayout.status === 'PENDING' ? (
+                                  <span
+                                    style={{
+                                      background: '#fef9c3',
+                                      color: '#92400e',
+                                      padding: '1px 6px',
+                                      borderRadius: '5px',
+                                      fontWeight: '700',
+                                      fontSize: '0.7rem',
+                                    }}
+                                  >
+                                    ⏳ รอตรวจสอบ
+                                  </span>
+                                ) : (
                                   <span
                                     style={{
                                       background: '#dcfce7',
@@ -1232,9 +1280,98 @@ export default function CircleDetail() {
                                   >
                                     ✅ รับแล้ว
                                   </span>
-                                )}
-                              </div>
-                            )}
+                                )
+                              ) : stairIsMe ? (
+                                /* Winner’s view */
+                                !stairPayout || stairPayout.status === 'REJECTED' ? (
+                                  <span
+                                    style={{
+                                      background: '#fee2e2',
+                                      color: '#991b1b',
+                                      padding: '1px 6px',
+                                      borderRadius: '5px',
+                                      fontWeight: '700',
+                                      fontSize: '0.7rem',
+                                    }}
+                                  >
+                                    ❌ ยังไม่จ่าย
+                                  </span>
+                                ) : stairPayout.status === 'PENDING' ? (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setInspectPayoutModal({ open: true, payout: stairPayout });
+                                    }}
+                                    style={{
+                                      background: '#f59e0b',
+                                      color: 'white',
+                                      border: 'none',
+                                      padding: '2px 8px',
+                                      borderRadius: '6px',
+                                      fontSize: '0.7rem',
+                                      fontWeight: '700',
+                                      cursor: 'pointer',
+                                    }}
+                                  >
+                                    🔍 ตรวจสอบ
+                                  </button>
+                                ) : (
+                                  <span
+                                    style={{
+                                      background: '#dcfce7',
+                                      color: '#166534',
+                                      padding: '1px 6px',
+                                      borderRadius: '5px',
+                                      fontWeight: '700',
+                                      fontSize: '0.7rem',
+                                    }}
+                                  >
+                                    ✅ รับแล้ว
+                                  </span>
+                                )
+                              ) : /* Other members’ view */
+                              !stairPayout || stairPayout.status === 'REJECTED' ? (
+                                <span
+                                  style={{
+                                    background: '#fee2e2',
+                                    color: '#991b1b',
+                                    padding: '1px 6px',
+                                    borderRadius: '5px',
+                                    fontWeight: '600',
+                                    fontSize: '0.7rem',
+                                  }}
+                                >
+                                  ⏳ ยังไม่จ่าย
+                                </span>
+                              ) : stairPayout.status === 'PENDING' ? (
+                                <span
+                                  style={{
+                                    background: '#fef9c3',
+                                    color: '#92400e',
+                                    padding: '1px 6px',
+                                    borderRadius: '5px',
+                                    fontWeight: '600',
+                                    fontSize: '0.7rem',
+                                  }}
+                                >
+                                  ⏳ รอตรวจสอบ
+                                </span>
+                              ) : (
+                                <span
+                                  style={{
+                                    background: '#dcfce7',
+                                    color: '#166534',
+                                    padding: '1px 6px',
+                                    borderRadius: '5px',
+                                    fontWeight: '600',
+                                    fontSize: '0.7rem',
+                                  }}
+                                >
+                                  ✅ รับแล้ว
+                                </span>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
                     ) : (
