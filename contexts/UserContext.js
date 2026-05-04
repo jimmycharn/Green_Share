@@ -85,7 +85,7 @@ export function UserProvider({ children }) {
       <Script
         src="https://static.line-scdn.net/liff/edge/versions/2.22.1/sdk.js"
         onLoad={handleScriptLoad}
-        strategy="beforeInteractive"
+        strategy="afterInteractive"
       />
       {children}
     </UserContext.Provider>

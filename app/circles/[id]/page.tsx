@@ -2151,6 +2151,37 @@ export default function CircleDetail() {
                                   <>
                                     {isCurrent && !isBiddingClosed(period) && (
                                       <>
+                                        {isBiddingWindowOpen(period) && (
+                                          <button
+                                            onClick={async () => {
+                                              try {
+                                                const res = await callAction('notify_bid_start', {
+                                                  circle_id: circleId,
+                                                  period,
+                                                  caller_role: dbUser.role,
+                                                });
+                                                if (res.status === 'success')
+                                                  toast.success(res.message);
+                                                else toast.error(res.message);
+                                              } catch {
+                                                toast.error('เกิดข้อผิดพลาดในการส่งการแจ้งเตือน');
+                                              }
+                                            }}
+                                            className="btn-primary"
+                                            style={{
+                                              flex: '1 1 100%',
+                                              padding: '10px',
+                                              fontSize: '0.8rem',
+                                              background: '#10b981',
+                                              display: 'flex',
+                                              alignItems: 'center',
+                                              justifyContent: 'center',
+                                              gap: '6px',
+                                            }}
+                                          >
+                                            🔔 เริ่มประมูล (แจ้งสมาชิก)
+                                          </button>
+                                        )}
                                         {(() => {
                                           const isAssigned = Boolean(getAssignedTo(period));
                                           return (
