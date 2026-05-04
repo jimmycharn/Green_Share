@@ -1042,7 +1042,7 @@ export default function CircleDetail() {
                       !isFuture || circle.status === 'OPEN' ? toggleAccordion(period) : null
                     }
                     style={{
-                      padding: '16px 20px',
+                      padding: '12px 16px 12px 12px',
                       display: 'flex',
                       alignItems: isStairType || isCompleted ? 'flex-start' : 'center',
                       justifyContent: 'space-between',
@@ -1424,7 +1424,7 @@ export default function CircleDetail() {
                         style={{
                           display: 'flex',
                           alignItems: 'flex-start',
-                          gap: '12px',
+                          gap: '8px',
                           flex: 1,
                           minWidth: 0,
                         }}
@@ -1432,8 +1432,8 @@ export default function CircleDetail() {
                         {/* Winner avatar */}
                         <div
                           style={{
-                            width: '48px',
-                            height: '48px',
+                            width: '40px',
+                            height: '40px',
                             borderRadius: '50%',
                             overflow: 'hidden',
                             flexShrink: 0,
@@ -1494,21 +1494,10 @@ export default function CircleDetail() {
                                   day: 'numeric',
                                   month: 'short',
                                   year: 'numeric',
-                                })}
+                                })}{' '}
+                                · ✅ ปิดแล้ว
                               </span>
                             )}
-                            <span
-                              style={{
-                                fontSize: '0.66rem',
-                                fontWeight: '600',
-                                color: '#166534',
-                                background: '#dcfce7',
-                                padding: '1px 5px',
-                                borderRadius: '4px',
-                              }}
-                            >
-                              ✅ ปิดงวดแล้ว
-                            </span>
                           </div>
 
                           {/* Row 2: winner name */}
