@@ -970,16 +970,12 @@ export default function CircleDetail() {
 
               // Staircase-specific
               const stairAssignedId = isStairType ? getAssignedTo(period) || null : null;
-              const stairWinnerPlayer =
-                stairAssignedId && stairAssignedId !== 'NONE'
+              const stairWinnerPlayer = isStairType
+                ? stairAssignedId && stairAssignedId !== 'NONE'
                   ? players.find((p) => p.member_id === stairAssignedId)
-                  : null;
-              const stairWinnerMember =
-                stairAssignedId && stairAssignedId !== 'NONE'
-                  ? allMembers.find((m) => m.id === stairAssignedId)
-                  : null;
-              const stairWinnerName =
-                stairWinnerMember?.nickname || stairWinnerPlayer?.member_name || '';
+                  : players.find((p) => p.hand_no === period)
+                : null;
+              const stairWinnerName = stairWinnerPlayer?.member_name || '';
               const stairWinnerPic = stairWinnerPlayer?.picture_url || null;
               const pDateObj = periodDates.find((p) => p.period === period);
               const amountPerPeriod = pDateObj?.amount ?? circle.amount_per_hand;
