@@ -1214,7 +1214,7 @@ export default function CircleDetail() {
                             </div>
                           )}
                           {/* Line 4: รับสุทธิ */}
-                          {stairWinnerId && stairReceivedAmount > 0 && (
+                          {stairWinnerId && stairReceivedAmount > 0 && !isFuture && (
                             <div
                               style={{
                                 fontSize: '0.78rem',
@@ -1231,15 +1231,38 @@ export default function CircleDetail() {
                               {isCircleAdmin ? (
                                 !stairPayout || stairPayout.status === 'REJECTED' ? (
                                   <button
-                                    onClick={(e) => {
+                                    onClick={async (e) => {
                                       e.stopPropagation();
-                                      setPayoutModal({
-                                        open: true,
-                                        period,
-                                        winner_id: stairWinnerId,
-                                        winner_name: stairWinnerName,
-                                        amount: stairReceivedAmount,
-                                      });
+                                      if (stairIsMe) {
+                                        const ok = await confirm({
+                                          title: 'ยืนยันการรับเงิน',
+                                          description: `ยืนยันว่าคุณได้รับเงิน ${stairReceivedAmount.toLocaleString()} ฿ ครบแล้ว`,
+                                        });
+                                        if (!ok) return;
+                                        try {
+                                          const res = await callAction('create_payout', {
+                                            circle_id: circleId,
+                                            member_id: stairWinnerId,
+                                            period,
+                                            amount: stairReceivedAmount,
+                                            is_cash: true,
+                                            auto_approve: true,
+                                            caller_role: dbUser.role,
+                                          });
+                                          if (res.status === 'success') fetchCircleDetail();
+                                          else setMessage({ type: 'error', text: res.message });
+                                        } catch {
+                                          setMessage({ type: 'error', text: 'เกิดข้อผิดพลาด' });
+                                        }
+                                      } else {
+                                        setPayoutModal({
+                                          open: true,
+                                          period,
+                                          winner_id: stairWinnerId,
+                                          winner_name: stairWinnerName,
+                                          amount: stairReceivedAmount,
+                                        });
+                                      }
                                     }}
                                     style={{
                                       background: 'var(--primary)',
