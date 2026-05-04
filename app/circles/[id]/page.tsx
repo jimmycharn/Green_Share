@@ -574,6 +574,17 @@ export default function CircleDetail() {
     return true;
   };
 
+  const isBiddingWindowOpen = (period: number): boolean => {
+    const pDate = periodDates.find((pd) => pd.period === period);
+    if (!pDate?.period_date) return true; // no date → no time restriction
+    const bidStart = (circle?.bid_start_time || '00:00').substring(0, 5);
+    const bidEnd = (circle?.bid_end_time || '23:59').substring(0, 5);
+    const now = new Date();
+    const start = new Date(`${pDate.period_date}T${bidStart}:00`);
+    const end = new Date(`${pDate.period_date}T${bidEnd}:00`);
+    return now >= start && now <= end;
+  };
+
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
     toast.success('คัดลอกเลขบัญชีแล้ว!');
@@ -1997,7 +2008,44 @@ export default function CircleDetail() {
                             {circle.type === 'ประมูล (เปียแข่งดอก)' && (
                               <>
                                 {isCurrent &&
-                                  (!isBiddingClosed(period) ? (
+                                  (isBiddingClosed(period) ? (
+                                    <div
+                                      style={{
+                                        flex: '1 1 45%',
+                                        padding: '12px',
+                                        fontSize: '0.85rem',
+                                        background: '#f1f5f9',
+                                        borderRadius: '12px',
+                                        color: '#64748b',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '6px',
+                                        border: '1px solid #e2e8f0',
+                                      }}
+                                    >
+                                      🔒 ปิดรับการประมูลแล้ว
+                                    </div>
+                                  ) : !isBiddingWindowOpen(period) ? (
+                                    <div
+                                      style={{
+                                        flex: '1 1 45%',
+                                        padding: '12px',
+                                        fontSize: '0.85rem',
+                                        background: '#f8fafc',
+                                        borderRadius: '12px',
+                                        color: '#94a3b8',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '6px',
+                                        border: '1px solid #e2e8f0',
+                                        cursor: 'default',
+                                      }}
+                                    >
+                                      🕐 ยังไม่ถึงเวลาประมูล
+                                    </div>
+                                  ) : (
                                     (() => {
                                       const assignedTo = getAssignedTo(period) || 'NONE';
 
@@ -2065,24 +2113,6 @@ export default function CircleDetail() {
                                         </button>
                                       );
                                     })()
-                                  ) : (
-                                    <div
-                                      style={{
-                                        flex: '1 1 45%',
-                                        padding: '12px',
-                                        fontSize: '0.85rem',
-                                        background: '#f1f5f9',
-                                        borderRadius: '12px',
-                                        color: '#64748b',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        gap: '6px',
-                                        border: '1px solid #e2e8f0',
-                                      }}
-                                    >
-                                      🔒 ปิดรับการประมูลแล้ว
-                                    </div>
                                   ))}
 
                                 {canPay && (
@@ -2166,22 +2196,25 @@ export default function CircleDetail() {
                                         </button>
                                       </>
                                     )}
-                                    <button
-                                      onClick={() => handleCircleAction('close_period', period)}
-                                      className="btn-primary"
-                                      style={{
-                                        flex: '1 1 30%',
-                                        padding: '10px',
-                                        fontSize: '0.75rem',
-                                        background: '#ef4444',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        alignItems: 'center',
-                                        gap: '4px',
-                                      }}
-                                    >
-                                      <span>🎌</span> ปิดงวด
-                                    </button>
+                                    {(isBiddingClosed(period) ||
+                                      Boolean(getAssignedTo(period))) && (
+                                      <button
+                                        onClick={() => handleCircleAction('close_period', period)}
+                                        className="btn-primary"
+                                        style={{
+                                          flex: '1 1 30%',
+                                          padding: '10px',
+                                          fontSize: '0.75rem',
+                                          background: '#ef4444',
+                                          display: 'flex',
+                                          flexDirection: 'column',
+                                          alignItems: 'center',
+                                          gap: '4px',
+                                        }}
+                                      >
+                                        <span>🎌</span> ปิดงวด
+                                      </button>
+                                    )}
                                   </>
                                 )}
                               </>
