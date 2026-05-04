@@ -109,6 +109,7 @@ export default function CircleDetail() {
     open: boolean;
     slip: AnyRecord | null;
   }>({ open: false, slip: null });
+  const [notifiedBidPeriods, setNotifiedBidPeriods] = useState<Set<number>>(new Set());
   const [bidAmount, setBidAmount] = useState<string>('');
   const [paymentMode, setPaymentMode] = useState<'TRANSFER' | 'CASH'>('TRANSFER');
   const [myBank, setMyBank] = useState<Bank | null>(null);
@@ -583,6 +584,15 @@ export default function CircleDetail() {
     const start = new Date(`${pDate.period_date}T${bidStart}:00`);
     const end = new Date(`${pDate.period_date}T${bidEnd}:00`);
     return now >= start && now <= end;
+  };
+
+  const getHasNoClearWinner = (period: number): boolean => {
+    const periodBids = bids
+      .filter((b) => b.period === period)
+      .sort((a, b) => b.bid_amount - a.bid_amount);
+    if (periodBids.length === 0) return true; // no bids → need random
+    if (periodBids.length === 1) return false; // single bidder → clear winner
+    return periodBids[0].bid_amount === periodBids[1].bid_amount; // tie → need random
   };
 
   const copyToClipboard = (text) => {
@@ -2151,6 +2161,7 @@ export default function CircleDetail() {
                                   <>
                                     {isCurrent && !isBiddingClosed(period) && (
                                       <>
+                                        {/* เริ่มประมูล: only during bidding window */}
                                         {isBiddingWindowOpen(period) && (
                                           <button
                                             onClick={async () => {
@@ -2160,9 +2171,12 @@ export default function CircleDetail() {
                                                   period,
                                                   caller_role: dbUser.role,
                                                 });
-                                                if (res.status === 'success')
+                                                if (res.status === 'success') {
                                                   toast.success(res.message);
-                                                else toast.error(res.message);
+                                                  setNotifiedBidPeriods(
+                                                    (prev) => new Set([...prev, period])
+                                                  );
+                                                } else toast.error(res.message);
                                               } catch {
                                                 toast.error('เกิดข้อผิดพลาดในการส่งการแจ้งเตือน');
                                               }
@@ -2182,51 +2196,78 @@ export default function CircleDetail() {
                                             🔔 เริ่มประมูล (แจ้งสมาชิก)
                                           </button>
                                         )}
-                                        {(() => {
-                                          const isAssigned = Boolean(getAssignedTo(period));
-                                          return (
-                                            !isAssigned && (
-                                              <button
-                                                onClick={() =>
-                                                  handleCircleAction('random_select_bidder', period)
-                                                }
-                                                className="btn-primary"
-                                                style={{
-                                                  flex: '1 1 30%',
-                                                  padding: '10px',
-                                                  fontSize: '0.75rem',
-                                                  background: '#8b5cf6',
-                                                  display: 'flex',
-                                                  flexDirection: 'column',
-                                                  alignItems: 'center',
-                                                  gap: '4px',
-                                                }}
-                                              >
-                                                <span>🎲</span> สุ่มผู้ชนะ
-                                              </button>
-                                            )
-                                          );
-                                        })()}
+                                        {/* ปิดประมูล: gated — must send notification first */}
+                                        {notifiedBidPeriods.has(period) ? (
+                                          <button
+                                            onClick={() =>
+                                              handleCircleAction('close_bidding', period)
+                                            }
+                                            className="btn-primary"
+                                            style={{
+                                              flex: '1 1 45%',
+                                              padding: '10px',
+                                              fontSize: '0.75rem',
+                                              background: '#f59e0b',
+                                              display: 'flex',
+                                              flexDirection: 'column',
+                                              alignItems: 'center',
+                                              gap: '4px',
+                                            }}
+                                          >
+                                            <span>🔒</span> ปิดประมูล
+                                          </button>
+                                        ) : (
+                                          <button
+                                            onClick={() =>
+                                              toast.error(
+                                                'กรุณากด "เริ่มประมูล (แจ้งสมาชิก)" ก่อนปิดประมูล'
+                                              )
+                                            }
+                                            style={{
+                                              flex: '1 1 45%',
+                                              padding: '10px',
+                                              fontSize: '0.75rem',
+                                              background: '#e2e8f0',
+                                              color: '#94a3b8',
+                                              border: 'none',
+                                              borderRadius: '8px',
+                                              display: 'flex',
+                                              flexDirection: 'column',
+                                              alignItems: 'center',
+                                              gap: '4px',
+                                              cursor: 'not-allowed',
+                                            }}
+                                          >
+                                            <span>🔒</span> ปิดประมูล
+                                          </button>
+                                        )}
+                                      </>
+                                    )}
+                                    {/* สุ่มผู้ชนะ: after window expires or bidding closed, when no clear winner */}
+                                    {isCurrent &&
+                                      (isBiddingClosed(period) || !isBiddingWindowOpen(period)) &&
+                                      !Boolean(getAssignedTo(period)) &&
+                                      getHasNoClearWinner(period) && (
                                         <button
                                           onClick={() =>
-                                            handleCircleAction('close_bidding', period)
+                                            handleCircleAction('random_select_bidder', period)
                                           }
                                           className="btn-primary"
                                           style={{
-                                            flex: '1 1 30%',
+                                            flex: '1 1 45%',
                                             padding: '10px',
                                             fontSize: '0.75rem',
-                                            background: '#f59e0b',
+                                            background: '#8b5cf6',
                                             display: 'flex',
                                             flexDirection: 'column',
                                             alignItems: 'center',
                                             gap: '4px',
                                           }}
                                         >
-                                          <span>🔒</span> ปิดประมูล
+                                          <span>🎲</span> สุ่มผู้ชนะ
                                         </button>
-                                      </>
-                                    )}
+                                      )}
+                                    {/* ปิดงวด: after bidding closed or pre-assigned */}
                                     {(isBiddingClosed(period) ||
                                       Boolean(getAssignedTo(period))) && (
                                       <button
