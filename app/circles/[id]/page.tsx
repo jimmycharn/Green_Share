@@ -2309,9 +2309,16 @@ export default function CircleDetail() {
                               const pBid = bids.find(
                                 (b) => b.period === period && b.member_id === p.member_id
                               );
-                              const pSlip = slips.find(
-                                (s) => s.period === period && s.member_id === p.member_id
-                              );
+                              const pSlip =
+                                slips.find(
+                                  (s) =>
+                                    s.period === period &&
+                                    s.member_id === p.member_id &&
+                                    s.status === 'APPROVED'
+                                ) ||
+                                slips.find(
+                                  (s) => s.period === period && s.member_id === p.member_id
+                                );
                               const isMe = dbUser && p.member_id === dbUser.id;
                               const status = handStatus[p.hand_no];
                               const isDead = status === 'DEAD';
