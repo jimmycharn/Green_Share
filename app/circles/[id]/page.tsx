@@ -968,6 +968,27 @@ export default function CircleDetail() {
               const mySlip = slips.find((s) => s.period === period && s.member_id === dbUser?.id);
               const canPay = !mySlip || mySlip.status === 'REJECTED';
 
+              // Staircase-specific
+              const stairAssignedId = isStairType ? getAssignedTo(period) || null : null;
+              const stairWinnerPlayer =
+                stairAssignedId && stairAssignedId !== 'NONE'
+                  ? players.find((p) => p.member_id === stairAssignedId)
+                  : null;
+              const stairWinnerMember =
+                stairAssignedId && stairAssignedId !== 'NONE'
+                  ? allMembers.find((m) => m.id === stairAssignedId)
+                  : null;
+              const stairWinnerName =
+                stairWinnerMember?.nickname || stairWinnerPlayer?.member_name || '';
+              const stairWinnerPic = stairWinnerPlayer?.picture_url || null;
+              const pDateObj = periodDates.find((p) => p.period === period);
+              const amountPerPeriod = pDateObj?.amount ?? circle.amount_per_hand;
+              const stairReceivedAmount = players.length * (Number(amountPerPeriod) || 0);
+              const stairPayout =
+                isStairType && stairAssignedId && stairAssignedId !== 'NONE'
+                  ? payouts.find((po) => po.period === period && po.member_id === stairAssignedId)
+                  : null;
+
               // Calculate Received Amount
               const deadHands = period - 1;
               const liveHands = circle.total_hands - deadHands;
@@ -998,7 +1019,7 @@ export default function CircleDetail() {
                     style={{
                       padding: '16px 20px',
                       display: 'flex',
-                      alignItems: 'center',
+                      alignItems: isStairType ? 'flex-start' : 'center',
                       justifyContent: 'space-between',
                       background: isCompleted
                         ? 'rgba(16, 185, 129, 0.05)'
@@ -1008,153 +1029,308 @@ export default function CircleDetail() {
                       cursor: isFuture && circle.status !== 'OPEN' ? 'default' : 'pointer',
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    {isStairType ? (
+                      /* ── Staircase card header ── */
                       <div
                         style={{
-                          width: '40px',
-                          height: '40px',
-                          borderRadius: '12px',
-                          background: isCompleted
-                            ? 'var(--primary-gradient)'
-                            : isCurrent
-                              ? 'var(--secondary)'
-                              : '#e2e8f0',
-                          color: 'white',
                           display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontWeight: '800',
-                          fontSize: '0.9rem',
+                          alignItems: 'flex-start',
+                          gap: '12px',
+                          flex: 1,
+                          minWidth: 0,
                         }}
                       >
-                        {period}
-                      </div>
-                      <div>
+                        {/* Profile picture */}
                         <div
                           style={{
-                            fontWeight: '700',
-                            fontSize: '0.95rem',
+                            width: '52px',
+                            height: '52px',
+                            borderRadius: '50%',
+                            overflow: 'hidden',
+                            flexShrink: 0,
+                            border: isCurrent
+                              ? '2px solid var(--primary)'
+                              : isCompleted
+                                ? '2px solid #10b981'
+                                : '2px solid #e2e8f0',
+                            background: '#f1f5f9',
                             display: 'flex',
                             alignItems: 'center',
-                            flexWrap: 'wrap',
+                            justifyContent: 'center',
                           }}
                         >
-                          <span style={{ marginRight: '8px' }}>งวดที่ {period}</span>
-                          {(() => {
-                            const pDateObj = periodDates.find((p) => p.period === period);
-                            if (pDateObj?.period_date) {
-                              return (
-                                <span
-                                  style={{
-                                    fontSize: '0.75rem',
-                                    fontWeight: '500',
-                                    color: 'var(--primary)',
-                                    background: 'var(--primary-light, #e0e7ff)',
-                                    padding: '2px 6px',
-                                    borderRadius: '4px',
-                                    marginRight: '8px',
-                                  }}
-                                >
-                                  📅{' '}
-                                  {new Date(pDateObj.period_date).toLocaleDateString('th-TH', {
-                                    day: 'numeric',
-                                    month: 'short',
-                                    year: 'numeric',
-                                  })}
-                                </span>
-                              );
-                            }
-                            return null;
-                          })()}
-                          {circle.status === 'OPEN' ? (
+                          {stairWinnerPic ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={stairWinnerPic}
+                              alt={stairWinnerName}
+                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            />
+                          ) : stairWinnerName ? (
                             <span
-                              style={{
-                                marginLeft: '8px',
-                                color: '#94a3b8',
-                                fontSize: '0.7rem',
-                                fontWeight: '500',
-                              }}
+                              style={{ fontSize: '1.3rem', color: '#94a3b8', fontWeight: '700' }}
                             >
-                              🔒 รอดำเนินการ
+                              {stairWinnerName[0]?.toUpperCase()}
                             </span>
                           ) : (
-                            <>
-                              {circle.status === 'OPEN' ? (
-                                <span
-                                  style={{
-                                    marginLeft: '8px',
-                                    color: '#94a3b8',
-                                    fontSize: '0.7rem',
-                                    fontWeight: '500',
-                                  }}
-                                >
-                                  🔒 รอดำเนินการ
-                                </span>
-                              ) : (
-                                <>
-                                  {isCurrent && (
-                                    <span
-                                      style={{
-                                        marginLeft: '8px',
-                                        color: 'var(--primary)',
-                                        fontSize: '0.7rem',
-                                        verticalAlign: 'middle',
-                                      }}
-                                    >
-                                      ⭐ กำลังดำเนินการ
-                                    </span>
-                                  )}
-                                  {isFuture && (
-                                    <span
-                                      style={{
-                                        marginLeft: '8px',
-                                        color: '#94a3b8',
-                                        fontSize: '0.7rem',
-                                        fontWeight: '500',
-                                      }}
-                                    >
-                                      🔒 รอดำเนินการ
-                                    </span>
-                                  )}
-                                </>
-                              )}
-                            </>
+                            <span style={{ fontSize: '1.1rem', color: '#cbd5e1' }}>👤</span>
                           )}
                         </div>
-                        {isCompleted && winner && (
+                        {/* Text lines */}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          {/* Line 1: period + date + status */}
                           <div
                             style={{
-                              fontSize: '0.8rem',
-                              color: '#64748b',
+                              fontWeight: '700',
+                              fontSize: '0.9rem',
                               display: 'flex',
                               alignItems: 'center',
-                              gap: '4px',
+                              flexWrap: 'wrap',
+                              gap: '5px',
+                              marginBottom: '3px',
                             }}
                           >
-                            🏆 {winner.member_name}
-                          </div>
-                        )}
-                        {/* Amount for this period */}
-                        {(() => {
-                          const pDate = periodDates.find((p) => p.period === period);
-                          const isStepType = circle.type === 'ขั้นบันได (ดอกคงที่)';
-                          const amt = isStepType ? pDate?.amount : circle.amount_per_hand;
-                          if (isStepType && (amt === undefined || amt === null)) {
-                            return (
-                              <div
+                            <span>งวดที่ {period}</span>
+                            {pDateObj?.period_date && (
+                              <span
                                 style={{
                                   fontSize: '0.72rem',
-                                  color: '#94a3b8',
                                   fontWeight: '500',
-                                  marginTop: '2px',
+                                  color: 'var(--primary)',
+                                  background: 'var(--primary-light, #e0e7ff)',
+                                  padding: '1px 5px',
+                                  borderRadius: '4px',
                                 }}
                               >
-                                ยังไม่กำหนดยอดชำระ
+                                📅{' '}
+                                {new Date(pDateObj.period_date).toLocaleDateString('th-TH', {
+                                  day: 'numeric',
+                                  month: 'short',
+                                  year: 'numeric',
+                                })}
+                              </span>
+                            )}
+                            {isCompleted && (
+                              <span
+                                style={{
+                                  fontSize: '0.68rem',
+                                  fontWeight: '600',
+                                  color: '#166534',
+                                  background: '#dcfce7',
+                                  padding: '1px 6px',
+                                  borderRadius: '4px',
+                                }}
+                              >
+                                ✅ ปิดงวดแล้ว
+                              </span>
+                            )}
+                            {isCurrent && circle.status !== 'OPEN' && (
+                              <span
+                                style={{
+                                  fontSize: '0.68rem',
+                                  fontWeight: '600',
+                                  color: 'var(--primary)',
+                                }}
+                              >
+                                ⭐ กำลังดำเนินการ
+                              </span>
+                            )}
+                            {(isFuture || circle.status === 'OPEN') && (
+                              <span
+                                style={{
+                                  fontSize: '0.68rem',
+                                  fontWeight: '500',
+                                  color: '#94a3b8',
+                                }}
+                              >
+                                🔒 รอดำเนินการ
+                              </span>
+                            )}
+                          </div>
+                          {/* Line 2: winner name */}
+                          {stairWinnerName ? (
+                            <div
+                              style={{
+                                fontSize: '0.85rem',
+                                fontWeight: '600',
+                                color: '#1e293b',
+                                marginBottom: '2px',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                              }}
+                            >
+                              🏆 {stairWinnerName}
+                            </div>
+                          ) : (
+                            <div
+                              style={{ fontSize: '0.78rem', color: '#94a3b8', marginBottom: '2px' }}
+                            >
+                              ยังไม่กำหนดผู้รับ
+                            </div>
+                          )}
+                          {/* Line 3: จ่ายงวดละ */}
+                          {amountPerPeriod != null ? (
+                            <div
+                              style={{
+                                fontSize: '0.78rem',
+                                color: 'var(--primary)',
+                                fontWeight: '700',
+                                marginBottom: '2px',
+                              }}
+                            >
+                              💰 จ่ายงวดละ: {Number(amountPerPeriod).toLocaleString()} ฿
+                            </div>
+                          ) : (
+                            <div
+                              style={{ fontSize: '0.72rem', color: '#94a3b8', marginBottom: '2px' }}
+                            >
+                              ยังไม่กำหนดยอดชำระ
+                            </div>
+                          )}
+                          {/* Line 4: รับสุทธิ */}
+                          {stairAssignedId &&
+                            stairAssignedId !== 'NONE' &&
+                            stairReceivedAmount > 0 && (
+                              <div
+                                style={{
+                                  fontSize: '0.78rem',
+                                  color: '#166534',
+                                  fontWeight: '700',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '6px',
+                                  flexWrap: 'wrap',
+                                }}
+                              >
+                                🏦 รับสุทธิ: {stairReceivedAmount.toLocaleString()} ฿
+                                {stairPayout?.status === 'APPROVED' && (
+                                  <span
+                                    style={{
+                                      background: '#dcfce7',
+                                      color: '#166534',
+                                      padding: '1px 6px',
+                                      borderRadius: '5px',
+                                      fontWeight: '700',
+                                      fontSize: '0.7rem',
+                                    }}
+                                  >
+                                    ✅ รับแล้ว
+                                  </span>
+                                )}
                               </div>
-                            );
-                          }
-                          if (amt === undefined || amt === null) return null;
-                          return (
+                            )}
+                        </div>
+                      </div>
+                    ) : (
+                      /* ── Standard (auction) card header ── */
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div
+                          style={{
+                            width: '40px',
+                            height: '40px',
+                            borderRadius: '12px',
+                            background: isCompleted
+                              ? 'var(--primary-gradient)'
+                              : isCurrent
+                                ? 'var(--secondary)'
+                                : '#e2e8f0',
+                            color: 'white',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontWeight: '800',
+                            fontSize: '0.9rem',
+                          }}
+                        >
+                          {period}
+                        </div>
+                        <div>
+                          <div
+                            style={{
+                              fontWeight: '700',
+                              fontSize: '0.95rem',
+                              display: 'flex',
+                              alignItems: 'center',
+                              flexWrap: 'wrap',
+                            }}
+                          >
+                            <span style={{ marginRight: '8px' }}>งวดที่ {period}</span>
+                            {pDateObj?.period_date && (
+                              <span
+                                style={{
+                                  fontSize: '0.75rem',
+                                  fontWeight: '500',
+                                  color: 'var(--primary)',
+                                  background: 'var(--primary-light, #e0e7ff)',
+                                  padding: '2px 6px',
+                                  borderRadius: '4px',
+                                  marginRight: '8px',
+                                }}
+                              >
+                                📅{' '}
+                                {new Date(pDateObj.period_date).toLocaleDateString('th-TH', {
+                                  day: 'numeric',
+                                  month: 'short',
+                                  year: 'numeric',
+                                })}
+                              </span>
+                            )}
+                            {circle.status === 'OPEN' ? (
+                              <span
+                                style={{
+                                  marginLeft: '8px',
+                                  color: '#94a3b8',
+                                  fontSize: '0.7rem',
+                                  fontWeight: '500',
+                                }}
+                              >
+                                🔒 รอดำเนินการ
+                              </span>
+                            ) : (
+                              <>
+                                {isCurrent && (
+                                  <span
+                                    style={{
+                                      marginLeft: '8px',
+                                      color: 'var(--primary)',
+                                      fontSize: '0.7rem',
+                                      verticalAlign: 'middle',
+                                    }}
+                                  >
+                                    ⭐ กำลังดำเนินการ
+                                  </span>
+                                )}
+                                {isFuture && (
+                                  <span
+                                    style={{
+                                      marginLeft: '8px',
+                                      color: '#94a3b8',
+                                      fontSize: '0.7rem',
+                                      fontWeight: '500',
+                                    }}
+                                  >
+                                    🔒 รอดำเนินการ
+                                  </span>
+                                )}
+                              </>
+                            )}
+                          </div>
+                          {isCompleted && winner && (
+                            <div
+                              style={{
+                                fontSize: '0.8rem',
+                                color: '#64748b',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                              }}
+                            >
+                              🏆 {winner.member_name}
+                            </div>
+                          )}
+                          {/* Amount */}
+                          {circle.amount_per_hand != null && (
                             <div
                               style={{
                                 fontSize: '0.78rem',
@@ -1163,12 +1339,12 @@ export default function CircleDetail() {
                                 marginTop: '2px',
                               }}
                             >
-                              💰 {Number(amt).toLocaleString()} ฿/งวด
+                              💰 {Number(circle.amount_per_hand).toLocaleString()} ฿/งวด
                             </div>
-                          );
-                        })()}
+                          )}
+                        </div>
                       </div>
-                    </div>
+                    )}
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       {isCompleted && <span style={{ fontSize: '1.2rem' }}>🏆</span>}
