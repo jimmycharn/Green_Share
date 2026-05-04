@@ -1044,7 +1044,7 @@ export default function CircleDetail() {
                     style={{
                       padding: '16px 20px',
                       display: 'flex',
-                      alignItems: isStairType ? 'flex-start' : 'center',
+                      alignItems: isStairType || isCompleted ? 'flex-start' : 'center',
                       justifyContent: 'space-between',
                       background: isCompleted
                         ? 'rgba(16, 185, 129, 0.05)'
@@ -1397,50 +1397,69 @@ export default function CircleDetail() {
                           )}
                         </div>
                       </div>
-                    ) : (
-                      /* ── Standard (auction) card header ── */
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    ) : isCompleted && winner ? (
+                      /* ── Auction completed: winner pic + multiline ── */
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: '12px',
+                          flex: 1,
+                          minWidth: 0,
+                        }}
+                      >
                         <div
                           style={{
-                            width: '40px',
-                            height: '40px',
-                            borderRadius: '12px',
-                            background: isCompleted
-                              ? 'var(--primary-gradient)'
-                              : isCurrent
-                                ? 'var(--secondary)'
-                                : '#e2e8f0',
-                            color: 'white',
+                            width: '52px',
+                            height: '52px',
+                            borderRadius: '50%',
+                            overflow: 'hidden',
+                            flexShrink: 0,
+                            border: '2px solid #10b981',
+                            background: '#f1f5f9',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            fontWeight: '800',
-                            fontSize: '0.9rem',
                           }}
                         >
-                          {period}
+                          {winner.picture_url ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={winner.picture_url}
+                              alt={winner.member_name}
+                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            />
+                          ) : (
+                            <span
+                              style={{ fontSize: '1.3rem', color: '#94a3b8', fontWeight: '700' }}
+                            >
+                              {(allMembers.find((m) => m.id === winner.member_id)
+                                ?.custom_nickname || winner.member_name)?.[0]?.toUpperCase()}
+                            </span>
+                          )}
                         </div>
-                        <div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
                           <div
                             style={{
                               fontWeight: '700',
-                              fontSize: '0.95rem',
+                              fontSize: '0.9rem',
                               display: 'flex',
                               alignItems: 'center',
                               flexWrap: 'wrap',
+                              gap: '5px',
+                              marginBottom: '3px',
                             }}
                           >
-                            <span style={{ marginRight: '8px' }}>งวดที่ {period}</span>
+                            <span>งวดที่ {period}</span>
                             {pDateObj?.period_date && (
                               <span
                                 style={{
-                                  fontSize: '0.75rem',
+                                  fontSize: '0.72rem',
                                   fontWeight: '500',
                                   color: 'var(--primary)',
                                   background: 'var(--primary-light, #e0e7ff)',
-                                  padding: '2px 6px',
+                                  padding: '1px 5px',
                                   borderRadius: '4px',
-                                  marginRight: '8px',
                                 }}
                               >
                                 📅{' '}
@@ -1451,78 +1470,321 @@ export default function CircleDetail() {
                                 })}
                               </span>
                             )}
-                            {circle.status === 'OPEN' ? (
-                              <span
-                                style={{
-                                  marginLeft: '8px',
-                                  color: '#94a3b8',
-                                  fontSize: '0.7rem',
-                                  fontWeight: '500',
-                                }}
-                              >
-                                🔒 รอดำเนินการ
+                            <span
+                              style={{
+                                fontSize: '0.68rem',
+                                fontWeight: '600',
+                                color: '#166534',
+                                background: '#dcfce7',
+                                padding: '1px 6px',
+                                borderRadius: '4px',
+                              }}
+                            >
+                              ✅ ปิดงวดแล้ว
+                            </span>
+                          </div>
+                          <div
+                            style={{
+                              fontSize: '0.85rem',
+                              fontWeight: '600',
+                              color: '#1e293b',
+                              marginBottom: '2px',
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                            }}
+                          >
+                            🏆{' '}
+                            {allMembers.find((m) => m.id === winner.member_id)?.custom_nickname ||
+                              winner.member_name}
+                          </div>
+                          <div
+                            style={{
+                              fontSize: '0.78rem',
+                              color: 'var(--primary)',
+                              fontWeight: '700',
+                              marginBottom: '2px',
+                              display: 'flex',
+                              gap: '6px',
+                              flexWrap: 'wrap',
+                            }}
+                          >
+                            <span>💰 {Number(circle.amount_per_hand).toLocaleString()} ฿/งวด</span>
+                            {winnerBid?.bid_amount > 0 && (
+                              <span style={{ color: '#ea580c' }}>
+                                (เปีย {winnerBid.bid_amount.toLocaleString()})
                               </span>
-                            ) : (
-                              <>
-                                {isCurrent && (
-                                  <span
-                                    style={{
-                                      marginLeft: '8px',
-                                      color: 'var(--primary)',
-                                      fontSize: '0.7rem',
-                                      verticalAlign: 'middle',
-                                    }}
-                                  >
-                                    ⭐ กำลังดำเนินการ
-                                  </span>
-                                )}
-                                {isFuture && (
-                                  <span
-                                    style={{
-                                      marginLeft: '8px',
-                                      color: '#94a3b8',
-                                      fontSize: '0.7rem',
-                                      fontWeight: '500',
-                                    }}
-                                  >
-                                    🔒 รอดำเนินการ
-                                  </span>
-                                )}
-                              </>
                             )}
                           </div>
-                          {isCompleted && winner && (
-                            <div
+                          <div
+                            style={{
+                              fontSize: '0.78rem',
+                              color: '#166534',
+                              fontWeight: '700',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              flexWrap: 'wrap',
+                            }}
+                          >
+                            🏦 รับสุทธิ: {receivedAmount.toLocaleString()} ฿
+                            {isCircleAdmin ? (
+                              !winnerPayout || winnerPayout.status === 'REJECTED' ? (
+                                <button
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
+                                    if (winner.member_id === dbUser?.id) {
+                                      const ok = await confirm({
+                                        title: 'ยืนยันการรับเงิน',
+                                        description: `ยืนยันว่าคุณได้รับเงิน ${receivedAmount.toLocaleString()} ฿ ครบแล้ว`,
+                                      });
+                                      if (!ok) return;
+                                      try {
+                                        const res = await callAction('create_payout', {
+                                          circle_id: circleId,
+                                          member_id: winner.member_id,
+                                          period,
+                                          amount: receivedAmount,
+                                          is_cash: true,
+                                          auto_approve: true,
+                                          caller_role: dbUser.role,
+                                        });
+                                        if (res.status === 'success') fetchCircleDetail();
+                                        else setMessage({ type: 'error', text: res.message });
+                                      } catch {
+                                        setMessage({ type: 'error', text: 'เกิดข้อผิดพลาด' });
+                                      }
+                                    } else {
+                                      setPayoutModal({
+                                        open: true,
+                                        period,
+                                        winner_id: winner.member_id,
+                                        winner_name:
+                                          allMembers.find((m) => m.id === winner.member_id)
+                                            ?.custom_nickname || winner.member_name,
+                                        amount: receivedAmount,
+                                      });
+                                    }
+                                  }}
+                                  style={{
+                                    background: 'var(--primary)',
+                                    color: 'white',
+                                    border: 'none',
+                                    padding: '2px 8px',
+                                    borderRadius: '6px',
+                                    fontSize: '0.7rem',
+                                    fontWeight: '700',
+                                    cursor: 'pointer',
+                                  }}
+                                >
+                                  💸 จ่ายเงิน
+                                </button>
+                              ) : winnerPayout.status === 'PENDING' ? (
+                                <span
+                                  style={{
+                                    background: '#fef9c3',
+                                    color: '#92400e',
+                                    padding: '1px 6px',
+                                    borderRadius: '5px',
+                                    fontWeight: '700',
+                                    fontSize: '0.7rem',
+                                  }}
+                                >
+                                  ⏳ รอตรวจสอบ
+                                </span>
+                              ) : (
+                                <span
+                                  style={{
+                                    background: '#dcfce7',
+                                    color: '#166534',
+                                    padding: '1px 6px',
+                                    borderRadius: '5px',
+                                    fontWeight: '700',
+                                    fontSize: '0.7rem',
+                                  }}
+                                >
+                                  ✅ รับแล้ว
+                                </span>
+                              )
+                            ) : winner.member_id === dbUser?.id ? (
+                              !winnerPayout || winnerPayout.status === 'REJECTED' ? (
+                                <span
+                                  style={{
+                                    background: '#fee2e2',
+                                    color: '#991b1b',
+                                    padding: '1px 6px',
+                                    borderRadius: '5px',
+                                    fontWeight: '700',
+                                    fontSize: '0.7rem',
+                                  }}
+                                >
+                                  ❌ ยังไม่จ่าย
+                                </span>
+                              ) : winnerPayout.status === 'PENDING' ? (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setInspectPayoutModal({ open: true, payout: winnerPayout });
+                                  }}
+                                  style={{
+                                    background: '#f59e0b',
+                                    color: 'white',
+                                    border: 'none',
+                                    padding: '2px 8px',
+                                    borderRadius: '6px',
+                                    fontSize: '0.7rem',
+                                    fontWeight: '700',
+                                    cursor: 'pointer',
+                                  }}
+                                >
+                                  🔍 ตรวจสอบ
+                                </button>
+                              ) : (
+                                <span
+                                  style={{
+                                    background: '#dcfce7',
+                                    color: '#166534',
+                                    padding: '1px 6px',
+                                    borderRadius: '5px',
+                                    fontWeight: '700',
+                                    fontSize: '0.7rem',
+                                  }}
+                                >
+                                  ✅ รับแล้ว
+                                </span>
+                              )
+                            ) : !winnerPayout || winnerPayout.status === 'REJECTED' ? (
+                              <span
+                                style={{
+                                  background: '#fee2e2',
+                                  color: '#991b1b',
+                                  padding: '1px 6px',
+                                  borderRadius: '5px',
+                                  fontWeight: '600',
+                                  fontSize: '0.7rem',
+                                }}
+                              >
+                                ⏳ ยังไม่จ่าย
+                              </span>
+                            ) : winnerPayout.status === 'PENDING' ? (
+                              <span
+                                style={{
+                                  background: '#fef9c3',
+                                  color: '#92400e',
+                                  padding: '1px 6px',
+                                  borderRadius: '5px',
+                                  fontWeight: '600',
+                                  fontSize: '0.7rem',
+                                }}
+                              >
+                                ⏳ รอตรวจสอบ
+                              </span>
+                            ) : (
+                              <span
+                                style={{
+                                  background: '#dcfce7',
+                                  color: '#166534',
+                                  padding: '1px 6px',
+                                  borderRadius: '5px',
+                                  fontWeight: '600',
+                                  fontSize: '0.7rem',
+                                }}
+                              >
+                                ✅ รับแล้ว
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      /* ── Auction current/future: text only, no circle ── */
+                      <div>
+                        <div
+                          style={{
+                            fontWeight: '700',
+                            fontSize: '0.95rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            flexWrap: 'wrap',
+                          }}
+                        >
+                          <span style={{ marginRight: '8px' }}>งวดที่ {period}</span>
+                          {pDateObj?.period_date && (
+                            <span
                               style={{
-                                fontSize: '0.8rem',
-                                color: '#64748b',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '4px',
-                              }}
-                            >
-                              🏆 {winner.member_name}
-                            </div>
-                          )}
-                          {/* Amount */}
-                          {circle.amount_per_hand != null && (
-                            <div
-                              style={{
-                                fontSize: '0.78rem',
+                                fontSize: '0.75rem',
+                                fontWeight: '500',
                                 color: 'var(--primary)',
-                                fontWeight: '700',
-                                marginTop: '2px',
+                                background: 'var(--primary-light, #e0e7ff)',
+                                padding: '2px 6px',
+                                borderRadius: '4px',
+                                marginRight: '8px',
                               }}
                             >
-                              💰 {Number(circle.amount_per_hand).toLocaleString()} ฿/งวด
-                            </div>
+                              📅{' '}
+                              {new Date(pDateObj.period_date).toLocaleDateString('th-TH', {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric',
+                              })}
+                            </span>
+                          )}
+                          {circle.status === 'OPEN' ? (
+                            <span
+                              style={{
+                                marginLeft: '8px',
+                                color: '#94a3b8',
+                                fontSize: '0.7rem',
+                                fontWeight: '500',
+                              }}
+                            >
+                              🔒 รอดำเนินการ
+                            </span>
+                          ) : (
+                            <>
+                              {isCurrent && (
+                                <span
+                                  style={{
+                                    marginLeft: '8px',
+                                    color: 'var(--primary)',
+                                    fontSize: '0.7rem',
+                                    verticalAlign: 'middle',
+                                  }}
+                                >
+                                  ⭐ กำลังดำเนินการ
+                                </span>
+                              )}
+                              {isFuture && (
+                                <span
+                                  style={{
+                                    marginLeft: '8px',
+                                    color: '#94a3b8',
+                                    fontSize: '0.7rem',
+                                    fontWeight: '500',
+                                  }}
+                                >
+                                  🔒 รอดำเนินการ
+                                </span>
+                              )}
+                            </>
                           )}
                         </div>
+                        {circle.amount_per_hand != null && (
+                          <div
+                            style={{
+                              fontSize: '0.78rem',
+                              color: 'var(--primary)',
+                              fontWeight: '700',
+                              marginTop: '2px',
+                            }}
+                          >
+                            💰 {Number(circle.amount_per_hand).toLocaleString()} ฿/งวด
+                          </div>
+                        )}
                       </div>
                     )}
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      {isCompleted && <span style={{ fontSize: '1.2rem' }}>🏆</span>}
                       {(isFuture || isCurrent || circle.status === 'OPEN') && isCircleAdmin && (
                         <button
                           onClick={(e) => {
@@ -1564,8 +1826,8 @@ export default function CircleDetail() {
                     </div>
                   </div>
 
-                  {/* Winner Summary (For Completed) */}
-                  {isCompleted && winner && !isExpanded && (
+                  {/* Winner Summary removed — info is now in the card header */}
+                  {false && winner && !isExpanded && (
                     <div
                       style={{
                         padding: '0 20px 16px 20px',
@@ -1938,71 +2200,6 @@ export default function CircleDetail() {
                         )
                       )}
 
-                      {isCompleted && winner && (
-                        <div
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '16px',
-                            marginBottom: '20px',
-                            padding: '12px',
-                            borderRadius: '16px',
-                            background: '#f0fdf4',
-                          }}
-                        >
-                          <div
-                            style={{
-                              width: '48px',
-                              height: '48px',
-                              borderRadius: '12px',
-                              overflow: 'hidden',
-                              background: 'var(--primary-gradient)',
-                            }}
-                          >
-                            <img
-                              src={
-                                winner.picture_url ||
-                                `https://api.dicebear.com/7.x/avataaars/svg?seed=${winner.member_id}`
-                              }
-                              alt="winner"
-                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                            />
-                          </div>
-                          <div style={{ flex: 1 }}>
-                            <div style={{ fontWeight: '700' }}>🏆 {winner.member_name}</div>
-                            <div
-                              style={{
-                                fontSize: '0.8rem',
-                                color: '#166534',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '6px',
-                                flexWrap: 'wrap',
-                              }}
-                            >
-                              รับสุทธิ {receivedAmount.toLocaleString()} ฿
-                              {!isStairType && winnerBid?.bid_amount > 0 && (
-                                <span>(ดอก {winnerBid.bid_amount.toLocaleString()})</span>
-                              )}
-                              {winnerPayout?.status === 'APPROVED' && (
-                                <span
-                                  style={{
-                                    background: '#dcfce7',
-                                    color: '#166534',
-                                    padding: '1px 7px',
-                                    borderRadius: '6px',
-                                    fontWeight: '700',
-                                    fontSize: '0.75rem',
-                                  }}
-                                >
-                                  ✅ รับแล้ว
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
                       {/* Details: Bids & Slips */}
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         <div
@@ -2095,12 +2292,13 @@ export default function CircleDetail() {
                                     gap: '4px',
                                     padding: '12px',
                                     borderRadius: '14px',
-                                    background: isWinner ? '#fffbeb' : '#f8fafc',
-                                    border: isWinner
-                                      ? '1.5px solid #fbbf24'
-                                      : isMe
-                                        ? '1.5px solid #cbd5e1'
-                                        : '1px solid #f1f5f9',
+                                    background: isWinner && !isCompleted ? '#fffbeb' : '#f8fafc',
+                                    border:
+                                      isWinner && !isCompleted
+                                        ? '1.5px solid #fbbf24'
+                                        : isMe
+                                          ? '1.5px solid #cbd5e1'
+                                          : '1px solid #f1f5f9',
                                     opacity: isDead ? 0.6 : 1,
                                     marginBottom: '8px',
                                   }}
@@ -2130,7 +2328,7 @@ export default function CircleDetail() {
                                               : '#1e293b',
                                         }}
                                       >
-                                        {isWinner ? '🏆 ' : ''}
+                                        {isWinner && !isCompleted ? '🏆 ' : ''}
                                         {allMembers.find((m) => m.id === p.member_id)
                                           ?.custom_nickname || p.member_name}{' '}
                                         {isDead ? '(มือตาย)' : ''}
@@ -2215,7 +2413,7 @@ export default function CircleDetail() {
                                     </div>
                                   </div>
 
-                                  {isWinner && (
+                                  {isWinner && !isCompleted && (
                                     <div
                                       style={{
                                         fontSize: '0.8rem',
