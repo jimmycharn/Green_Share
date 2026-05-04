@@ -895,7 +895,12 @@ export default function CircleDetail() {
                             color: player ? 'var(--foreground)' : '#94a3b8',
                           }}
                         >
-                          {player ? player.member_name : canClick ? 'ว่าง (แตะเพื่อจอง)' : 'ว่าง'}
+                          {player
+                            ? allMembers.find((m) => m.id === player.member_id)?.nickname ||
+                              player.member_name
+                            : canClick
+                              ? 'ว่าง (แตะเพื่อจอง)'
+                              : 'ว่าง'}
                         </div>
                         {/* Amount display for this hand's period */}
                         {(() => {
@@ -979,7 +984,10 @@ export default function CircleDetail() {
                   ? players.find((p) => p.member_id === stairAssignedId)
                   : players.find((p) => p.hand_no === period)
                 : null;
-              const stairWinnerName = stairWinnerPlayer?.member_name || '';
+              const stairWinnerName =
+                allMembers.find((m) => m.id === stairWinnerPlayer?.member_id)?.nickname ||
+                stairWinnerPlayer?.member_name ||
+                '';
               const stairWinnerPic = stairWinnerPlayer?.picture_url || null;
               const pDateObj = periodDates.find((p) => p.period === period);
               const amountPerPeriod = pDateObj?.amount ?? circle.amount_per_hand;
@@ -1958,7 +1966,9 @@ export default function CircleDetail() {
                                         }}
                                       >
                                         {isWinner ? '🏆 ' : ''}
-                                        {p.member_name} {isDead ? '(มือตาย)' : ''}
+                                        {allMembers.find((m) => m.id === p.member_id)?.nickname ||
+                                          p.member_name}{' '}
+                                        {isDead ? '(มือตาย)' : ''}
                                       </span>
                                       {!isStairType && pBid && !isWinner && isActive && (
                                         <span
