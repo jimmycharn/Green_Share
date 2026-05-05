@@ -149,6 +149,19 @@ export default function CircleDetail() {
   }, [dbUser, circleId]);
 
   useEffect(() => {
+    if (!circleId) return;
+    const restored = new Set<number>();
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key?.startsWith(`bid_notified_${circleId}_`)) {
+        const p = parseInt(key.replace(`bid_notified_${circleId}_`, ''), 10);
+        if (p > 0) restored.add(p);
+      }
+    }
+    if (restored.size > 0) setNotifiedBidPeriods(restored);
+  }, [circleId]);
+
+  useEffect(() => {
     // Covers the rare case: a MEMBER-role user who is the circle creator
     if (!isCircleAdmin || allMembers.length > 0) return;
     if (['ADMIN', 'SUPERADMIN'].includes(dbUser?.role)) return; // already fetched above
@@ -2186,6 +2199,10 @@ export default function CircleDetail() {
                                                 });
                                                 if (res.status === 'success') {
                                                   toast.success(res.message);
+                                                  localStorage.setItem(
+                                                    `bid_notified_${circleId}_${period}`,
+                                                    '1'
+                                                  );
                                                   setNotifiedBidPeriods(
                                                     (prev) => new Set([...prev, period])
                                                   );
