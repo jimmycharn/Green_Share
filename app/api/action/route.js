@@ -27,6 +27,7 @@ import {
   updatePeriodDate,
   regeneratePeriodDates,
   getPeriodDates,
+  removeEmptyHand,
 } from '@/lib/controllers/circle';
 import {
   manageSlot,
@@ -88,6 +89,7 @@ const HANDLERS = {
   update_period_date: updatePeriodDate,
   regenerate_period_dates: regeneratePeriodDates,
   get_period_dates: getPeriodDates,
+  remove_empty_hand: removeEmptyHand,
 };
 
 function errorResponse(message, status = 400, extra = {}) {

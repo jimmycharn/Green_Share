@@ -301,6 +301,30 @@ export default function CircleDetail() {
     }
   };
 
+  const handleRemoveEmptyHand = async (handNo) => {
+    const ok = await confirm({
+      title: 'ลบมือว่าง',
+      description: `ยืนยันการลบมือที่ ${handNo}? ระบบจะเลื่อนมือที่ ${handNo + 1} ขึ้นมาแทนโดยอัตโนมัติ`,
+      destructive: true,
+    });
+    if (!ok) return;
+    try {
+      const data = await callAction('remove_empty_hand', {
+        circle_id: circleId,
+        hand_no: handNo,
+        caller_role: dbUser.role,
+      });
+      if (data.status === 'success') {
+        fetchCircleDetail();
+        setMessage({ type: 'success', text: data.message || 'ลบมือว่างเรียบร้อยแล้ว' });
+      } else {
+        setMessage({ type: 'error', text: data.message });
+      }
+    } catch {
+      setMessage({ type: 'error', text: 'การเชื่อมต่อขัดข้อง' });
+    }
+  };
+
   const openAdminChangeModal = (e, handNo) => {
     e.stopPropagation();
     setAdminModal({ open: true, mode: 'CHANGE', handNo });
@@ -811,6 +835,24 @@ export default function CircleDetail() {
               📣 แจ้งเตือนสมาชิกให้มาจองมือทาง LINE
             </button>
           )}
+
+          {/* Start circle admin block — show below LINE button when OPEN */}
+          {isCircleAdmin && circle.status === 'OPEN' && (
+            <div
+              className="glass-panel"
+              style={{
+                marginTop: '12px',
+                textAlign: 'center',
+                border: '1px dashed var(--primary)',
+              }}
+            >
+              <h4 style={{ margin: '0 0 12px 0' }}>จัดการวงแชร์</h4>
+              <button onClick={handleStartCircle} className="btn-primary" style={{ width: '100%' }}>
+                {' '}
+                ✨ เริ่มเดินวง{' '}
+              </button>
+            </div>
+          )}
         </div>
 
         {message.text && (
@@ -887,26 +929,7 @@ export default function CircleDetail() {
 
         {activeTab === 'members' && (
           <div className="animate-fade-in">
-            {isCircleAdmin && circle.status === 'OPEN' && (
-              <div
-                className="glass-panel"
-                style={{
-                  marginBottom: '20px',
-                  textAlign: 'center',
-                  border: '1px dashed var(--primary)',
-                }}
-              >
-                <h4 style={{ margin: '0 0 12px 0' }}>จัดการวงแชร์</h4>
-                <button
-                  onClick={handleStartCircle}
-                  className="btn-primary"
-                  style={{ width: '100%' }}
-                >
-                  {' '}
-                  ✨ เริ่มเดินวง{' '}
-                </button>
-              </div>
-            )}
+            {/* start circle block moved to top section, above tabs */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {totalHandsArray.map((hand) => {
                 const player = players.find((p) => p.hand_no === hand);
@@ -1015,6 +1038,25 @@ export default function CircleDetail() {
                         }}
                       >
                         จัดการ
+                      </button>
+                    )}
+                    {!displayPlayer && isCircleAdmin && circle.status === 'OPEN' && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveEmptyHand(hand);
+                        }}
+                        style={{
+                          background: 'none',
+                          border: '1px solid #fca5a5',
+                          padding: '4px 12px',
+                          borderRadius: '8px',
+                          color: '#dc2626',
+                          fontSize: '0.75rem',
+                          fontWeight: '700',
+                        }}
+                      >
+                        🗑️ ลบ
                       </button>
                     )}
                   </div>
