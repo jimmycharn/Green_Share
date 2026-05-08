@@ -7,6 +7,7 @@ import { ChevronRight, Coins, Hash, Inbox, Loader2, Tag } from 'lucide-react';
 
 import { useUser } from '@/contexts/UserContext';
 import { swrFetcher } from '@/lib/api';
+import { cn } from '@/lib/utils';
 
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
@@ -34,17 +35,18 @@ export default function ViewCirclesPage() {
     error,
   } = useSWR<{ status: string; circles?: Circle[]; message?: string }>(
     memberId ? ['get_circles', { member_id: memberId }] : null,
-    swrFetcher as any,
+    swrFetcher as any
   );
 
-  const circles: Circle[] = circlesResponse?.status === 'success' ? circlesResponse.circles ?? [] : [];
+  const circles: Circle[] =
+    circlesResponse?.status === 'success' ? (circlesResponse.circles ?? []) : [];
 
   const filtered = circles.filter(
     (c) =>
       c.is_participant &&
       (activeTab === 'OPEN'
         ? c.status === 'OPEN' || c.status === 'ACTIVE'
-        : c.status === 'CLOSED' || c.status === 'DEAD'),
+        : c.status === 'CLOSED' || c.status === 'DEAD')
   );
 
   if (isUserLoading) {
@@ -108,15 +110,21 @@ function CircleRow({ circle }: { circle: Circle }) {
       <div className="min-w-0 flex-1">
         <div className="mb-2 flex items-center gap-2">
           <h3 className="m-0 truncate text-base font-bold">{circle.name}</h3>
+          <span
+            className={cn(
+              'shrink-0 rounded-full px-1.5 py-0.5 text-[0.55rem] font-bold leading-tight',
+              circle.type === 'ขั้นบันได (ดอกคงที่)'
+                ? 'bg-amber-100 text-amber-700'
+                : 'bg-blue-100 text-blue-700'
+            )}
+          >
+            {circle.type === 'ขั้นบันได (ดอกคงที่)' ? '📊 ขั้นบันได' : '🎯 บิงโก'}
+          </span>
           <Badge variant={variant} className="text-[0.6rem]">
             {circle.status}
           </Badge>
         </div>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
-          <span className="flex items-center gap-1">
-            <Tag className="size-3.5" />
-            {circle.type}
-          </span>
           <span className="flex items-center gap-1 font-semibold text-primary">
             <Coins className="size-3.5" />
             {circle.amount_per_hand.toLocaleString()} บ.

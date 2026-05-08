@@ -33,6 +33,7 @@ type Circle = {
   type?: string;
   creator_id?: string;
   is_participant?: boolean;
+  total_hands?: number;
 };
 
 export default function Home() {
@@ -45,10 +46,10 @@ export default function Home() {
     mutate,
   } = useSWR<{ status: string; circles?: Circle[] }>(
     memberId ? ['get_circles', { member_id: memberId }] : null,
-    swrFetcher as any,
+    swrFetcher as any
   );
 
-  const circles = circlesResponse?.status === 'success' ? circlesResponse.circles ?? [] : [];
+  const circles = circlesResponse?.status === 'success' ? (circlesResponse.circles ?? []) : [];
 
   const [pendingDelete, setPendingDelete] = useState<Circle | null>(null);
 
@@ -143,10 +144,7 @@ export default function Home() {
       <Section
         title="วงแชร์ที่เล่นอยู่"
         action={
-          <Link
-            href="/circles/view"
-            className="text-sm font-semibold text-primary hover:underline"
-          >
+          <Link href="/circles/view" className="text-sm font-semibold text-primary hover:underline">
             ดูทั้งหมด
           </Link>
         }
@@ -162,7 +160,10 @@ export default function Home() {
       </Section>
 
       {/* Confirm delete */}
-      <AlertDialog open={!!pendingDelete} onOpenChange={(open) => !open && setPendingDelete(null)}>
+      <AlertDialog
+        open={Boolean(pendingDelete)}
+        onOpenChange={(open) => !open && setPendingDelete(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>ยืนยันการลบวงแชร์</AlertDialogTitle>
@@ -272,7 +273,7 @@ function CircleRow({
       href={`/circles/${circle.id}`}
       className={cn(
         'group flex items-center justify-between rounded-xl border border-primary/10 bg-card px-5 py-4 shadow-sm transition-all',
-        'hover:border-primary/30 hover:shadow-md active:scale-[0.99]',
+        'hover:border-primary/30 hover:shadow-md active:scale-[0.99]'
       )}
     >
       <div className="min-w-0 flex-1">
@@ -312,9 +313,19 @@ function CircleRow({
         <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
           <Wallet className="size-3.5" />
           {circle.type === 'ขั้นบันได (ดอกคงที่)' ? (
-            <span>กำหนดยอดชำระต่องวด</span>
+            <span>
+              กำหนดยอดชำระต่องวด{' '}
+              {circle.total_hands ? (
+                <span className="ml-1 font-medium"># {circle.total_hands} มือ</span>
+              ) : null}
+            </span>
           ) : (
-            <span>ส่งงวดละ {circle.amount_per_hand.toLocaleString()} ฿</span>
+            <span>
+              ส่งงวดละ {circle.amount_per_hand.toLocaleString()} ฿{' '}
+              {circle.total_hands ? (
+                <span className="ml-1 font-medium"># {circle.total_hands} มือ</span>
+              ) : null}
+            </span>
           )}
         </div>
       </div>

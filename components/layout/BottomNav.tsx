@@ -13,7 +13,7 @@ type NavItem = {
 
 const NAV_ITEMS: NavItem[] = [
   { label: 'หน้าแรก', icon: Home, path: '/' },
-  { label: 'ไทม์ไลน์', icon: BarChart3, path: '/circles/view' },
+  { label: 'วงแชร์ฉัน', icon: BarChart3, path: '/circles/view' },
   { label: 'สมาชิก', icon: Users, path: '/members' },
   { label: 'กิจกรรม', icon: Bell, path: '/activity' },
   { label: 'ตั้งค่า', icon: Settings, path: '/profile' },
@@ -40,7 +40,7 @@ export function BottomNav() {
             href={path}
             className={cn(
               'flex flex-1 flex-col items-center justify-center gap-0.5 text-xs font-semibold transition-colors',
-              active ? 'text-primary' : 'text-muted-foreground hover:text-foreground',
+              active ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
             )}
             aria-current={active ? 'page' : undefined}
           >
