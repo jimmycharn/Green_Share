@@ -910,7 +910,25 @@ export default function CircleDetail() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {totalHandsArray.map((hand) => {
                 const player = players.find((p) => p.hand_no === hand);
-                const canClick = !player && circle.status === 'OPEN';
+                const assignedId =
+                  circle.type === 'ขั้นบันได (ดอกคงที่)' ? getAssignedTo(hand) : null;
+                const assignedMember =
+                  assignedId && assignedId !== 'NONE'
+                    ? allMembers.find((m) => m.id === assignedId)
+                    : null;
+
+                // If there's an assigned member but no player record yet, we still consider them the "player" for display
+                const displayPlayer =
+                  player ||
+                  (assignedMember
+                    ? {
+                        member_id: assignedMember.id,
+                        member_name: assignedMember.name,
+                        picture_url: assignedMember.picture_url,
+                      }
+                    : null);
+
+                const canClick = !displayPlayer && circle.status === 'OPEN';
                 return (
                   <div
                     key={hand}
@@ -921,7 +939,7 @@ export default function CircleDetail() {
                       justifyContent: 'space-between',
                       alignItems: 'center',
                       padding: '16px 20px',
-                      opacity: !player && !canClick ? 0.6 : 1,
+                      opacity: !displayPlayer && !canClick ? 0.6 : 1,
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -930,7 +948,7 @@ export default function CircleDetail() {
                           width: '32px',
                           height: '32px',
                           borderRadius: '10px',
-                          background: player ? 'var(--primary-gradient)' : '#cbd5e1',
+                          background: displayPlayer ? 'var(--primary-gradient)' : '#cbd5e1',
                           color: 'white',
                           display: 'flex',
                           alignItems: 'center',
@@ -943,13 +961,13 @@ export default function CircleDetail() {
                       <div>
                         <div
                           style={{
-                            fontWeight: player ? '700' : '500',
-                            color: player ? 'var(--foreground)' : '#94a3b8',
+                            fontWeight: displayPlayer ? '700' : '500',
+                            color: displayPlayer ? 'var(--foreground)' : '#94a3b8',
                           }}
                         >
-                          {player
-                            ? allMembers.find((m) => m.id === player.member_id)?.custom_nickname ||
-                              player.member_name
+                          {displayPlayer
+                            ? allMembers.find((m) => m.id === displayPlayer.member_id)
+                                ?.custom_nickname || displayPlayer.member_name
                             : canClick
                               ? 'ว่าง (แตะเพื่อจอง)'
                               : 'ว่าง'}
@@ -1031,18 +1049,27 @@ export default function CircleDetail() {
 
               // Staircase-specific
               const stairAssignedId = isStairType ? getAssignedTo(period) || null : null;
+              const assignedMemberObj =
+                stairAssignedId && stairAssignedId !== 'NONE'
+                  ? allMembers.find((m) => m.id === stairAssignedId)
+                  : null;
               const stairWinnerPlayer = isStairType
                 ? stairAssignedId && stairAssignedId !== 'NONE'
                   ? players.find((p) => p.member_id === stairAssignedId)
                   : players.find((p) => p.hand_no === period)
                 : null;
               const stairWinnerName =
+                assignedMemberObj?.custom_nickname ||
+                assignedMemberObj?.name ||
                 allMembers.find((m) => m.id === stairWinnerPlayer?.member_id)?.custom_nickname ||
                 stairWinnerPlayer?.member_name ||
                 '';
-              const stairWinnerPic = stairWinnerPlayer?.picture_url || null;
+              const stairWinnerPic =
+                assignedMemberObj?.picture_url || stairWinnerPlayer?.picture_url || null;
               const pDateObj = periodDates.find((p) => p.period === period);
-              const amountPerPeriod = pDateObj?.amount ?? circle.amount_per_hand;
+              const amountPerPeriod = isStairType
+                ? pDateObj?.amount
+                : (pDateObj?.amount ?? circle.amount_per_hand);
               const stairReceivedAmount = isStairType
                 ? periodDates.reduce((s, pd) => s + (Number(pd.amount) || 0), 0)
                 : 0;
@@ -1242,7 +1269,7 @@ export default function CircleDetail() {
                             </div>
                           )}
                           {/* Line 3: จ่ายงวดละ */}
-                          {amountPerPeriod != null ? (
+                          {amountPerPeriod != null && amountPerPeriod !== undefined ? (
                             <div
                               style={{
                                 fontSize: '0.78rem',
