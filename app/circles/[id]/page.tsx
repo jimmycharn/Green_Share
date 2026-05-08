@@ -1027,7 +1027,7 @@ export default function CircleDetail() {
         {activeTab === 'timeline' && (
           <div
             className="animate-fade-in"
-            style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
+            style={{ display: 'flex', flexDirection: 'column', gap: '16px', margin: '0 -8px' }}
           >
             {totalHandsArray.map((period) => {
               const isStairType = circle.type === 'ขั้นบันได (ดอกคงที่)';
@@ -1116,7 +1116,7 @@ export default function CircleDetail() {
                       !isFuture || circle.status === 'OPEN' ? toggleAccordion(period) : null
                     }
                     style={{
-                      padding: '12px 16px 12px 12px',
+                      padding: '12px',
                       display: 'flex',
                       alignItems: isStairType || isCompleted ? 'flex-start' : 'center',
                       justifyContent: 'space-between',
@@ -1126,6 +1126,7 @@ export default function CircleDetail() {
                           ? 'rgba(16, 185, 129, 0.1)'
                           : 'transparent',
                       cursor: isFuture && circle.status !== 'OPEN' ? 'default' : 'pointer',
+                      position: 'relative',
                     }}
                   >
                     {isStairType ? (
@@ -1137,6 +1138,7 @@ export default function CircleDetail() {
                           gap: '12px',
                           flex: 1,
                           minWidth: 0,
+                          paddingRight: '36px',
                         }}
                       >
                         {/* Profile picture */}
@@ -1501,6 +1503,7 @@ export default function CircleDetail() {
                           gap: '8px',
                           flex: 1,
                           minWidth: 0,
+                          paddingRight: '36px',
                         }}
                       >
                         {/* Winner avatar */}
@@ -1818,7 +1821,7 @@ export default function CircleDetail() {
                       </div>
                     ) : (
                       /* ── Auction current/future: text only, no circle ── */
-                      <div>
+                      <div style={{ flex: 1, paddingRight: '36px' }}>
                         <div
                           style={{
                             fontWeight: '700',
@@ -1904,46 +1907,52 @@ export default function CircleDetail() {
                       </div>
                     )}
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      {(isFuture || isCurrent || circle.status === 'OPEN') && isCircleAdmin && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            const assignedTo = getAssignedTo(period) || 'NONE';
-                            const pDate = periodDates.find((p) => p.period === period);
-                            setSettingsData({
-                              ...circle,
-                              close_mode:
-                                circle.close_mode === 'AUTO' ? 'ปิดอัตโนมัติ' : 'แอดมินปิดเอง',
-                              assigned_to: assignedTo,
-                              amount: pDate?.amount ?? circle?.amount_per_hand ?? 0,
-                              period_date: pDate?.period_date || '',
-                            });
-                            setConfigModal({ open: true, period });
-                          }}
-                          style={{
-                            background: '#f1f5f9',
-                            border: 'none',
-                            padding: '8px',
-                            borderRadius: '10px',
-                            color: '#64748b',
-                          }}
-                        >
-                          ⚙️
-                        </button>
-                      )}
-                      {(!isFuture || circle.status === 'OPEN') && (
-                        <span
-                          style={{
-                            transform: isExpanded ? 'rotate(180deg)' : 'rotate(0)',
-                            transition: 'all 0.3s',
-                            color: '#cbd5e1',
-                          }}
-                        >
-                          ▼
-                        </span>
-                      )}
-                    </div>
+                    {/* Action Buttons */}
+                    {(isFuture || isCurrent || circle.status === 'OPEN') && isCircleAdmin && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const assignedTo = getAssignedTo(period) || 'NONE';
+                          const pDate = periodDates.find((p) => p.period === period);
+                          setSettingsData({
+                            ...circle,
+                            close_mode:
+                              circle.close_mode === 'AUTO' ? 'ปิดอัตโนมัติ' : 'แอดมินปิดเอง',
+                            assigned_to: assignedTo,
+                            amount: pDate?.amount ?? circle?.amount_per_hand ?? 0,
+                            period_date: pDate?.period_date || '',
+                          });
+                          setConfigModal({ open: true, period });
+                        }}
+                        style={{
+                          position: 'absolute',
+                          top: '12px',
+                          right: '12px',
+                          background: '#f1f5f9',
+                          border: 'none',
+                          padding: '6px',
+                          borderRadius: '10px',
+                          color: '#64748b',
+                          zIndex: 2,
+                        }}
+                      >
+                        ⚙️
+                      </button>
+                    )}
+                    {(!isFuture || circle.status === 'OPEN') && (
+                      <span
+                        style={{
+                          position: 'absolute',
+                          top: '50%',
+                          right: '16px',
+                          transform: `translateY(-50%) ${isExpanded ? 'rotate(180deg)' : 'rotate(0)'}`,
+                          transition: 'all 0.3s',
+                          color: '#cbd5e1',
+                        }}
+                      >
+                        ▼
+                      </span>
+                    )}
                   </div>
 
                   {/* Winner Summary removed — info is now in the card header */}
