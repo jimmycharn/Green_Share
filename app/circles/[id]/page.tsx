@@ -394,7 +394,12 @@ export default function CircleDetail() {
         const fd = new FormData();
         fd.append('file', selectedFile);
         fd.append('folder', circleId);
-        const upRes = await fetch('/api/upload', { method: 'POST', body: fd });
+        const ah = authHeaders();
+        const upRes = await fetch('/api/upload', {
+          method: 'POST',
+          headers: ah.Authorization ? { Authorization: ah.Authorization } : {},
+          body: fd,
+        });
         const upJson = await upRes.json();
         if (upJson.status !== 'success') throw new Error('อัปโหลดรูปไม่สำเร็จ: ' + upJson.message);
         finalImageUrl = upJson.url;
@@ -663,7 +668,12 @@ export default function CircleDetail() {
         const fd = new FormData();
         fd.append('file', selectedFile);
         fd.append('folder', 'payouts');
-        const upRes = await fetch('/api/upload', { method: 'POST', body: fd });
+        const ah = authHeaders();
+        const upRes = await fetch('/api/upload', {
+          method: 'POST',
+          headers: ah.Authorization ? { Authorization: ah.Authorization } : {},
+          body: fd,
+        });
         const upJson = await upRes.json();
         if (upJson.status !== 'success') throw new Error('อัปโหลดรูปไม่สำเร็จ: ' + upJson.message);
         finalImg = upJson.url;
