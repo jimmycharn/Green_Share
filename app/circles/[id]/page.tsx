@@ -3552,7 +3552,7 @@ export default function CircleDetail() {
       >
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>🔍 ตรวจสอบหลักฐานการชำระเงิน</DialogTitle>
+            <DialogTitle>🔍 ตรวจสอบการชำระเงิน</DialogTitle>
           </DialogHeader>
           {reviewSlipModal.slip && (
             <>
