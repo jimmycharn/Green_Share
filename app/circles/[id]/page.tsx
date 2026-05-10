@@ -343,17 +343,27 @@ export default function CircleDetail() {
     }
   };
 
-  const handleVerifySlip = async (slipId) => {
+  const handleVerifySlip = async (slipId, slipStatus = 'APPROVED') => {
+    const isApprove = slipStatus === 'APPROVED';
     const ok = await confirm({
-      title: 'อนุมัติสลิป',
-      description: 'ยืนยันการอนุมัติสลิปนี้?',
+      title: isApprove ? 'อนุมัติสลิป' : 'ไม่อนุมัติสลิป',
+      description: isApprove
+        ? 'ยืนยันการอนุมัติสลิปนี้?'
+        : 'ยืนยันการไม่อนุมัติสลิปนี้? สมาชิกจะต้องส่งหลักฐานใหม่อีกครั้ง',
     });
     if (!ok) return;
     try {
-      const data = await callAction('verify_slip', { slip_id: slipId, caller_role: dbUser.role });
+      const data = await callAction('verify_slip', {
+        slip_id: slipId,
+        slip_status: slipStatus,
+        caller_role: dbUser.role,
+      });
       if (data.status === 'success') {
+        toast.success(data.message);
         setReviewSlipModal({ open: false, slip: null });
         fetchCircleDetail();
+      } else {
+        toast.error(data.message);
       }
     } catch {
       toast.error('การเชื่อมต่อขัดข้อง');
@@ -3463,7 +3473,7 @@ export default function CircleDetail() {
           <Button
             type="button"
             onClick={handlePayoutSubmit}
-            disabled={uploadLoading}
+            disabled={uploadLoading || (paymentMode === 'TRANSFER' && !selectedFile)}
             className="w-full"
             size="lg"
           >
@@ -3493,14 +3503,20 @@ export default function CircleDetail() {
                   {parseFloat(inspectPayoutModal.payout.amount).toLocaleString()} ฿
                 </div>
               </div>
-              <div className="overflow-hidden rounded-2xl border border-border bg-muted/40">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={inspectPayoutModal.payout.image_url}
-                  alt="Admin Slip"
-                  className="max-h-[350px] w-full object-contain"
-                />
-              </div>
+              {inspectPayoutModal.payout.image_url ? (
+                <div className="overflow-hidden rounded-2xl border border-border bg-muted/40">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={inspectPayoutModal.payout.image_url}
+                    alt="Admin Slip"
+                    className="max-h-[350px] w-full object-contain"
+                  />
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-border bg-muted/40 p-6 text-center text-sm text-muted-foreground">
+                  ไม่มีรูปสลิปแนบมา (ชำระเป็นเงินสด)
+                </div>
+              )}
               <DialogFooter className="gap-2 sm:gap-2">
                 <Button
                   type="button"
@@ -3508,14 +3524,14 @@ export default function CircleDetail() {
                   className="flex-1 border-destructive text-destructive hover:bg-destructive/5 hover:text-destructive"
                   onClick={() => handleVerifyPayout(inspectPayoutModal.payout.id, 'REJECTED')}
                 >
-                  ❌ แจ้งสลิปผิด
+                  ❌ ไม่อนุมัติ
                 </Button>
                 <Button
                   type="button"
                   className="flex-1"
                   onClick={() => handleVerifyPayout(inspectPayoutModal.payout.id, 'APPROVED')}
                 >
-                  ✅ ได้รับเงินแล้ว
+                  ✅ อนุมัติ
                 </Button>
               </DialogFooter>
             </>
@@ -3562,8 +3578,16 @@ export default function CircleDetail() {
               <DialogFooter className="gap-2 sm:gap-2">
                 <Button
                   type="button"
+                  variant="outline"
+                  className="flex-1 border-destructive text-destructive hover:bg-destructive/5 hover:text-destructive"
+                  onClick={() => handleVerifySlip(reviewSlipModal.slip!.id, 'REJECTED')}
+                >
+                  ❌ ไม่อนุมัติ
+                </Button>
+                <Button
+                  type="button"
                   className="flex-1"
-                  onClick={() => handleVerifySlip(reviewSlipModal.slip!.id)}
+                  onClick={() => handleVerifySlip(reviewSlipModal.slip!.id, 'APPROVED')}
                 >
                   ✅ อนุมัติ
                 </Button>
