@@ -7,7 +7,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
+import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { supabase } from '@/lib/supabase';
 import Script from 'next/script';
 import Link from 'next/link';
@@ -3747,54 +3747,46 @@ function ImageLightbox({ url, onClose }: { url: string; onClose: () => void }) {
     }
   };
 
-  if (typeof window === 'undefined') return null;
-  return createPortal(
-    <div
-      ref={containerRef}
-      onClick={onClickBackground}
-      onWheel={onWheel}
-      className="fixed inset-0 flex items-center justify-center overflow-hidden bg-black/95"
-      style={{ touchAction: 'none', overscrollBehavior: 'contain', zIndex: 2147483646 }}
-    >
-      <button
-        type="button"
-        onPointerDown={(e) => {
-          e.stopPropagation();
-          e.preventDefault();
-          onClose();
-        }}
-        onClick={(e) => {
-          e.stopPropagation();
-          onClose();
-        }}
-        className="fixed top-4 right-4 flex h-11 w-11 items-center justify-center rounded-full bg-white text-2xl font-bold text-black shadow-lg"
-        style={{ zIndex: 2147483647 }}
-        aria-label="ปิด"
-      >
-        ✕
-      </button>
-      <div
-        className="pointer-events-none fixed bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-white/15 px-3 py-1 text-xs text-white"
-        style={{ zIndex: 2147483647 }}
-      >
-        บีบ 2 นิ้วเพื่อซูม · แตะ 2 ครั้งเพื่อขยาย
-      </div>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        ref={imgRef}
-        src={url}
-        alt="สลิปขนาดใหญ่"
-        draggable={false}
-        onClick={onImgClick}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerCancel={onPointerUp}
-        className="max-h-[95vh] max-w-[95vw] select-none object-contain will-change-transform"
-        style={{ touchAction: 'none', transformOrigin: 'center center' }}
-      />
-    </div>,
-    document.body
+  return (
+    <DialogPrimitive.Root open onOpenChange={(o) => !o && onClose()}>
+      <DialogPrimitive.Portal>
+        <DialogPrimitive.Overlay className="fixed inset-0 z-[100] bg-black/95" />
+        <DialogPrimitive.Content
+          ref={containerRef as any}
+          onWheel={onWheel}
+          onClick={onClickBackground}
+          onOpenAutoFocus={(e) => e.preventDefault()}
+          className="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden outline-none"
+          style={{ touchAction: 'none', overscrollBehavior: 'contain' }}
+          aria-describedby={undefined}
+        >
+          <DialogPrimitive.Title className="sr-only">สลิปขนาดใหญ่</DialogPrimitive.Title>
+          <DialogPrimitive.Close
+            className="fixed top-4 right-4 z-[101] flex h-11 w-11 items-center justify-center rounded-full bg-white text-2xl font-bold text-black shadow-lg"
+            aria-label="ปิด"
+          >
+            ✕
+          </DialogPrimitive.Close>
+          <div className="pointer-events-none fixed bottom-4 left-1/2 z-[101] -translate-x-1/2 rounded-full bg-white/15 px-3 py-1 text-xs text-white">
+            บีบ 2 นิ้วเพื่อซูม · แตะ 2 ครั้งเพื่อขยาย
+          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            ref={imgRef}
+            src={url}
+            alt="สลิปขนาดใหญ่"
+            draggable={false}
+            onClick={onImgClick}
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+            onPointerCancel={onPointerUp}
+            className="max-h-[95vh] max-w-[95vw] select-none object-contain will-change-transform"
+            style={{ touchAction: 'none', transformOrigin: 'center center' }}
+          />
+        </DialogPrimitive.Content>
+      </DialogPrimitive.Portal>
+    </DialogPrimitive.Root>
   );
 }
 
