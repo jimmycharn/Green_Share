@@ -94,12 +94,14 @@ export default function CircleDetail() {
     winner_id: any;
     winner_name: string;
     amount: number;
+    deduction: number;
   }>({
     open: false,
     period: null,
     winner_id: null,
     winner_name: '',
     amount: 0,
+    deduction: 0,
   });
   const [inspectPayoutModal, setInspectPayoutModal] = useState<{
     open: boolean;
@@ -1379,6 +1381,7 @@ export default function CircleDetail() {
                                           winner_id: stairWinnerId,
                                           winner_name: stairWinnerName,
                                           amount: stairReceivedAmount,
+                                          deduction: 0,
                                         });
                                       }
                                     }}
@@ -1619,21 +1622,46 @@ export default function CircleDetail() {
                             )}
                           </div>
 
-                          {/* Row 2: winner name */}
+                          {/* Row 2: winner name + win-type label */}
                           <div
                             style={{
-                              fontSize: '0.88rem',
-                              fontWeight: '700',
-                              color: '#1e293b',
-                              whiteSpace: 'nowrap',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
+                              display: 'flex',
+                              alignItems: 'center',
+                              flexWrap: 'wrap',
+                              gap: '4px',
                               marginBottom: '6px',
                             }}
                           >
-                            🏆{' '}
-                            {allMembers.find((m) => m.id === winner.member_id)?.custom_nickname ||
-                              winner.member_name}
+                            <span
+                              style={{
+                                fontSize: '0.88rem',
+                                fontWeight: '700',
+                                color: '#1e293b',
+                              }}
+                            >
+                              🏆{' '}
+                              {allMembers.find((m) => m.id === winner.member_id)?.custom_nickname ||
+                                winner.member_name}
+                            </span>
+                            {getAssignedTo(period) && getAssignedTo(period) !== 'NONE' ? (
+                              <span
+                                style={{ fontSize: '0.78rem', color: '#b45309', fontWeight: '700' }}
+                              >
+                                (ท้าวแชร์)
+                              </span>
+                            ) : winnerBid?.bid_amount > 0 ? (
+                              <span
+                                style={{ fontSize: '0.78rem', color: '#0d9488', fontWeight: '700' }}
+                              >
+                                (เปีย {winnerBid.bid_amount.toLocaleString()})
+                              </span>
+                            ) : winnerBid?.bid_amount === 0 ? (
+                              <span
+                                style={{ fontSize: '0.78rem', color: '#8b5cf6', fontWeight: '700' }}
+                              >
+                                (สุ่มชนะ)
+                              </span>
+                            ) : null}
                           </div>
 
                           {/* Row 3: amount chips + payout status */}
@@ -1707,6 +1735,7 @@ export default function CircleDetail() {
                                           allMembers.find((m) => m.id === winner.member_id)
                                             ?.custom_nickname || winner.member_name,
                                         amount: receivedAmount,
+                                        deduction: 0,
                                       });
                                     }
                                   }}
@@ -2521,6 +2550,25 @@ export default function CircleDetail() {
                           const biddingIsClosed =
                             isCompleted || isBiddingClosed(period) || Boolean(currentPayout);
 
+                          // Deduction: winner's unpaid installments for this period
+                          const winnerHandsCount = winnerMemberId
+                            ? players.filter((pl) => pl.member_id === winnerMemberId).length
+                            : 0;
+                          const winnerApprovedAmt = winnerMemberId
+                            ? slips
+                                .filter(
+                                  (s) =>
+                                    s.period === period &&
+                                    s.member_id === winnerMemberId &&
+                                    s.status === 'APPROVED'
+                                )
+                                .reduce((sum, s) => sum + Number(s.amount), 0)
+                            : 0;
+                          const winnerDeduction = Math.max(
+                            0,
+                            winnerHandsCount * circle.amount_per_hand - winnerApprovedAmt
+                          );
+
                           return [...players]
                             .sort((a, b) => a.hand_no - b.hand_no)
                             .map((p) => {
@@ -2544,11 +2592,11 @@ export default function CircleDetail() {
                               const isWinner =
                                 p.member_id === winnerMemberId && isActive && biddingIsClosed;
 
-                              // Net Amount Calculation for winner: (Total Hands * Amount Per Hand) - (My Bid Amount)
-                              // This depends on the circle rules, but usually:
+                              // Net Amount = gross - bid_interest - winner's unpaid installments
                               const netAmount =
                                 circle.total_hands * circle.amount_per_hand -
-                                (periodWinner?.bid_amount || 0);
+                                (periodWinner?.bid_amount || 0) -
+                                winnerDeduction;
 
                               return (
                                 <div
@@ -2667,6 +2715,20 @@ export default function CircleDetail() {
                                             ⏳ รออนุมัติ
                                           </span>
                                         )
+                                      ) : p.member_id === winnerMemberId &&
+                                        currentPayout &&
+                                        currentPayout.status !== 'REJECTED' ? (
+                                        <span
+                                          style={{
+                                            fontSize: '0.7rem',
+                                            padding: '2px 8px',
+                                            borderRadius: '6px',
+                                            background: '#fef3c7',
+                                            color: '#92400e',
+                                          }}
+                                        >
+                                          🔸 หักแล้ว
+                                        </span>
                                       ) : (
                                         <span
                                           style={{
@@ -2702,6 +2764,11 @@ export default function CircleDetail() {
                                           (เปีย {periodWinner.bid_amount.toLocaleString()})
                                         </span>
                                       )}
+                                      {winnerDeduction > 0 && (
+                                        <span style={{ fontSize: '0.7rem', color: '#b45309' }}>
+                                          (หักค่างวด {winnerDeduction.toLocaleString()} ฿)
+                                        </span>
+                                      )}
                                       {/* Admin: pay button or status */}
                                       {isCircleAdmin ? (
                                         !currentPayout || currentPayout.status === 'REJECTED' ? (
@@ -2714,6 +2781,7 @@ export default function CircleDetail() {
                                                 winner_id: p.member_id,
                                                 winner_name: p.member_name,
                                                 amount: netAmount,
+                                                deduction: winnerDeduction,
                                               });
                                             }}
                                             style={{
@@ -3314,6 +3382,19 @@ export default function CircleDetail() {
           <p className="text-sm text-muted-foreground">
             เตรียมโอนเงินให้ <b>{payoutModal.winner_name}</b>
             <br />
+            {payoutModal.deduction > 0 ? (
+              <>
+                ยอดก่อนหัก:{' '}
+                <b className="text-base">
+                  {(payoutModal.amount + payoutModal.deduction).toLocaleString()} ฿
+                </b>{' '}
+                · หักค่างวด{' '}
+                <b className="text-base text-orange-500">
+                  {payoutModal.deduction.toLocaleString()} ฿
+                </b>
+                <br />
+              </>
+            ) : null}
             ยอดรับสุทธิ:{' '}
             <b className="text-xl text-primary">{payoutModal.amount.toLocaleString()} ฿</b>
           </p>
