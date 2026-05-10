@@ -1397,19 +1397,6 @@ export default function CircleDetail() {
                                   </button>
                                 ) : stairPayout.status === 'PENDING' ? (
                                   stairIsMe ? (
-                                    <span
-                                      style={{
-                                        background: '#dcfce7',
-                                        color: '#166534',
-                                        padding: '1px 6px',
-                                        borderRadius: '5px',
-                                        fontWeight: '700',
-                                        fontSize: '0.7rem',
-                                      }}
-                                    >
-                                      ✅ รับแล้ว
-                                    </span>
-                                  ) : (
                                     <button
                                       onClick={(e) => {
                                         e.stopPropagation();
@@ -1428,6 +1415,19 @@ export default function CircleDetail() {
                                     >
                                       🔍 ตรวจสอบ
                                     </button>
+                                  ) : (
+                                    <span
+                                      style={{
+                                        background: '#fef3c7',
+                                        color: '#92400e',
+                                        padding: '1px 6px',
+                                        borderRadius: '5px',
+                                        fontWeight: '600',
+                                        fontSize: '0.7rem',
+                                      }}
+                                    >
+                                      ⏳ รอตรวจสอบ
+                                    </span>
                                   )
                                 ) : (
                                   <span
@@ -1725,19 +1725,6 @@ export default function CircleDetail() {
                                 </button>
                               ) : winnerPayout.status === 'PENDING' ? (
                                 winner.member_id === dbUser?.id ? (
-                                  <span
-                                    style={{
-                                      background: '#dcfce7',
-                                      color: '#166534',
-                                      padding: '2px 7px',
-                                      borderRadius: '5px',
-                                      fontWeight: '700',
-                                      fontSize: '0.7rem',
-                                    }}
-                                  >
-                                    ✅ รับแล้ว
-                                  </span>
-                                ) : (
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
@@ -1756,6 +1743,19 @@ export default function CircleDetail() {
                                   >
                                     🔍 ตรวจสอบ
                                   </button>
+                                ) : (
+                                  <span
+                                    style={{
+                                      background: '#fef3c7',
+                                      color: '#92400e',
+                                      padding: '2px 7px',
+                                      borderRadius: '5px',
+                                      fontWeight: '600',
+                                      fontSize: '0.7rem',
+                                    }}
+                                  >
+                                    ⏳ รอตรวจสอบ
+                                  </span>
                                 )
                               ) : (
                                 <span
@@ -2304,8 +2304,9 @@ export default function CircleDetail() {
                                             🔔 เริ่มประมูล (แจ้งสมาชิก)
                                           </button>
                                         )}
-                                        {/* ปิดประมูล: gated — must send notification first */}
-                                        {notifiedBidPeriods.has(period) ? (
+                                        {/* ปิดประมูล: enabled when notified OR when a bid already exists (e.g. after random selection) */}
+                                        {notifiedBidPeriods.has(period) ||
+                                        bids.some((b) => b.period === period) ? (
                                           <button
                                             onClick={() =>
                                               handleCircleAction('close_bidding', period)
@@ -2603,15 +2604,18 @@ export default function CircleDetail() {
                                         <span
                                           style={{
                                             fontSize: '0.75rem',
-                                            color: 'var(--primary)',
+                                            color:
+                                              pBid.bid_amount === 0 ? '#8b5cf6' : 'var(--primary)',
                                             fontWeight: '600',
                                           }}
                                         >
-                                          (เปีย{' '}
-                                          {isCompleted || isCircleAdmin || isMe
-                                            ? pBid.bid_amount.toLocaleString()
-                                            : '***'}
-                                          )
+                                          {pBid.bid_amount === 0
+                                            ? '(สุ่มชนะ)'
+                                            : `(เปีย ${
+                                                isCompleted || isCircleAdmin || isMe
+                                                  ? pBid.bid_amount.toLocaleString()
+                                                  : '***'
+                                              })`}
                                         </span>
                                       )}
                                     </div>
