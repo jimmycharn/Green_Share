@@ -663,10 +663,11 @@ export default function CircleDetail() {
   };
   const handlePayoutSubmit = async () => {
     if (!payoutModal.period || !payoutModal.winner_id) return;
+    const isSelfPayout = payoutModal.winner_id === dbUser?.id;
     setUploadLoading(true);
     try {
-      let finalImg = uploadData.image_url;
-      if (selectedFile) {
+      let finalImg = isSelfPayout ? null : uploadData.image_url;
+      if (!isSelfPayout && selectedFile) {
         const fd = new FormData();
         fd.append('file', selectedFile);
         fd.append('folder', 'payouts');
@@ -687,7 +688,8 @@ export default function CircleDetail() {
         period: payoutModal.period,
         amount: payoutModal.amount,
         image_url: finalImg,
-        is_cash: paymentMode === 'CASH',
+        is_cash: isSelfPayout ? true : paymentMode === 'CASH',
+        auto_approve: isSelfPayout,
         caller_role: dbUser.role,
       });
       if (data.status === 'success') {
@@ -3410,80 +3412,106 @@ export default function CircleDetail() {
             <b className="text-xl text-primary">{payoutModal.amount.toLocaleString()} ฿</b>
           </p>
 
-          <div className="rounded-2xl border border-border bg-muted/40 p-4">
-            <label className="mb-2 block text-sm font-bold">วิธีการชำระ</label>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setPaymentMode('TRANSFER')}
-                className={`flex-1 rounded-xl border-2 px-3 py-2 text-sm font-bold transition-colors ${
-                  paymentMode === 'TRANSFER'
-                    ? 'border-primary bg-emerald-50 text-primary'
-                    : 'border-border bg-background text-muted-foreground'
-                }`}
-              >
-                🏦 โอนเงิน
-              </button>
-              <button
-                type="button"
-                onClick={() => setPaymentMode('CASH')}
-                className={`flex-1 rounded-xl border-2 px-3 py-2 text-sm font-bold transition-colors ${
-                  paymentMode === 'CASH'
-                    ? 'border-primary bg-emerald-50 text-primary'
-                    : 'border-border bg-background text-muted-foreground'
-                }`}
-              >
-                💵 เงินสด
-              </button>
-            </div>
-          </div>
-
-          {paymentMode === 'TRANSFER' && (
-            <div>
-              <label className="mb-2 block text-sm font-bold">แนบหลักฐานการโอน (สลิป)</label>
-              <div
-                onClick={() => document.getElementById('payout-file').click()}
-                className="flex h-40 w-full cursor-pointer flex-col items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-border bg-muted/40"
-              >
-                {filePreview ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={filePreview} alt="preview" className="size-full object-cover" />
-                ) : (
-                  <>
-                    <div className="mb-2 text-3xl">📸</div>
-                    <div className="text-sm text-muted-foreground">กดเพื่ออัปโหลดรูปภาพ</div>
-                  </>
-                )}
+          {payoutModal.winner_id === dbUser?.id ? (
+            <p className="rounded-2xl border border-border bg-muted/40 p-4 text-sm text-muted-foreground">
+              ท้าวแชร์เป็นผู้ชนะงวดนี้เอง ไม่จำเป็นต้องแนบสลิป
+              กดยืนยันเพื่อบันทึกและแจ้งสมาชิกคนอื่น
+            </p>
+          ) : (
+            <>
+              <div className="rounded-2xl border border-border bg-muted/40 p-4">
+                <label className="mb-2 block text-sm font-bold">วิธีการชำระ</label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMode('TRANSFER')}
+                    className={`flex-1 rounded-xl border-2 px-3 py-2 text-sm font-bold transition-colors ${
+                      paymentMode === 'TRANSFER'
+                        ? 'border-primary bg-emerald-50 text-primary'
+                        : 'border-border bg-background text-muted-foreground'
+                    }`}
+                  >
+                    🏦 โอนเงิน
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMode('CASH')}
+                    className={`flex-1 rounded-xl border-2 px-3 py-2 text-sm font-bold transition-colors ${
+                      paymentMode === 'CASH'
+                        ? 'border-primary bg-emerald-50 text-primary'
+                        : 'border-border bg-background text-muted-foreground'
+                    }`}
+                  >
+                    💵 เงินสด
+                  </button>
+                </div>
               </div>
-              <input
-                id="payout-file"
-                type="file"
-                accept="image/*"
-                onChange={(e) => {
-                  const file = e.target.files[0];
-                  if (file) {
-                    setSelectedFile(file);
-                    setFilePreview(URL.createObjectURL(file));
-                  }
-                }}
-                className="hidden"
-              />
-            </div>
+
+              {paymentMode === 'TRANSFER' && (
+                <div>
+                  <label className="mb-2 block text-sm font-bold">แนบหลักฐานการโอน (สลิป)</label>
+                  <div
+                    onClick={() => document.getElementById('payout-file').click()}
+                    className="flex h-40 w-full cursor-pointer flex-col items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-border bg-muted/40"
+                  >
+                    {filePreview ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={filePreview} alt="preview" className="size-full object-cover" />
+                    ) : (
+                      <>
+                        <div className="mb-2 text-3xl">📸</div>
+                        <div className="text-sm text-muted-foreground">กดเพื่ออัปโหลดรูปภาพ</div>
+                      </>
+                    )}
+                  </div>
+                  <input
+                    id="payout-file"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files[0];
+                      if (file) {
+                        setSelectedFile(file);
+                        setFilePreview(URL.createObjectURL(file));
+                      }
+                    }}
+                    className="hidden"
+                  />
+                </div>
+              )}
+            </>
           )}
 
-          <Button
-            type="button"
-            onClick={handlePayoutSubmit}
-            disabled={uploadLoading || (paymentMode === 'TRANSFER' && !selectedFile)}
-            className="w-full"
-            size="lg"
-          >
-            {uploadLoading
-              ? 'กำลังส่ง...'
-              : paymentMode === 'CASH'
-                ? '✅ ยืนยันการจ่ายเงินสด'
-                : '🚀 ส่งหลักฐานการโอน'}
-          </Button>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1"
+              onClick={() => setPayoutModal({ ...payoutModal, open: false })}
+              disabled={uploadLoading}
+            >
+              ยกเลิก
+            </Button>
+            <Button
+              type="button"
+              onClick={handlePayoutSubmit}
+              disabled={
+                uploadLoading ||
+                (payoutModal.winner_id !== dbUser?.id &&
+                  paymentMode === 'TRANSFER' &&
+                  !selectedFile)
+              }
+              className="flex-1"
+            >
+              {uploadLoading
+                ? 'กำลังส่ง...'
+                : payoutModal.winner_id === dbUser?.id
+                  ? '✅ ยืนยันการชำระเงิน'
+                  : paymentMode === 'CASH'
+                    ? '✅ ยืนยันการจ่ายเงินสด'
+                    : '🚀 ส่งหลักฐานการโอน'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
