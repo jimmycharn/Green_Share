@@ -6,7 +6,7 @@
 // pending future incremental refactor.
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import Script from 'next/script';
 import Link from 'next/link';
@@ -3607,35 +3607,182 @@ export default function CircleDetail() {
         </DialogContent>
       </Dialog>
 
-      {/* Image Lightbox — click slip to view fullscreen / pinch-zoom on mobile */}
-      {imageViewer && (
-        <div
-          onClick={() => setImageViewer(null)}
-          className="fixed inset-0 z-[100] flex items-center justify-center overflow-auto bg-black/90 p-4"
-          style={{ touchAction: 'pinch-zoom' }}
-        >
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setImageViewer(null);
-            }}
-            className="fixed top-4 right-4 z-[101] flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-xl font-bold text-black shadow-lg hover:bg-white"
-            aria-label="ปิด"
-          >
-            ✕
-          </button>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={imageViewer}
-            alt="สลิปขนาดใหญ่"
-            onClick={(e) => e.stopPropagation()}
-            className="max-h-none max-w-none"
-            style={{ touchAction: 'pinch-zoom' }}
-          />
-        </div>
-      )}
+      {/* Image Lightbox — click slip to view fullscreen with pinch-zoom & pan */}
+      {imageViewer && <ImageLightbox url={imageViewer} onClose={() => setImageViewer(null)} />}
     </>
+  );
+}
+
+function ImageLightbox({ url, onClose }: { url: string; onClose: () => void }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const imgRef = useRef<HTMLImageElement>(null);
+  const stateRef = useRef({
+    scale: 1,
+    tx: 0,
+    ty: 0,
+    // pointer tracking
+    pointers: new Map<number, { x: number; y: number }>(),
+    startDist: 0,
+    startScale: 1,
+    startMid: { x: 0, y: 0 },
+    startTx: 0,
+    startTy: 0,
+    lastTap: 0,
+  });
+  const [, forceRender] = useState(0);
+  const apply = () => {
+    const el = imgRef.current;
+    if (!el) return;
+    const { scale, tx, ty } = stateRef.current;
+    el.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+  };
+
+  const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
+
+  const setScale = (next: number, anchorX: number, anchorY: number) => {
+    const s = stateRef.current;
+    const newScale = clamp(next, 1, 6);
+    // zoom around anchor (relative to viewport center of image)
+    const factor = newScale / s.scale;
+    s.tx = anchorX - factor * (anchorX - s.tx);
+    s.ty = anchorY - factor * (anchorY - s.ty);
+    s.scale = newScale;
+    // when fully zoomed out, recenter
+    if (newScale === 1) {
+      s.tx = 0;
+      s.ty = 0;
+    }
+    apply();
+  };
+
+  const onPointerDown = (e: React.PointerEvent) => {
+    e.preventDefault();
+    const s = stateRef.current;
+    (e.target as Element).setPointerCapture?.(e.pointerId);
+    s.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (s.pointers.size === 2) {
+      const pts = Array.from(s.pointers.values());
+      const dx = pts[0].x - pts[1].x;
+      const dy = pts[0].y - pts[1].y;
+      s.startDist = Math.hypot(dx, dy) || 1;
+      s.startScale = s.scale;
+      s.startMid = { x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) / 2 };
+      s.startTx = s.tx;
+      s.startTy = s.ty;
+    } else if (s.pointers.size === 1) {
+      s.startMid = { x: e.clientX, y: e.clientY };
+      s.startTx = s.tx;
+      s.startTy = s.ty;
+    }
+  };
+
+  const onPointerMove = (e: React.PointerEvent) => {
+    const s = stateRef.current;
+    if (!s.pointers.has(e.pointerId)) return;
+    s.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (s.pointers.size === 2) {
+      const pts = Array.from(s.pointers.values());
+      const dx = pts[0].x - pts[1].x;
+      const dy = pts[0].y - pts[1].y;
+      const dist = Math.hypot(dx, dy) || 1;
+      const newScale = clamp(s.startScale * (dist / s.startDist), 1, 6);
+      const mid = { x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) / 2 };
+      // anchor zoom around the midpoint at gesture start
+      const factor = newScale / s.startScale;
+      s.tx = s.startTx + (mid.x - s.startMid.x) - (factor - 1) * (s.startMid.x - s.startTx);
+      s.ty = s.startTy + (mid.y - s.startMid.y) - (factor - 1) * (s.startMid.y - s.startTy);
+      s.scale = newScale;
+      apply();
+    } else if (s.pointers.size === 1 && s.scale > 1) {
+      // pan only when zoomed
+      s.tx = s.startTx + (e.clientX - s.startMid.x);
+      s.ty = s.startTy + (e.clientY - s.startMid.y);
+      apply();
+    }
+  };
+
+  const onPointerUp = (e: React.PointerEvent) => {
+    const s = stateRef.current;
+    s.pointers.delete(e.pointerId);
+    if (s.pointers.size < 2 && s.scale === 1) {
+      s.tx = 0;
+      s.ty = 0;
+      apply();
+    }
+  };
+
+  const onWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    const s = stateRef.current;
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const ax = e.clientX - rect.left - rect.width / 2;
+    const ay = e.clientY - rect.top - rect.height / 2;
+    const next = s.scale * (e.deltaY < 0 ? 1.15 : 1 / 1.15);
+    setScale(next, ax, ay);
+    forceRender((n) => n + 1);
+  };
+
+  const onClickBackground = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) onClose();
+  };
+
+  const onImgClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const now = Date.now();
+    const s = stateRef.current;
+    if (now - s.lastTap < 300) {
+      // double tap → toggle 1x / 2.5x at tap point
+      const rect = containerRef.current?.getBoundingClientRect();
+      if (rect) {
+        const ax = e.clientX - rect.left - rect.width / 2;
+        const ay = e.clientY - rect.top - rect.height / 2;
+        setScale(s.scale > 1 ? 1 : 2.5, ax, ay);
+        forceRender((n) => n + 1);
+      }
+      s.lastTap = 0;
+    } else {
+      s.lastTap = now;
+    }
+  };
+
+  return (
+    <div
+      ref={containerRef}
+      onClick={onClickBackground}
+      onWheel={onWheel}
+      className="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden bg-black/95"
+      style={{ touchAction: 'none', overscrollBehavior: 'contain' }}
+    >
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onClose();
+        }}
+        className="fixed top-4 right-4 z-[101] flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-xl font-bold text-black shadow-lg hover:bg-white"
+        aria-label="ปิด"
+      >
+        ✕
+      </button>
+      <div className="pointer-events-none fixed bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-white/15 px-3 py-1 text-xs text-white">
+        บีบ 2 นิ้วเพื่อซูม · แตะ 2 ครั้งเพื่อขยาย
+      </div>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        ref={imgRef}
+        src={url}
+        alt="สลิปขนาดใหญ่"
+        draggable={false}
+        onClick={onImgClick}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
+        className="max-h-[95vh] max-w-[95vw] select-none object-contain will-change-transform"
+        style={{ touchAction: 'none', transformOrigin: 'center center' }}
+      />
+    </div>
   );
 }
 
