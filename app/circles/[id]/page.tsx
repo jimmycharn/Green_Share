@@ -395,14 +395,14 @@ export default function CircleDetail() {
         const fileName = `${circleId}/${Date.now()}.${fileExt}`;
 
         const { data: uploadRes, error: uploadError } = await supabase.storage
-          .from('slips')
+          .from('shares')
           .upload(fileName, selectedFile);
 
         if (uploadError) throw new Error('อัปโหลดรูปไม่สำเร็จ: ' + uploadError.message);
 
         const {
           data: { publicUrl },
-        } = supabase.storage.from('slips').getPublicUrl(uploadRes.path);
+        } = supabase.storage.from('shares').getPublicUrl(uploadRes.path);
 
         finalImageUrl = publicUrl;
       }
