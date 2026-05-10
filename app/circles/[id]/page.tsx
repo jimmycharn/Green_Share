@@ -111,6 +111,7 @@ export default function CircleDetail() {
     open: boolean;
     slip: AnyRecord | null;
   }>({ open: false, slip: null });
+  const [imageViewer, setImageViewer] = useState<string | null>(null);
   const [notifiedBidPeriods, setNotifiedBidPeriods] = useState<Set<number>>(new Set());
   const [bidAmount, setBidAmount] = useState<string>('');
   const [paymentMode, setPaymentMode] = useState<'TRANSFER' | 'CASH'>('TRANSFER');
@@ -3503,14 +3504,19 @@ export default function CircleDetail() {
                 </div>
               </div>
               {inspectPayoutModal.payout.image_url ? (
-                <div className="overflow-hidden rounded-2xl border border-border bg-muted/40">
+                <button
+                  type="button"
+                  onClick={() => setImageViewer(inspectPayoutModal.payout.image_url)}
+                  className="block w-full overflow-hidden rounded-2xl border border-border bg-muted/40 transition hover:opacity-90"
+                  title="แตะเพื่อดูรูปขนาดใหญ่"
+                >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={inspectPayoutModal.payout.image_url}
                     alt="Admin Slip"
-                    className="max-h-[350px] w-full object-contain"
+                    className="max-h-[350px] w-full cursor-zoom-in object-contain"
                   />
-                </div>
+                </button>
               ) : (
                 <div className="rounded-2xl border border-border bg-muted/40 p-6 text-center text-sm text-muted-foreground">
                   ไม่มีรูปสลิปแนบมา (ชำระเป็นเงินสด)
@@ -3561,14 +3567,19 @@ export default function CircleDetail() {
                 )}
               </div>
               {reviewSlipModal.slip.image_url ? (
-                <div className="overflow-hidden rounded-2xl border border-border bg-muted/40">
+                <button
+                  type="button"
+                  onClick={() => setImageViewer(reviewSlipModal.slip!.image_url)}
+                  className="block w-full overflow-hidden rounded-2xl border border-border bg-muted/40 transition hover:opacity-90"
+                  title="แตะเพื่อดูรูปขนาดใหญ่"
+                >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={reviewSlipModal.slip.image_url}
                     alt="Payment Slip"
-                    className="max-h-[350px] w-full object-contain"
+                    className="max-h-[350px] w-full cursor-zoom-in object-contain"
                   />
-                </div>
+                </button>
               ) : (
                 <div className="rounded-2xl border border-border bg-muted/40 p-6 text-center text-sm text-muted-foreground">
                   ไม่มีรูปสลิปแนบมา
@@ -3595,6 +3606,35 @@ export default function CircleDetail() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Image Lightbox — click slip to view fullscreen / pinch-zoom on mobile */}
+      {imageViewer && (
+        <div
+          onClick={() => setImageViewer(null)}
+          className="fixed inset-0 z-[100] flex items-center justify-center overflow-auto bg-black/90 p-4"
+          style={{ touchAction: 'pinch-zoom' }}
+        >
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setImageViewer(null);
+            }}
+            className="fixed top-4 right-4 z-[101] flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-xl font-bold text-black shadow-lg hover:bg-white"
+            aria-label="ปิด"
+          >
+            ✕
+          </button>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={imageViewer}
+            alt="สลิปขนาดใหญ่"
+            onClick={(e) => e.stopPropagation()}
+            className="max-h-none max-w-none"
+            style={{ touchAction: 'pinch-zoom' }}
+          />
+        </div>
+      )}
     </>
   );
 }
