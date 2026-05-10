@@ -2679,7 +2679,7 @@ export default function CircleDetail() {
                                     <div
                                       style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
                                     >
-                                      {pSlip ? (
+                                      {pSlip && pSlip.status !== 'REJECTED' ? (
                                         pSlip.status === 'APPROVED' ? (
                                           <span
                                             style={{
