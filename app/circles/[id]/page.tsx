@@ -7,6 +7,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { supabase } from '@/lib/supabase';
 import Script from 'next/script';
 import Link from 'next/link';
@@ -3746,26 +3747,36 @@ function ImageLightbox({ url, onClose }: { url: string; onClose: () => void }) {
     }
   };
 
-  return (
+  if (typeof window === 'undefined') return null;
+  return createPortal(
     <div
       ref={containerRef}
       onClick={onClickBackground}
       onWheel={onWheel}
-      className="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden bg-black/95"
-      style={{ touchAction: 'none', overscrollBehavior: 'contain' }}
+      className="fixed inset-0 flex items-center justify-center overflow-hidden bg-black/95"
+      style={{ touchAction: 'none', overscrollBehavior: 'contain', zIndex: 2147483646 }}
     >
       <button
         type="button"
+        onPointerDown={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          onClose();
+        }}
         onClick={(e) => {
           e.stopPropagation();
           onClose();
         }}
-        className="fixed top-4 right-4 z-[101] flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-xl font-bold text-black shadow-lg hover:bg-white"
+        className="fixed top-4 right-4 flex h-11 w-11 items-center justify-center rounded-full bg-white text-2xl font-bold text-black shadow-lg"
+        style={{ zIndex: 2147483647 }}
         aria-label="ปิด"
       >
         ✕
       </button>
-      <div className="pointer-events-none fixed bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-white/15 px-3 py-1 text-xs text-white">
+      <div
+        className="pointer-events-none fixed bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-white/15 px-3 py-1 text-xs text-white"
+        style={{ zIndex: 2147483647 }}
+      >
         บีบ 2 นิ้วเพื่อซูม · แตะ 2 ครั้งเพื่อขยาย
       </div>
       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -3782,7 +3793,8 @@ function ImageLightbox({ url, onClose }: { url: string; onClose: () => void }) {
         className="max-h-[95vh] max-w-[95vw] select-none object-contain will-change-transform"
         style={{ touchAction: 'none', transformOrigin: 'center center' }}
       />
-    </div>
+    </div>,
+    document.body
   );
 }
 
