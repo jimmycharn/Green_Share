@@ -21,6 +21,18 @@ export async function POST(req) {
     const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`;
     const buffer = Buffer.from(await file.arrayBuffer());
 
+    // Ensure the bucket exists (one-time auto-provision)
+    const { data: existing } = await supabaseAdmin.storage.getBucket('shares');
+    if (!existing) {
+      const { error: bucketErr } = await supabaseAdmin.storage.createBucket('shares', {
+        public: true,
+        fileSizeLimit: 10 * 1024 * 1024, // 10 MB
+      });
+      if (bucketErr && !String(bucketErr.message || '').includes('already exists')) {
+        throw bucketErr;
+      }
+    }
+
     const { data: uploadData, error } = await supabaseAdmin.storage
       .from('shares')
       .upload(fileName, buffer, { contentType: file.type, upsert: false });
