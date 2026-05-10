@@ -389,22 +389,15 @@ export default function CircleDetail() {
     setUploadLoading(true);
 
     try {
-      // 1. Upload File to Storage if selected
+      // 1. Upload File to Storage if selected (via server to avoid CORS in LIFF)
       if (selectedFile && paymentMode === 'TRANSFER') {
-        const fileExt = selectedFile.name.split('.').pop();
-        const fileName = `${circleId}/${Date.now()}.${fileExt}`;
-
-        const { data: uploadRes, error: uploadError } = await supabase.storage
-          .from('shares')
-          .upload(fileName, selectedFile);
-
-        if (uploadError) throw new Error('อัปโหลดรูปไม่สำเร็จ: ' + uploadError.message);
-
-        const {
-          data: { publicUrl },
-        } = supabase.storage.from('shares').getPublicUrl(uploadRes.path);
-
-        finalImageUrl = publicUrl;
+        const fd = new FormData();
+        fd.append('file', selectedFile);
+        fd.append('folder', circleId);
+        const upRes = await fetch('/api/upload', { method: 'POST', body: fd });
+        const upJson = await upRes.json();
+        if (upJson.status !== 'success') throw new Error('อัปโหลดรูปไม่สำเร็จ: ' + upJson.message);
+        finalImageUrl = upJson.url;
       }
 
       // 2. Submit Action
@@ -667,17 +660,13 @@ export default function CircleDetail() {
     try {
       let finalImg = uploadData.image_url;
       if (selectedFile) {
-        const fileExt = selectedFile.name.split('.').pop();
-        const fileName = `${Math.random()}.${fileExt}`;
-        const filePath = `slips/${fileName}`;
-        const { error: uploadError } = await supabase.storage
-          .from('shares')
-          .upload(filePath, selectedFile);
-        if (uploadError) throw uploadError;
-        const {
-          data: { publicUrl },
-        } = supabase.storage.from('shares').getPublicUrl(filePath);
-        finalImg = publicUrl;
+        const fd = new FormData();
+        fd.append('file', selectedFile);
+        fd.append('folder', 'payouts');
+        const upRes = await fetch('/api/upload', { method: 'POST', body: fd });
+        const upJson = await upRes.json();
+        if (upJson.status !== 'success') throw new Error('อัปโหลดรูปไม่สำเร็จ: ' + upJson.message);
+        finalImg = upJson.url;
       }
 
       const data = await callAction('create_payout', {
