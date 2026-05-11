@@ -12,6 +12,7 @@ import { supabase } from '@/lib/supabase';
 import Script from 'next/script';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
+import { ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { useUser } from '@/contexts/UserContext';
 import { authHeaders } from '@/lib/authHeaders';
@@ -758,7 +759,16 @@ export default function CircleDetail() {
       <div className="animate-fade-in" style={{ paddingBottom: '40px' }}>
         {/* Header Circle Title */}
         <div style={{ marginBottom: '20px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
+          <div className="mb-2 flex items-center gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => router.back()}
+              aria-label="กลับ"
+            >
+              <ArrowLeft className="size-5 text-primary" />
+            </Button>
             <h2 style={{ fontSize: '1.6rem', fontWeight: '800', margin: 0 }}>{circle.name}</h2>
             {isCircleAdmin && (
               <button
