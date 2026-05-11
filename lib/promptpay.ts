@@ -55,10 +55,10 @@ export function generatePromptPayPayload(id: string, amount?: number): string {
       payload += tlv('54', amount.toFixed(2)); // Transaction Amount
     }
     payload += tlv('58', 'TH'); // Country Code
-    payload += tlv('63', ''); // CRC placeholder
 
-    const crc = crc16ccitt(payload.slice(0, -4));
-    return payload.slice(0, -4) + crc;
+    // CRC must be calculated on the payload WITHOUT tag 63, then appended as 6304 + CRC
+    const crc = crc16ccitt(payload);
+    return payload + '6304' + crc;
   }
 
   // Fallback: return the raw ID for plain text QR
