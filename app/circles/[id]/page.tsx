@@ -1241,18 +1241,6 @@ export default function CircleDetail() {
                 ? periodDates.reduce((s, pd) => s + (Number(pd.amount) || 0), 0)
                 : 0;
 
-              // Calculate management fee for staircase circles
-              const stairPDateObj = isStairType
-                ? periodDates.find((p) => p.period === period)
-                : null;
-              const stairEffectiveFeePerHand =
-                stairPDateObj?.fee_per_hand ?? circle?.fee_per_hand ?? 0;
-              const stairWinnerHandsCount = stairWinnerId
-                ? players.filter((p) => p.member_id === stairWinnerId).length
-                : 0;
-              const stairFeeAmount = stairEffectiveFeePerHand * stairWinnerHandsCount;
-              const stairNetReceivedAmount = Math.max(0, stairReceivedAmount - stairFeeAmount);
-
               const stairPayout =
                 isStairType && stairAssignedId && stairAssignedId !== 'NONE'
                   ? payouts.find((po) => po.period === period && po.member_id === stairAssignedId)
@@ -1267,6 +1255,14 @@ export default function CircleDetail() {
                   ? stairAssignedId
                   : stairWinnerPlayer?.member_id;
               const stairIsMe = dbUser?.id === stairWinnerId;
+
+              // Calculate management fee for staircase circles
+              const stairEffectiveFeePerHand = pDateObj?.fee_per_hand ?? circle?.fee_per_hand ?? 0;
+              const stairWinnerHandsCount = stairWinnerId
+                ? players.filter((p) => p.member_id === stairWinnerId).length
+                : 0;
+              const stairFeeAmount = stairEffectiveFeePerHand * stairWinnerHandsCount;
+              const stairNetReceivedAmount = Math.max(0, stairReceivedAmount - stairFeeAmount);
 
               // Calculate Received Amount
               const deadHands = period - 1;
