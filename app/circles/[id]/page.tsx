@@ -2421,6 +2421,39 @@ export default function CircleDetail() {
                                           </div>
                                         </div>
                                       )}
+                                      {(unpaid.length > 0 || pending.length > 0) && (
+                                        <button
+                                          type="button"
+                                          onClick={async (e) => {
+                                            e.stopPropagation();
+                                            try {
+                                              const res = await callAction('notify_unpaid_members', {
+                                                circle_id: circleId,
+                                                period,
+                                                caller_role: dbUser.role,
+                                              });
+                                              if (res.status === 'success') toast.success(res.message);
+                                              else toast.error(res.message);
+                                            } catch {
+                                              toast.error('เกิดข้อผิดพลาดในการส่งแจ้งเตือน');
+                                            }
+                                          }}
+                                          style={{
+                                            marginTop: '8px',
+                                            padding: '8px 14px',
+                                            background: '#f59e0b',
+                                            color: 'white',
+                                            border: 'none',
+                                            borderRadius: '8px',
+                                            fontSize: '0.8rem',
+                                            fontWeight: '700',
+                                            cursor: 'pointer',
+                                            alignSelf: 'flex-start',
+                                          }}
+                                        >
+                                          🔔 ส่งแจ้งเตือนให้ผู้ที่ยังไม่จ่าย
+                                        </button>
+                                      )}
                                     </div>
                                   );
                                 })()}
