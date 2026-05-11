@@ -1087,6 +1087,26 @@ export default function CircleDetail() {
                         จัดการ
                       </button>
                     )}
+                    {/* Member can cancel their own hand */}
+                    {player && player.member_id === dbUser?.id && !isCircleAdmin && circle.status === 'OPEN' && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCancelHand(e, hand);
+                        }}
+                        style={{
+                          background: 'none',
+                          border: '1px solid #fca5a5',
+                          padding: '4px 12px',
+                          borderRadius: '8px',
+                          color: '#dc2626',
+                          fontSize: '0.75rem',
+                          fontWeight: '700',
+                        }}
+                      >
+                        ยกเลิก
+                      </button>
+                    )}
                     {!displayPlayer && isCircleAdmin && circle.status === 'OPEN' && (
                       <button
                         onClick={(e) => {
