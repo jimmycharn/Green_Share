@@ -1986,6 +1986,29 @@ export default function CircleDetail() {
                             </>
                           )}
                         </div>
+                        {/* Assigned member info */}
+                        {(() => {
+                          const assignedTo = getAssignedTo(period);
+                          if (assignedTo && assignedTo !== 'NONE') {
+                            const assignedMember = allMembers.find((m) => m.id === assignedTo);
+                            const isCreator = assignedTo === circle.creator_id;
+                            return (
+                              <div
+                                style={{
+                                  fontSize: '0.78rem',
+                                  color: isCreator ? '#b45309' : '#1e293b',
+                                  fontWeight: '700',
+                                  marginTop: '2px',
+                                }}
+                              >
+                                {isCreator
+                                  ? `👤 ${assignedMember?.name || 'ท้าวแชร์'} (ท้าวแชร์)`
+                                  : `👤 ${assignedMember?.custom_nickname || assignedMember?.name || 'สมาชิก'}`}
+                              </div>
+                            );
+                          }
+                          return null;
+                        })()}
                         {circle.amount_per_hand != null && (
                           <div
                             style={{
