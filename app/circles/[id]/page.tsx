@@ -20,7 +20,7 @@ import { callAction } from '@/lib/api';
 import { subscribeToTable, unsubscribeChannel } from '@/lib/realtime';
 import { usePolling } from '@/lib/polling';
 import QRCode from 'qrcode';
-import { generatePromptPayPayload, buildBankQRText } from '@/lib/promptpay';
+import { generatePromptPayPayload } from '@/lib/promptpay';
 import { useConfirm } from '@/components/providers/ConfirmProvider';
 import {
   Dialog,
@@ -124,6 +124,7 @@ export default function CircleDetail() {
   const [paymentMode, setPaymentMode] = useState<'TRANSFER' | 'CASH'>('TRANSFER');
   const [myBank, setMyBank] = useState<Bank | null>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const [isPromptPay, setIsPromptPay] = useState(false);
   const [settingsData, setSettingsData] = useState<AnyRecord>({
     name: '',
     line_group_url: '',
@@ -177,20 +178,21 @@ export default function CircleDetail() {
     if (circleId && dbUser) fetchCircleDetail();
   }, 5000, !!(circleId && dbUser));
 
-  // Generate QR code for bank transfer when myBank is available
+  // Generate PromptPay QR code only for phone numbers (PromptPay Mobile)
   useEffect(() => {
     if (!myBank?.account_no) {
+      setQrDataUrl(null);
+      setIsPromptPay(false);
+      return;
+    }
+    const isPhone = /^0\d{9}$/.test(myBank.account_no);
+    setIsPromptPay(isPhone);
+    if (!isPhone) {
       setQrDataUrl(null);
       return;
     }
     const payload = generatePromptPayPayload(myBank.account_no);
-    // If generatePromptPayPayload returns just the account number (not a PromptPay payload),
-    // fall back to a plain text QR
-    const qrText =
-      payload === myBank.account_no
-        ? buildBankQRText(myBank.bank_name || '', myBank.account_no, myBank.account_name || '')
-        : payload;
-    QRCode.toDataURL(qrText, { width: 200, margin: 2, color: { dark: '#000000', light: '#ffffff' } })
+    QRCode.toDataURL(payload, { width: 200, margin: 2, color: { dark: '#000000', light: '#ffffff' } })
       .then((url) => setQrDataUrl(url))
       .catch(() => setQrDataUrl(null));
   }, [myBank]);
@@ -2580,8 +2582,8 @@ export default function CircleDetail() {
                                     })()
                                   ))}
 
-                                {/* QR Code for member payment */}
-                                {canPay && !isCircleAdmin && qrDataUrl && myBank && (
+                                {/* Payment info: PromptPay QR or bank details */}
+                                {canPay && !isCircleAdmin && myBank && (
                                   <div
                                     style={{
                                       flex: '1 1 100%',
@@ -2595,15 +2597,36 @@ export default function CircleDetail() {
                                       border: '1px dashed #cbd5e1',
                                     }}
                                   >
-                                    <div style={{ fontSize: '0.8rem', fontWeight: '700', color: '#475569' }}>
-                                      📱 สแกน QR โอนเงิน
-                                    </div>
-                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img
-                                      src={qrDataUrl}
-                                      alt="QR Code โอนเงิน"
-                                      style={{ width: '180px', height: '180px', borderRadius: '8px' }}
-                                    />
+                                    {isPromptPay && qrDataUrl ? (
+                                      <>
+                                        <div style={{ fontSize: '0.8rem', fontWeight: '700', color: '#475569' }}>
+                                          📱 สแกน QR PromptPay
+                                        </div>
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                        <img
+                                          src={qrDataUrl}
+                                          alt="QR Code PromptPay"
+                                          style={{ width: '180px', height: '180px', borderRadius: '8px' }}
+                                        />
+                                        <div
+                                          style={{
+                                            fontSize: '0.7rem',
+                                            color: '#92400e',
+                                            background: '#fef3c7',
+                                            padding: '8px 12px',
+                                            borderRadius: '8px',
+                                            textAlign: 'center',
+                                            fontWeight: '600',
+                                          }}
+                                        >
+                                          📸 แคปหน้าจอ → เปิดแอปธนาคาร → สแกนจากแกลเลอรี
+                                        </div>
+                                      </>
+                                    ) : (
+                                      <div style={{ fontSize: '0.8rem', fontWeight: '700', color: '#475569' }}>
+                                        🏦 โอนผ่านธนาคาร
+                                      </div>
+                                    )}
                                     <div style={{ textAlign: 'center', fontSize: '0.75rem', color: '#64748b' }}>
                                       <div style={{ fontWeight: '600' }}>{myBank.bank_name}</div>
                                       <div>{myBank.account_no}</div>
@@ -2795,8 +2818,8 @@ export default function CircleDetail() {
                             {/* Staircase/Fixed Interest Logic */}
                             {circle.type === 'ขั้นบันได (ดอกคงที่)' && (
                               <>
-                                {/* QR Code for member payment */}
-                                {canPay && !isCircleAdmin && qrDataUrl && myBank && (
+                                {/* Payment info: PromptPay QR or bank details */}
+                                {canPay && !isCircleAdmin && myBank && (
                                   <div
                                     style={{
                                       flex: '1 1 100%',
@@ -2810,15 +2833,36 @@ export default function CircleDetail() {
                                       border: '1px dashed #cbd5e1',
                                     }}
                                   >
-                                    <div style={{ fontSize: '0.8rem', fontWeight: '700', color: '#475569' }}>
-                                      📱 สแกน QR โอนเงิน
-                                    </div>
-                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img
-                                      src={qrDataUrl}
-                                      alt="QR Code โอนเงิน"
-                                      style={{ width: '180px', height: '180px', borderRadius: '8px' }}
-                                    />
+                                    {isPromptPay && qrDataUrl ? (
+                                      <>
+                                        <div style={{ fontSize: '0.8rem', fontWeight: '700', color: '#475569' }}>
+                                          📱 สแกน QR PromptPay
+                                        </div>
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                        <img
+                                          src={qrDataUrl}
+                                          alt="QR Code PromptPay"
+                                          style={{ width: '180px', height: '180px', borderRadius: '8px' }}
+                                        />
+                                        <div
+                                          style={{
+                                            fontSize: '0.7rem',
+                                            color: '#92400e',
+                                            background: '#fef3c7',
+                                            padding: '8px 12px',
+                                            borderRadius: '8px',
+                                            textAlign: 'center',
+                                            fontWeight: '600',
+                                          }}
+                                        >
+                                          📸 แคปหน้าจอ → เปิดแอปธนาคาร → สแกนจากแกลเลอรี
+                                        </div>
+                                      </>
+                                    ) : (
+                                      <div style={{ fontSize: '0.8rem', fontWeight: '700', color: '#475569' }}>
+                                        🏦 โอนผ่านธนาคาร
+                                      </div>
+                                    )}
                                     <div style={{ textAlign: 'center', fontSize: '0.75rem', color: '#64748b' }}>
                                       <div style={{ fontWeight: '600' }}>{myBank.bank_name}</div>
                                       <div>{myBank.account_no}</div>
