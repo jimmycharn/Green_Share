@@ -265,14 +265,7 @@ export default function Home() {
       </Section>
 
       {/* Playing Circles */}
-      <Section
-        title="วงแชร์ที่เล่นอยู่"
-        action={
-          <Link href="/circles/view" className="text-sm font-semibold text-primary hover:underline">
-            ดูทั้งหมด
-          </Link>
-        }
-      >
+      <Section title="วงแชร์ที่เล่นอยู่">
         <AdminCircleGroup
           loading={isLoadingCircles}
           circles={joinedCircles}
@@ -285,14 +278,7 @@ export default function Home() {
       </Section>
 
       {/* Closed Circles */}
-      <Section
-        title="วงแชร์ที่ปิดแล้ว"
-        action={
-          <Link href="/circles/view" className="text-sm font-semibold text-primary hover:underline">
-            ดูทั้งหมด
-          </Link>
-        }
-      >
+      <Section title="วงแชร์ที่ปิดแล้ว">
         <AdminCircleGroup
           loading={isLoadingCircles}
           circles={closedCircles}
