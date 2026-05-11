@@ -123,7 +123,7 @@ export default function CircleDetail() {
   const [bidAmount, setBidAmount] = useState<string>('');
   const [paymentMode, setPaymentMode] = useState<'TRANSFER' | 'CASH'>('TRANSFER');
   const [myBank, setMyBank] = useState<Bank | null>(null);
-  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const [periodQrDataUrl, setPeriodQrDataUrl] = useState<string | null>(null);
   const [isPromptPay, setIsPromptPay] = useState(false);
   const [settingsData, setSettingsData] = useState<AnyRecord>({
     name: '',
@@ -178,24 +178,30 @@ export default function CircleDetail() {
     if (circleId && dbUser) fetchCircleDetail();
   }, 5000, !!(circleId && dbUser));
 
-  // Generate PromptPay QR code only for phone numbers (PromptPay Mobile)
+  // Detect if bank account is a PromptPay ID (phone, citizen ID, tax ID, or e-wallet)
   useEffect(() => {
     if (!myBank?.account_no) {
-      setQrDataUrl(null);
       setIsPromptPay(false);
       return;
     }
-    const isPhone = /^0\d{9}$/.test(myBank.account_no);
-    setIsPromptPay(isPhone);
-    if (!isPhone) {
-      setQrDataUrl(null);
+    const clean = myBank.account_no.replace(/[^0-9]/g, '');
+    setIsPromptPay(
+      /^0\d{9}$/.test(clean) || /^\d{13}$/.test(clean) || /^\d{15}$/.test(clean)
+    );
+  }, [myBank]);
+
+  // Generate PromptPay QR with amount for the currently expanded period
+  useEffect(() => {
+    if (!isPromptPay || !myBank?.account_no || !expandedPeriod || !circle || !dbUser) {
+      setPeriodQrDataUrl(null);
       return;
     }
-    const payload = generatePromptPayPayload(myBank.account_no);
+    const amount = getRequiredAmount(expandedPeriod);
+    const payload = generatePromptPayPayload(myBank.account_no, amount);
     QRCode.toDataURL(payload, { width: 200, margin: 2, color: { dark: '#000000', light: '#ffffff' } })
-      .then((url) => setQrDataUrl(url))
-      .catch(() => setQrDataUrl(null));
-  }, [myBank]);
+      .then((url) => setPeriodQrDataUrl(url))
+      .catch(() => setPeriodQrDataUrl(null));
+  }, [isPromptPay, myBank, expandedPeriod, circle, dbUser, bids, players, slips]);
 
   useEffect(() => {
     if (!circleId) return;
@@ -2597,14 +2603,14 @@ export default function CircleDetail() {
                                       border: '1px dashed #cbd5e1',
                                     }}
                                   >
-                                    {isPromptPay && qrDataUrl ? (
+                                    {isPromptPay && periodQrDataUrl ? (
                                       <>
                                         <div style={{ fontSize: '0.8rem', fontWeight: '700', color: '#475569' }}>
                                           📱 สแกน QR PromptPay
                                         </div>
                                         {/* eslint-disable-next-line @next/next/no-img-element */}
                                         <img
-                                          src={qrDataUrl}
+                                          src={periodQrDataUrl}
                                           alt="QR Code PromptPay"
                                           style={{ width: '180px', height: '180px', borderRadius: '8px' }}
                                         />
@@ -2833,14 +2839,14 @@ export default function CircleDetail() {
                                       border: '1px dashed #cbd5e1',
                                     }}
                                   >
-                                    {isPromptPay && qrDataUrl ? (
+                                    {isPromptPay && periodQrDataUrl ? (
                                       <>
                                         <div style={{ fontSize: '0.8rem', fontWeight: '700', color: '#475569' }}>
                                           📱 สแกน QR PromptPay
                                         </div>
                                         {/* eslint-disable-next-line @next/next/no-img-element */}
                                         <img
-                                          src={qrDataUrl}
+                                          src={periodQrDataUrl}
                                           alt="QR Code PromptPay"
                                           style={{ width: '180px', height: '180px', borderRadius: '8px' }}
                                         />
