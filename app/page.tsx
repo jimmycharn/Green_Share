@@ -574,11 +574,6 @@ function CircleRow({
               {circle.status}
             </Badge>
           )}
-          {isJoinedOpen && (
-            <Badge className="bg-emerald-100 text-emerald-700 text-[0.55rem] border-none">
-              คุณจองมือแล้ว
-            </Badge>
-          )}
           {isAdmin && (
             <button
               type="button"
@@ -610,6 +605,11 @@ function CircleRow({
                 <span className="ml-1 font-medium"># {circle.total_hands} มือ</span>
               ) : null}
             </span>
+          )}
+          {isJoinedOpen && (
+            <Badge className="ml-1 bg-emerald-100 text-emerald-700 text-[0.55rem] border-none">
+              จองแล้ว
+            </Badge>
           )}
         </div>
       </div>
