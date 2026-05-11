@@ -113,8 +113,8 @@ export default function CreateCirclePage() {
   const isStepInterest = circleType === 'ขั้นบันได (ดอกคงที่)';
 
   const totalAmount =
-    !isStepInterest && Number.isFinite(amountPerHand) && Number.isFinite(totalHands)
-      ? Number(amountPerHand) * Number(totalHands)
+    !isStepInterest
+      ? (parseFloat(amountPerHand as any) || 0) * (parseInt(totalHands as any, 10) || 0)
       : 0;
 
   // Compute period_value from bimonthly fields
