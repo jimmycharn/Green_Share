@@ -69,13 +69,24 @@ export default function Home() {
   const [joinHouseOpen, setJoinHouseOpen] = useState(false);
   const [joinHouseCode, setJoinHouseCode] = useState('');
   const [joinHouseLoading, setJoinHouseLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'OPEN' | 'ACTIVE' | 'CLOSED'>('ALL');
 
   const isAdmin = dbUser?.role === 'SUPERADMIN' || dbUser?.role === 'ADMIN';
-  const newCircles = circles.filter((c) => c.status === 'OPEN').slice(0, 5);
-  const joinedCircles = circles
+
+  // Apply search and filter
+  const filteredCircles = circles.filter((c) => {
+    const matchesSearch = !searchQuery || c.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = statusFilter === 'ALL' || c.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  const newCircles = filteredCircles.filter((c) => c.status === 'OPEN').slice(0, 5);
+  const joinedCircles = filteredCircles
     .filter((c) => {
       const isCreator = isAdmin && c.creator_id === dbUser?.id;
-      return (isCreator || c.is_participant) && (c.status === 'ACTIVE' || c.status === 'OPEN');
+      const isPlaying = c.status === 'ACTIVE' || c.status === 'OPEN' || c.status === 'CLOSED';
+      return (isCreator || c.is_participant) && isPlaying;
     })
     .slice(0, 5);
 
@@ -182,6 +193,38 @@ export default function Home() {
           เข้าร่วมบ้านแชร์อื่น
         </Button>
       </header>
+
+      {/* Search & Filter */}
+      <div className="mb-5 flex flex-col gap-3">
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="🔍 ค้นหาชื่อวงแชร์..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full rounded-xl border border-border bg-background px-4 py-2.5 pl-10 text-sm outline-none focus:border-primary"
+          />
+          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground">🔍</span>
+        </div>
+        <div className="flex gap-2">
+          {(['ALL', 'OPEN', 'ACTIVE', 'CLOSED'] as const).map((s) => (
+            <button
+              key={s}
+              onClick={() => setStatusFilter(s)}
+              className="rounded-lg px-3 py-1.5 text-xs font-semibold transition-all"
+              style={{
+                background: statusFilter === s ? 'var(--primary)' : '#f1f5f9',
+                color: statusFilter === s ? 'white' : '#64748b',
+              }}
+            >
+              {s === 'ALL' && 'ทั้งหมด'}
+              {s === 'OPEN' && 'เปิดใหม่'}
+              {s === 'ACTIVE' && 'กำลังเล่น'}
+              {s === 'CLOSED' && 'ปิดแล้ว'}
+            </button>
+          ))}
+        </div>
+      </div>
 
       {/* New Circles */}
       <Section
