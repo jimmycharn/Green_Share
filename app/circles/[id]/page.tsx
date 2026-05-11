@@ -3544,6 +3544,21 @@ export default function CircleDetail() {
           <form onSubmit={handleUpdateSettings} className="flex flex-col gap-5">
             {configModal.mode === 'EDIT_CIRCLE' && (
               <>
+                {(circle?.status === 'ACTIVE' || circle?.status === 'CLOSED') && (
+                  <div
+                    style={{
+                      padding: '12px',
+                      background: '#fef3c7',
+                      borderRadius: '10px',
+                      border: '1px solid #facc15',
+                      fontSize: '0.8rem',
+                      color: '#92400e',
+                      fontWeight: '600',
+                    }}
+                  >
+                    ⚠️ วงแชร์เริ่มดำเนินการไปแล้ว บางข้อมูลไม่สามารถแก้ไขได้
+                  </div>
+                )}
                 <FormField label="ชื่อวงแชร์">
                   <input
                     type="text"
