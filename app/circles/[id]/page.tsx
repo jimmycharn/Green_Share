@@ -160,9 +160,19 @@ export default function CircleDetail() {
     }
     // Realtime subscriptions for live updates
     const subs = [
-      subscribeToTable(`cp-${circleId}`, 'circle_players', `circle_id=eq.${circleId}`, fetchCircleDetail),
+      subscribeToTable(
+        `cp-${circleId}`,
+        'circle_players',
+        `circle_id=eq.${circleId}`,
+        fetchCircleDetail
+      ),
       subscribeToTable(`slips-${circleId}`, 'slips', `circle_id=eq.${circleId}`, fetchCircleDetail),
-      subscribeToTable(`payouts-${circleId}`, 'admin_payments', `circle_id=eq.${circleId}`, fetchCircleDetail),
+      subscribeToTable(
+        `payouts-${circleId}`,
+        'admin_payments',
+        `circle_id=eq.${circleId}`,
+        fetchCircleDetail
+      ),
       subscribeToTable(`bids-${circleId}`, 'bids', `circle_id=eq.${circleId}`, fetchCircleDetail),
     ];
     return () => {
@@ -174,9 +184,13 @@ export default function CircleDetail() {
   }, [dbUser, circleId]);
 
   // Polling fallback: refresh every 5s when tab is visible
-  usePolling(() => {
-    if (circleId && dbUser) fetchCircleDetail();
-  }, 5000, !!(circleId && dbUser));
+  usePolling(
+    () => {
+      if (circleId && dbUser) fetchCircleDetail();
+    },
+    5000,
+    Boolean(circleId && dbUser)
+  );
 
   // Detect if bank account is a PromptPay ID (phone, citizen ID, tax ID, or e-wallet)
   useEffect(() => {
@@ -185,9 +199,7 @@ export default function CircleDetail() {
       return;
     }
     const clean = myBank.account_no.replace(/[^0-9]/g, '');
-    setIsPromptPay(
-      /^0\d{9}$/.test(clean) || /^\d{13}$/.test(clean) || /^\d{15}$/.test(clean)
-    );
+    setIsPromptPay(/^0\d{9}$/.test(clean) || /^\d{13}$/.test(clean) || /^\d{15}$/.test(clean));
   }, [myBank]);
 
   // Generate PromptPay QR with amount for the currently expanded period
@@ -198,7 +210,11 @@ export default function CircleDetail() {
     }
     const amount = getRequiredAmount(expandedPeriod);
     const payload = generatePromptPayPayload(myBank.account_no, amount);
-    QRCode.toDataURL(payload, { width: 200, margin: 2, color: { dark: '#000000', light: '#ffffff' } })
+    QRCode.toDataURL(payload, {
+      width: 200,
+      margin: 2,
+      color: { dark: '#000000', light: '#ffffff' },
+    })
       .then((url) => setPeriodQrDataUrl(url))
       .catch(() => setPeriodQrDataUrl(null));
   }, [isPromptPay, myBank, expandedPeriod, circle, dbUser, bids, players, slips]);
@@ -559,6 +575,7 @@ export default function CircleDetail() {
               assigned_to: settingsData.assigned_to,
               amount: settingsData.amount,
               period_date: settingsData.period_date,
+              fee_per_hand: settingsData.fee_per_hand,
             }
           : null,
       });
@@ -1126,25 +1143,28 @@ export default function CircleDetail() {
                       </button>
                     )}
                     {/* Member can cancel their own hand */}
-                    {player && player.member_id === dbUser?.id && !isCircleAdmin && circle.status === 'OPEN' && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleCancelHand(e, hand);
-                        }}
-                        style={{
-                          background: 'none',
-                          border: '1px solid #fca5a5',
-                          padding: '4px 12px',
-                          borderRadius: '8px',
-                          color: '#dc2626',
-                          fontSize: '0.75rem',
-                          fontWeight: '700',
-                        }}
-                      >
-                        ยกเลิก
-                      </button>
-                    )}
+                    {player &&
+                      player.member_id === dbUser?.id &&
+                      !isCircleAdmin &&
+                      circle.status === 'OPEN' && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCancelHand(e, hand);
+                          }}
+                          style={{
+                            background: 'none',
+                            border: '1px solid #fca5a5',
+                            padding: '4px 12px',
+                            borderRadius: '8px',
+                            color: '#dc2626',
+                            fontSize: '0.75rem',
+                            fontWeight: '700',
+                          }}
+                        >
+                          ยกเลิก
+                        </button>
+                      )}
                     {!displayPlayer && isCircleAdmin && circle.status === 'OPEN' && (
                       <button
                         onClick={(e) => {
@@ -1220,6 +1240,19 @@ export default function CircleDetail() {
               const stairReceivedAmount = isStairType
                 ? periodDates.reduce((s, pd) => s + (Number(pd.amount) || 0), 0)
                 : 0;
+
+              // Calculate management fee for staircase circles
+              const stairPDateObj = isStairType
+                ? periodDates.find((p) => p.period === period)
+                : null;
+              const stairEffectiveFeePerHand =
+                stairPDateObj?.fee_per_hand ?? circle?.fee_per_hand ?? 0;
+              const stairWinnerHandsCount = stairWinnerId
+                ? players.filter((p) => p.member_id === stairWinnerId).length
+                : 0;
+              const stairFeeAmount = stairEffectiveFeePerHand * stairWinnerHandsCount;
+              const stairNetReceivedAmount = Math.max(0, stairReceivedAmount - stairFeeAmount);
+
               const stairPayout =
                 isStairType && stairAssignedId && stairAssignedId !== 'NONE'
                   ? payouts.find((po) => po.period === period && po.member_id === stairAssignedId)
@@ -1244,6 +1277,14 @@ export default function CircleDetail() {
                   : circle.amount_per_hand * deadHands +
                     (circle.amount_per_hand - winnerBid.bid_amount) * (liveHands - 1)
                 : 0;
+
+              // Calculate management fee for this period
+              const effectiveFeePerHand = pDateObj?.fee_per_hand ?? circle?.fee_per_hand ?? 0;
+              const winnerHandsCount = winnerBid
+                ? players.filter((p) => p.member_id === winnerBid.member_id).length
+                : 0;
+              const feeAmount = effectiveFeePerHand * winnerHandsCount;
+              const netReceivedAmount = Math.max(0, receivedAmount - feeAmount);
 
               return (
                 <div
@@ -1449,7 +1490,12 @@ export default function CircleDetail() {
                                 flexWrap: 'wrap',
                               }}
                             >
-                              🏦 รับสุทธิ: {stairReceivedAmount.toLocaleString()} ฿
+                              🏦 รับสุทธิ: {stairNetReceivedAmount.toLocaleString()} ฿
+                              {stairFeeAmount > 0 && (
+                                <span style={{ fontSize: '0.65rem', color: '#92400e' }}>
+                                  (หักค่าดูแล {stairFeeAmount.toLocaleString()} ฿)
+                                </span>
+                              )}
                               {/* Admin view */}
                               {isCircleAdmin ? (
                                 !stairPayout || stairPayout.status === 'REJECTED' ? (
@@ -1459,7 +1505,7 @@ export default function CircleDetail() {
                                       if (stairIsMe) {
                                         const ok = await confirm({
                                           title: 'ยืนยันการรับเงิน',
-                                          description: `ยืนยันว่าคุณได้รับเงิน ${stairReceivedAmount.toLocaleString()} ฿ ครบแล้ว`,
+                                          description: `ยืนยันว่าคุณได้รับเงิน ${stairNetReceivedAmount.toLocaleString()} ฿ ครบแล้ว`,
                                         });
                                         if (!ok) return;
                                         try {
@@ -1467,7 +1513,7 @@ export default function CircleDetail() {
                                             circle_id: circleId,
                                             member_id: stairWinnerId,
                                             period,
-                                            amount: stairReceivedAmount,
+                                            amount: stairNetReceivedAmount,
                                             is_cash: true,
                                             auto_approve: true,
                                             caller_role: dbUser.role,
@@ -1483,8 +1529,8 @@ export default function CircleDetail() {
                                           period,
                                           winner_id: stairWinnerId,
                                           winner_name: stairWinnerName,
-                                          amount: stairReceivedAmount,
-                                          deduction: 0,
+                                          amount: stairNetReceivedAmount,
+                                          deduction: stairFeeAmount,
                                         });
                                       }
                                     }}
@@ -1800,7 +1846,18 @@ export default function CircleDetail() {
                                 borderRadius: '5px',
                               }}
                             >
-                              🏦 {receivedAmount.toLocaleString()} ฿
+                              🏦 {netReceivedAmount.toLocaleString()} ฿
+                              {feeAmount > 0 && (
+                                <span
+                                  style={{
+                                    fontSize: '0.65rem',
+                                    color: '#92400e',
+                                    marginLeft: '4px',
+                                  }}
+                                >
+                                  (หักค่าดูแล {feeAmount.toLocaleString()} ฿)
+                                </span>
+                              )}
                             </span>
                             {/* Payout status / action button */}
                             {isCircleAdmin ? (
@@ -1837,8 +1894,8 @@ export default function CircleDetail() {
                                         winner_name:
                                           allMembers.find((m) => m.id === winner.member_id)
                                             ?.custom_nickname || winner.member_name,
-                                        amount: receivedAmount,
-                                        deduction: 0,
+                                        amount: netReceivedAmount,
+                                        deduction: feeAmount,
                                       });
                                     }
                                   }}
@@ -2118,6 +2175,7 @@ export default function CircleDetail() {
                             assigned_to: assignedTo,
                             amount: pDate?.amount ?? circle?.amount_per_hand ?? 0,
                             period_date: pDate?.period_date || '',
+                            fee_per_hand: pDate?.fee_per_hand ?? circle?.fee_per_hand ?? 0,
                           });
                           setConfigModal({ open: true, period });
                         }}
@@ -2300,9 +2358,13 @@ export default function CircleDetail() {
                                 </div>
                                 {(() => {
                                   // Determine who needs to pay and who has paid
-                                  const uniqueMemberIds = [...new Set(players.map((p) => p.member_id))];
+                                  const uniqueMemberIds = [
+                                    ...new Set(players.map((p) => p.member_id)),
+                                  ];
                                   const winnerId = isStairType
-                                    ? (getAssignedTo(period) === 'NONE' ? null : getAssignedTo(period))
+                                    ? getAssignedTo(period) === 'NONE'
+                                      ? null
+                                      : getAssignedTo(period)
                                     : (() => {
                                         const periodBidsList = bids
                                           .filter((b) => b.period === period)
@@ -2317,34 +2379,79 @@ export default function CircleDetail() {
                                       'สมาชิก';
                                     const isWinner = mId === winnerId;
                                     const approvedSlips = slips.filter(
-                                      (s) => s.period === period && s.member_id === mId && s.status === 'APPROVED'
+                                      (s) =>
+                                        s.period === period &&
+                                        s.member_id === mId &&
+                                        s.status === 'APPROVED'
                                     );
                                     const pendingSlips = slips.filter(
-                                      (s) => s.period === period && s.member_id === mId && s.status === 'PENDING'
+                                      (s) =>
+                                        s.period === period &&
+                                        s.member_id === mId &&
+                                        s.status === 'PENDING'
                                     );
-                                    const totalPaid = approvedSlips.reduce((sum, s) => sum + Number(s.amount), 0);
-                                    const handsCount = players.filter((p) => p.member_id === mId).length;
+                                    const totalPaid = approvedSlips.reduce(
+                                      (sum, s) => sum + Number(s.amount),
+                                      0
+                                    );
+                                    const handsCount = players.filter(
+                                      (p) => p.member_id === mId
+                                    ).length;
                                     const requiredAmt = handsCount * (circle.amount_per_hand || 0);
                                     const hasPaidEnough = totalPaid >= requiredAmt;
 
                                     if (isWinner) {
-                                      return { mId, memberName, status: 'WINNER', totalPaid, requiredAmt };
+                                      return {
+                                        mId,
+                                        memberName,
+                                        status: 'WINNER',
+                                        totalPaid,
+                                        requiredAmt,
+                                      };
                                     }
                                     if (hasPaidEnough) {
-                                      return { mId, memberName, status: 'PAID', totalPaid, requiredAmt };
+                                      return {
+                                        mId,
+                                        memberName,
+                                        status: 'PAID',
+                                        totalPaid,
+                                        requiredAmt,
+                                      };
                                     }
                                     if (pendingSlips.length > 0) {
-                                      return { mId, memberName, status: 'PENDING', totalPaid, requiredAmt };
+                                      return {
+                                        mId,
+                                        memberName,
+                                        status: 'PENDING',
+                                        totalPaid,
+                                        requiredAmt,
+                                      };
                                     }
-                                    return { mId, memberName, status: 'UNPAID', totalPaid, requiredAmt };
+                                    return {
+                                      mId,
+                                      memberName,
+                                      status: 'UNPAID',
+                                      totalPaid,
+                                      requiredAmt,
+                                    };
                                   });
 
-                                  const unpaid = memberStatuses.filter((m) => m.status === 'UNPAID');
-                                  const pending = memberStatuses.filter((m) => m.status === 'PENDING');
+                                  const unpaid = memberStatuses.filter(
+                                    (m) => m.status === 'UNPAID'
+                                  );
+                                  const pending = memberStatuses.filter(
+                                    (m) => m.status === 'PENDING'
+                                  );
                                   const paid = memberStatuses.filter((m) => m.status === 'PAID');
 
                                   return (
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                    <div
+                                      style={{
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: '6px',
+                                      }}
+                                    >
                                       {unpaid.length > 0 && (
                                         <div>
                                           <div
@@ -2357,7 +2464,13 @@ export default function CircleDetail() {
                                           >
                                             ❌ ยังไม่จ่าย ({unpaid.length} คน):
                                           </div>
-                                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                                          <div
+                                            style={{
+                                              display: 'flex',
+                                              flexWrap: 'wrap',
+                                              gap: '4px',
+                                            }}
+                                          >
                                             {unpaid.map((m) => (
                                               <span
                                                 key={m.mId}
@@ -2388,7 +2501,13 @@ export default function CircleDetail() {
                                           >
                                             ⏳ รอตรวจสอบ ({pending.length} คน):
                                           </div>
-                                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                                          <div
+                                            style={{
+                                              display: 'flex',
+                                              flexWrap: 'wrap',
+                                              gap: '4px',
+                                            }}
+                                          >
                                             {pending.map((m) => (
                                               <span
                                                 key={m.mId}
@@ -2419,7 +2538,13 @@ export default function CircleDetail() {
                                           >
                                             ✅ จ่ายแล้ว ({paid.length} คน):
                                           </div>
-                                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                                          <div
+                                            style={{
+                                              display: 'flex',
+                                              flexWrap: 'wrap',
+                                              gap: '4px',
+                                            }}
+                                          >
                                             {paid.map((m) => (
                                               <span
                                                 key={m.mId}
@@ -2444,12 +2569,16 @@ export default function CircleDetail() {
                                           onClick={async (e) => {
                                             e.stopPropagation();
                                             try {
-                                              const res = await callAction('notify_unpaid_members', {
-                                                circle_id: circleId,
-                                                period,
-                                                caller_role: dbUser.role,
-                                              });
-                                              if (res.status === 'success') toast.success(res.message);
+                                              const res = await callAction(
+                                                'notify_unpaid_members',
+                                                {
+                                                  circle_id: circleId,
+                                                  period,
+                                                  caller_role: dbUser.role,
+                                                }
+                                              );
+                                              if (res.status === 'success')
+                                                toast.success(res.message);
                                               else toast.error(res.message);
                                             } catch {
                                               toast.error('เกิดข้อผิดพลาดในการส่งแจ้งเตือน');
@@ -2470,6 +2599,35 @@ export default function CircleDetail() {
                                         >
                                           🔔 ส่งแจ้งเตือนให้ผู้ที่ยังไม่จ่าย
                                         </button>
+                                      )}
+                                      {/* Winner fee summary */}
+                                      {winnerId && (
+                                        <div
+                                          style={{
+                                            marginTop: '10px',
+                                            padding: '8px 10px',
+                                            background: '#fffbeb',
+                                            borderRadius: '8px',
+                                            fontSize: '0.72rem',
+                                            color: '#92400e',
+                                            fontWeight: '600',
+                                            display: 'flex',
+                                            flexWrap: 'wrap',
+                                            gap: '6px',
+                                            alignItems: 'center',
+                                          }}
+                                        >
+                                          <span>💵 ค่าดูแลวงแชร์งวดนี้:</span>
+                                          <span>
+                                            {isStairType
+                                              ? stairFeeAmount.toLocaleString()
+                                              : feeAmount.toLocaleString()}{' '}
+                                            ฿
+                                          </span>
+                                          <span style={{ color: '#b45309' }}>
+                                            (หักจากผู้ชนะงวดที่ {period})
+                                          </span>
+                                        </div>
                                       )}
                                     </div>
                                   );
@@ -2605,14 +2763,24 @@ export default function CircleDetail() {
                                   >
                                     {isPromptPay && periodQrDataUrl ? (
                                       <>
-                                        <div style={{ fontSize: '0.8rem', fontWeight: '700', color: '#475569' }}>
+                                        <div
+                                          style={{
+                                            fontSize: '0.8rem',
+                                            fontWeight: '700',
+                                            color: '#475569',
+                                          }}
+                                        >
                                           📱 สแกน QR PromptPay
                                         </div>
                                         {/* eslint-disable-next-line @next/next/no-img-element */}
                                         <img
                                           src={periodQrDataUrl}
                                           alt="QR Code PromptPay"
-                                          style={{ width: '180px', height: '180px', borderRadius: '8px' }}
+                                          style={{
+                                            width: '180px',
+                                            height: '180px',
+                                            borderRadius: '8px',
+                                          }}
                                         />
                                         <div
                                           style={{
@@ -2629,11 +2797,23 @@ export default function CircleDetail() {
                                         </div>
                                       </>
                                     ) : (
-                                      <div style={{ fontSize: '0.8rem', fontWeight: '700', color: '#475569' }}>
+                                      <div
+                                        style={{
+                                          fontSize: '0.8rem',
+                                          fontWeight: '700',
+                                          color: '#475569',
+                                        }}
+                                      >
                                         🏦 โอนผ่านธนาคาร
                                       </div>
                                     )}
-                                    <div style={{ textAlign: 'center', fontSize: '0.75rem', color: '#64748b' }}>
+                                    <div
+                                      style={{
+                                        textAlign: 'center',
+                                        fontSize: '0.75rem',
+                                        color: '#64748b',
+                                      }}
+                                    >
                                       <div style={{ fontWeight: '600' }}>{myBank.bank_name}</div>
                                       <div>{myBank.account_no}</div>
                                       <div>{myBank.account_name}</div>
@@ -2841,14 +3021,24 @@ export default function CircleDetail() {
                                   >
                                     {isPromptPay && periodQrDataUrl ? (
                                       <>
-                                        <div style={{ fontSize: '0.8rem', fontWeight: '700', color: '#475569' }}>
+                                        <div
+                                          style={{
+                                            fontSize: '0.8rem',
+                                            fontWeight: '700',
+                                            color: '#475569',
+                                          }}
+                                        >
                                           📱 สแกน QR PromptPay
                                         </div>
                                         {/* eslint-disable-next-line @next/next/no-img-element */}
                                         <img
                                           src={periodQrDataUrl}
                                           alt="QR Code PromptPay"
-                                          style={{ width: '180px', height: '180px', borderRadius: '8px' }}
+                                          style={{
+                                            width: '180px',
+                                            height: '180px',
+                                            borderRadius: '8px',
+                                          }}
                                         />
                                         <div
                                           style={{
@@ -2865,11 +3055,23 @@ export default function CircleDetail() {
                                         </div>
                                       </>
                                     ) : (
-                                      <div style={{ fontSize: '0.8rem', fontWeight: '700', color: '#475569' }}>
+                                      <div
+                                        style={{
+                                          fontSize: '0.8rem',
+                                          fontWeight: '700',
+                                          color: '#475569',
+                                        }}
+                                      >
                                         🏦 โอนผ่านธนาคาร
                                       </div>
                                     )}
-                                    <div style={{ textAlign: 'center', fontSize: '0.75rem', color: '#64748b' }}>
+                                    <div
+                                      style={{
+                                        textAlign: 'center',
+                                        fontSize: '0.75rem',
+                                        color: '#64748b',
+                                      }}
+                                    >
                                       <div style={{ fontWeight: '600' }}>{myBank.bank_name}</div>
                                       <div>{myBank.account_no}</div>
                                       <div>{myBank.account_name}</div>
@@ -3759,6 +3961,17 @@ export default function CircleDetail() {
                     <option value="ไม่หักดอก">ไม่หักดอก (Interest Add)</option>
                   </select>
                 </FormField>
+
+                <FormField label="💵 ค่าดูแลวงแชร์ต่อมือ (บาท)" boxed={false}>
+                  <input
+                    type="number"
+                    value={settingsData.fee_per_hand ?? 0}
+                    onChange={(e) =>
+                      setSettingsData({ ...settingsData, fee_per_hand: e.target.value })
+                    }
+                    className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm"
+                  />
+                </FormField>
               </>
             )}
 
@@ -3775,6 +3988,16 @@ export default function CircleDetail() {
 
             {configModal.period && (
               <>
+                <FormField label="💵 ค่าดูแลวงแชร์ต่อมืองวดนี้ (บาท)" boxed={false}>
+                  <input
+                    type="number"
+                    value={settingsData.fee_per_hand ?? 0}
+                    onChange={(e) =>
+                      setSettingsData({ ...settingsData, fee_per_hand: e.target.value })
+                    }
+                    className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm"
+                  />
+                </FormField>
                 <FormField label="วันที่งวด" boxed={false}>
                   <input
                     type="date"
@@ -3855,7 +4078,7 @@ export default function CircleDetail() {
                 <b className="text-base">
                   {(payoutModal.amount + payoutModal.deduction).toLocaleString()} ฿
                 </b>{' '}
-                · หักค่างวด{' '}
+                · หักค่าดูแลวงแชร์{' '}
                 <b className="text-base text-orange-500">
                   {payoutModal.deduction.toLocaleString()} ฿
                 </b>
@@ -3985,6 +4208,18 @@ export default function CircleDetail() {
                 <div className="text-2xl font-extrabold text-primary">
                   {parseFloat(inspectPayoutModal.payout.amount).toLocaleString()} ฿
                 </div>
+                {inspectPayoutModal.payout.fee_amount > 0 && (
+                  <div className="mt-2 text-xs text-orange-600">
+                    หักค่าดูแลวงแชร์{' '}
+                    {parseFloat(inspectPayoutModal.payout.fee_amount).toLocaleString()} ฿{' '}
+                    (ยอดก่อนหัก:{' '}
+                    {(
+                      parseFloat(inspectPayoutModal.payout.amount) +
+                      parseFloat(inspectPayoutModal.payout.fee_amount)
+                    ).toLocaleString()}{' '}
+                    ฿)
+                  </div>
+                )}
               </div>
               {inspectPayoutModal.payout.image_url ? (
                 <button

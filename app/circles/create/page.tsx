@@ -54,6 +54,7 @@ const formSchema = z.object({
   max_bid: z.coerce.number().min(0),
   notify_hours: z.coerce.number().min(0),
   close_mode: z.enum(['แอดมินปิดเอง', 'ปิดอัตโนมัติ']),
+  fee_per_hand: z.coerce.number().min(0, 'ค่าดูแลต้องไม่ติดลบ'),
   line_group_url: z.string().url('กรุณากรอก URL ที่ถูกต้อง').optional().or(z.literal('')),
 });
 
@@ -98,6 +99,7 @@ export default function CreateCirclePage() {
       notify_hours: 1,
       close_mode: 'ปิดอัตโนมัติ',
       bid_permission: 'ALL',
+      fee_per_hand: 0,
     },
   });
 
@@ -112,10 +114,9 @@ export default function CreateCirclePage() {
   const circleType = watch('type');
   const isStepInterest = circleType === 'ขั้นบันได (ดอกคงที่)';
 
-  const totalAmount =
-    !isStepInterest
-      ? (parseFloat(amountPerHand as any) || 0) * (parseInt(totalHands as any, 10) || 0)
-      : 0;
+  const totalAmount = !isStepInterest
+    ? (parseFloat(amountPerHand as any) || 0) * (parseInt(totalHands as any, 10) || 0)
+    : 0;
 
   // Compute period_value from bimonthly fields
   const computedPeriodValue = useMemo(() => {
@@ -246,6 +247,7 @@ export default function CreateCirclePage() {
       notify_hours: values.notify_hours,
       close_mode: values.close_mode,
       bid_permission: values.bid_permission,
+      fee_per_hand: values.fee_per_hand,
     });
 
     if (result.status === 'success' && result.id) {
@@ -337,6 +339,22 @@ export default function CreateCirclePage() {
                 type="number"
                 inputMode="numeric"
                 placeholder="10"
+                className="h-12 rounded-2xl border-2 px-4 text-base"
+              />
+            </Field>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <Field
+              icon={<Coins className="size-4" />}
+              label="ค่าดูแลวงแชร์ต่อมือ (บาท)"
+              error={errors.fee_per_hand?.message}
+            >
+              <Input
+                {...register('fee_per_hand')}
+                type="number"
+                inputMode="numeric"
+                placeholder="0"
                 className="h-12 rounded-2xl border-2 px-4 text-base"
               />
             </Field>
