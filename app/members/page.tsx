@@ -993,7 +993,7 @@ const CIRCLE_STATUS_VARIANT: Record<
 };
 
 function isStairCircle(type?: string) {
-  return Boolean(type) && type.includes('ขั้นบันได');
+  return !!type && type.includes('ขั้นบันได');
 }
 
 type CircleStatusFilter = 'ALL' | 'OPEN' | 'ACTIVE' | 'CLOSED';
