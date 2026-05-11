@@ -1820,17 +1820,16 @@ export default function CircleDetail() {
                           >
                             <span
                               style={{
-                                fontSize: '0.72rem',
-                                color: '#0d7248',
+                                fontSize: '0.8rem',
+                                color: 'var(--text-secondary)',
                                 fontWeight: '600',
-                                background: 'rgba(16,185,129,0.12)',
-                                padding: '2px 7px',
-                                borderRadius: '5px',
+                                background: 'var(--surface)',
+                                padding: '3px 8px',
+                                borderRadius: '8px',
+                                border: '1px solid var(--border)',
                               }}
                             >
                               💰 {Number(circle.amount_per_hand).toLocaleString()} ฿/งวด
-                              {winnerBid?.bid_amount > 0 &&
-                                ` · เปีย ${winnerBid.bid_amount.toLocaleString()}`}
                             </span>
                             <span
                               style={{
