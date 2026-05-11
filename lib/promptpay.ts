@@ -1,4 +1,9 @@
-import generatePayload from 'promptpay-qr';
+import promptpayQr from 'promptpay-qr';
+
+// Handle CJS/ESM interop: some bundlers expose the function directly,
+// others wrap it in a `.default` property.
+const generatePayload =
+  typeof (promptpayQr as any) === 'function' ? (promptpayQr as any) : (promptpayQr as any).default;
 
 /**
  * Generate a PromptPay-compatible QR payload.
@@ -14,10 +19,14 @@ export function generatePromptPayPayload(id: string, amount?: number): string {
     /^\d{13}$/.test(cleanId) || // citizen/tax ID
     /^\d{15}$/.test(cleanId); // e-wallet
 
-  if (!isPromptPay) {
+  if (!isPromptPay || !generatePayload) {
     // Not a PromptPay ID — return raw ID for plain text fallback
     return id;
   }
 
-  return generatePayload(cleanId, { amount: amount && amount > 0 ? amount : undefined });
+  try {
+    return generatePayload(cleanId, { amount: amount && amount > 0 ? amount : undefined });
+  } catch {
+    return id;
+  }
 }
