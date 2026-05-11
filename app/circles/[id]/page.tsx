@@ -1030,7 +1030,7 @@ export default function CircleDetail() {
         </div>
 
         {activeTab === 'members' && (
-          <div className="animate-fade-in">
+          <div className="animate-fade-in" style={{ padding: '0 8px' }}>
             {/* start circle block moved to top section, above tabs */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {totalHandsArray.map((hand) => {
@@ -1194,7 +1194,7 @@ export default function CircleDetail() {
         {activeTab === 'timeline' && (
           <div
             className="animate-fade-in"
-            style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '0 8px' }}
+            style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
           >
             {totalHandsArray.map((period) => {
               const isStairType = circle.type === 'ขั้นบันได (ดอกคงที่)';
