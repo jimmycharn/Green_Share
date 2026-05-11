@@ -1242,12 +1242,12 @@ function CircleRow({ circle }: { circle: AdminCircle }) {
                     <div
                       className="h-full bg-primary transition-all"
                       style={{
-                        width: `${Math.min(100, ((circle.current_period - 1) / circle.total_hands) * 100)}%`,
+                        width: `${Math.min(100, (((circle.current_period ?? 1) - 1) / (circle.total_hands ?? 1)) * 100)}%`,
                       }}
                     />
                   </div>
                   <span className="shrink-0 font-mono text-[0.65rem] text-muted-foreground">
-                    {circle.current_period - 1}/{circle.total_hands}
+                    {(circle.current_period ?? 1) - 1}/{circle.total_hands ?? 1}
                   </span>
                 </div>
               )}
