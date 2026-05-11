@@ -1194,7 +1194,7 @@ export default function CircleDetail() {
         {activeTab === 'timeline' && (
           <div
             className="animate-fade-in"
-            style={{ display: 'flex', flexDirection: 'column', gap: '16px', margin: '0 -8px' }}
+            style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '0 8px' }}
           >
             {totalHandsArray.map((period) => {
               const isStairType = circle.type === 'ขั้นบันได (ดอกคงที่)';
