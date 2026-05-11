@@ -21,7 +21,7 @@ import {
   Trash2,
   Unlock,
   Users,
-  Wrench,
+  ArrowLeft,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -280,10 +280,16 @@ export default function AdminDashboard() {
   return (
     <div className="animate-fade-in pb-10">
       {/* Header */}
-      <div className="mb-6 flex items-center gap-4">
-        <div className="flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 text-white shadow-md">
-          <Wrench className="size-6" />
-        </div>
+      <div className="mb-6 flex items-center gap-3">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={() => router.back()}
+          aria-label="กลับ"
+        >
+          <ArrowLeft className="size-5 text-primary" />
+        </Button>
         <div>
           <h2 className="m-0 text-2xl font-extrabold">แผงควบคุมแอดมิน</h2>
           <p className="m-0 text-sm text-muted-foreground">จัดการสมาชิกและบัญชีธนาคารของบ้าน</p>
