@@ -95,8 +95,15 @@ export default function Home() {
   const joinedCircles = filteredCircles
     .filter((c) => {
       const isCreator = isAdmin && c.creator_id === dbUser?.id;
-      const isPlaying = c.status === 'ACTIVE' || c.status === 'CLOSED';
+      const isPlaying = c.status === 'ACTIVE';
       return (isCreator || c.is_participant) && isPlaying;
+    })
+    .slice(0, 5);
+
+  const closedCircles = filteredCircles
+    .filter((c) => {
+      const isCreator = isAdmin && c.creator_id === dbUser?.id;
+      return (isCreator || c.is_participant) && c.status === 'CLOSED';
     })
     .slice(0, 5);
 
@@ -270,6 +277,26 @@ export default function Home() {
           loading={isLoadingCircles}
           circles={joinedCircles}
           emptyText="คุณยังไม่มีวงแชร์ที่กำลังเล่นอยู่"
+          currentUserId={dbUser?.id}
+          isAdmin={isAdmin}
+          showStatus
+          onDelete={(c) => setPendingDelete(c)}
+        />
+      </Section>
+
+      {/* Closed Circles */}
+      <Section
+        title="วงแชร์ที่ปิดแล้ว"
+        action={
+          <Link href="/circles/view" className="text-sm font-semibold text-primary hover:underline">
+            ดูทั้งหมด
+          </Link>
+        }
+      >
+        <AdminCircleGroup
+          loading={isLoadingCircles}
+          circles={closedCircles}
+          emptyText="คุณยังไม่มีวงแชร์ที่ปิดแล้ว"
           currentUserId={dbUser?.id}
           isAdmin={isAdmin}
           showStatus
