@@ -2256,6 +2256,177 @@ export default function CircleDetail() {
                               marginBottom: '20px',
                             }}
                           >
+                            {/* Admin: Payment Summary Dashboard */}
+                            {isCircleAdmin && (
+                              <div
+                                style={{
+                                  flex: '1 1 100%',
+                                  padding: '16px',
+                                  background: '#fefce8',
+                                  borderRadius: '14px',
+                                  border: '1px solid #facc15',
+                                  marginBottom: '8px',
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    fontSize: '0.85rem',
+                                    fontWeight: '700',
+                                    color: '#854d0e',
+                                    marginBottom: '10px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                  }}
+                                >
+                                  📋 สรุปการชำระเงินงวดที่ {period}
+                                </div>
+                                {(() => {
+                                  // Determine who needs to pay and who has paid
+                                  const uniqueMemberIds = [...new Set(players.map((p) => p.member_id))];
+                                  const winnerId = isStairType
+                                    ? (getAssignedTo(period) === 'NONE' ? null : getAssignedTo(period))
+                                    : (() => {
+                                        const periodBidsList = bids
+                                          .filter((b) => b.period === period)
+                                          .sort((a, b) => b.bid_amount - a.bid_amount);
+                                        return periodBidsList[0]?.member_id || null;
+                                      })();
+
+                                  const memberStatuses = uniqueMemberIds.map((mId) => {
+                                    const memberName =
+                                      allMembers.find((m) => m.id === mId)?.custom_nickname ||
+                                      players.find((p) => p.member_id === mId)?.member_name ||
+                                      'สมาชิก';
+                                    const isWinner = mId === winnerId;
+                                    const approvedSlips = slips.filter(
+                                      (s) => s.period === period && s.member_id === mId && s.status === 'APPROVED'
+                                    );
+                                    const pendingSlips = slips.filter(
+                                      (s) => s.period === period && s.member_id === mId && s.status === 'PENDING'
+                                    );
+                                    const totalPaid = approvedSlips.reduce((sum, s) => sum + Number(s.amount), 0);
+                                    const handsCount = players.filter((p) => p.member_id === mId).length;
+                                    const requiredAmt = handsCount * (circle.amount_per_hand || 0);
+                                    const hasPaidEnough = totalPaid >= requiredAmt;
+
+                                    if (isWinner) {
+                                      return { mId, memberName, status: 'WINNER', totalPaid, requiredAmt };
+                                    }
+                                    if (hasPaidEnough) {
+                                      return { mId, memberName, status: 'PAID', totalPaid, requiredAmt };
+                                    }
+                                    if (pendingSlips.length > 0) {
+                                      return { mId, memberName, status: 'PENDING', totalPaid, requiredAmt };
+                                    }
+                                    return { mId, memberName, status: 'UNPAID', totalPaid, requiredAmt };
+                                  });
+
+                                  const unpaid = memberStatuses.filter((m) => m.status === 'UNPAID');
+                                  const pending = memberStatuses.filter((m) => m.status === 'PENDING');
+                                  const paid = memberStatuses.filter((m) => m.status === 'PAID');
+
+                                  return (
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                      {unpaid.length > 0 && (
+                                        <div>
+                                          <div
+                                            style={{
+                                              fontSize: '0.75rem',
+                                              fontWeight: '700',
+                                              color: '#991b1b',
+                                              marginBottom: '4px',
+                                            }}
+                                          >
+                                            ❌ ยังไม่จ่าย ({unpaid.length} คน):
+                                          </div>
+                                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                                            {unpaid.map((m) => (
+                                              <span
+                                                key={m.mId}
+                                                style={{
+                                                  fontSize: '0.72rem',
+                                                  background: '#fee2e2',
+                                                  color: '#991b1b',
+                                                  padding: '2px 8px',
+                                                  borderRadius: '6px',
+                                                  fontWeight: '600',
+                                                }}
+                                              >
+                                                {m.memberName}
+                                              </span>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      )}
+                                      {pending.length > 0 && (
+                                        <div>
+                                          <div
+                                            style={{
+                                              fontSize: '0.75rem',
+                                              fontWeight: '700',
+                                              color: '#92400e',
+                                              marginBottom: '4px',
+                                            }}
+                                          >
+                                            ⏳ รอตรวจสอบ ({pending.length} คน):
+                                          </div>
+                                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                                            {pending.map((m) => (
+                                              <span
+                                                key={m.mId}
+                                                style={{
+                                                  fontSize: '0.72rem',
+                                                  background: '#fef3c7',
+                                                  color: '#92400e',
+                                                  padding: '2px 8px',
+                                                  borderRadius: '6px',
+                                                  fontWeight: '600',
+                                                }}
+                                              >
+                                                {m.memberName}
+                                              </span>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      )}
+                                      {paid.length > 0 && (
+                                        <div>
+                                          <div
+                                            style={{
+                                              fontSize: '0.75rem',
+                                              fontWeight: '700',
+                                              color: '#166534',
+                                              marginBottom: '4px',
+                                            }}
+                                          >
+                                            ✅ จ่ายแล้ว ({paid.length} คน):
+                                          </div>
+                                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                                            {paid.map((m) => (
+                                              <span
+                                                key={m.mId}
+                                                style={{
+                                                  fontSize: '0.72rem',
+                                                  background: '#dcfce7',
+                                                  color: '#166534',
+                                                  padding: '2px 8px',
+                                                  borderRadius: '6px',
+                                                  fontWeight: '600',
+                                                }}
+                                              >
+                                                {m.memberName}
+                                              </span>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                                })()}
+                              </div>
+                            )}
+
                             {/* Bingo/Auction Logic */}
                             {circle.type === 'ประมูล (เปียแข่งดอก)' && (
                               <>
