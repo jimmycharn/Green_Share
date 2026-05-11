@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import useSWR from 'swr';
-import { ChevronRight, Plus, Trash2, Wallet, MessageCircle, HomeIcon } from 'lucide-react';
+import { ChevronRight, ChevronDown, Plus, Trash2, Wallet, MessageCircle, HomeIcon, Crown, User as UserIcon } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { useUser } from '@/contexts/UserContext';
@@ -42,6 +42,8 @@ type Circle = {
   amount_per_hand: number;
   type?: string;
   creator_id?: string;
+  creator_name?: string;
+  creator_picture_url?: string | null;
   is_participant?: boolean;
   total_hands?: number;
 };
@@ -173,10 +175,11 @@ export default function Home() {
           ) : null
         }
       >
-        <CircleList
+        <AdminCircleGroup
           loading={isLoadingCircles}
-          items={newCircles}
+          circles={newCircles}
           emptyText="ยังไม่มีวงแชร์เปิดใหม่ในขณะนี้"
+          currentUserId={dbUser?.id}
           isAdmin={isAdmin}
           onDelete={(c) => setPendingDelete(c)}
         />
@@ -191,10 +194,11 @@ export default function Home() {
           </Link>
         }
       >
-        <CircleList
+        <AdminCircleGroup
           loading={isLoadingCircles}
-          items={joinedCircles}
+          circles={joinedCircles}
           emptyText="คุณยังไม่มีวงแชร์ที่กำลังเล่นอยู่"
+          currentUserId={dbUser?.id}
           isAdmin={isAdmin}
           showStatus
           onDelete={(c) => setPendingDelete(c)}
@@ -280,31 +284,52 @@ function Section({
   );
 }
 
-function CircleList({
+function groupCirclesByAdmin(circles: Circle[]) {
+  const groups = new Map<string, { creator_id: string; creator_name: string; creator_picture_url?: string | null; circles: Circle[] }>();
+  for (const c of circles) {
+    const cid = c.creator_id || 'unknown';
+    if (!groups.has(cid)) {
+      groups.set(cid, {
+        creator_id: cid,
+        creator_name: c.creator_name || 'ท้าวแชร์',
+        creator_picture_url: c.creator_picture_url,
+        circles: [],
+      });
+    }
+    groups.get(cid)!.circles.push(c);
+  }
+  return Array.from(groups.values());
+}
+
+function AdminCircleGroup({
   loading,
-  items,
+  circles,
   emptyText,
+  currentUserId,
   isAdmin,
   showStatus,
   onDelete,
 }: {
   loading: boolean;
-  items: Circle[];
+  circles: Circle[];
   emptyText: string;
+  currentUserId?: string;
   isAdmin: boolean;
   showStatus?: boolean;
   onDelete: (c: Circle) => void;
 }) {
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
   if (loading) {
     return (
       <>
-        <Skeleton className="h-[68px] w-full rounded-xl" />
-        <Skeleton className="h-[68px] w-full rounded-xl" />
+        <Skeleton className="h-[72px] w-full rounded-xl" />
+        <Skeleton className="h-[72px] w-full rounded-xl" />
       </>
     );
   }
 
-  if (items.length === 0) {
+  if (circles.length === 0) {
     return (
       <Card className="border-dashed bg-muted/30 px-5 py-7 text-center text-sm text-muted-foreground">
         {emptyText}
@@ -312,18 +337,94 @@ function CircleList({
     );
   }
 
+  const groups = groupCirclesByAdmin(circles);
+  // Sort: current user first, then by name
+  const sorted = groups.sort((a, b) => {
+    if (a.creator_id === currentUserId && b.creator_id !== currentUserId) return -1;
+    if (b.creator_id === currentUserId && a.creator_id !== currentUserId) return 1;
+    return a.creator_name.localeCompare(b.creator_name);
+  });
+
   return (
-    <>
-      {items.map((circle) => (
-        <CircleRow
-          key={circle.id}
-          circle={circle}
-          isAdmin={isAdmin}
-          showStatus={showStatus}
-          onDelete={onDelete}
-        />
-      ))}
-    </>
+    <div className="flex flex-col gap-2.5">
+      {sorted.map((group) => {
+        const isSelf = group.creator_id === currentUserId;
+        const isOpen = expanded.has(group.creator_id);
+        return (
+          <Card
+            key={group.creator_id}
+            className={cn(
+              'overflow-hidden border transition-all',
+              isSelf ? 'border-primary/30 bg-primary/5' : 'border-primary/10 bg-card'
+            )}
+          >
+            {/* Admin Header — clickable */}
+            <button
+              type="button"
+              onClick={() => {
+                const next = new Set(expanded);
+                if (next.has(group.creator_id)) next.delete(group.creator_id);
+                else next.add(group.creator_id);
+                setExpanded(next);
+              }}
+              className="flex w-full items-center gap-3 px-4 py-3 text-left"
+            >
+              {group.creator_picture_url ? (
+                <img
+                  src={group.creator_picture_url}
+                  alt=""
+                  className="size-10 rounded-full object-cover"
+                />
+              ) : (
+                <div className="flex size-10 items-center justify-center rounded-full bg-emerald-100">
+                  {isSelf ? (
+                    <Crown className="size-5 text-emerald-600" />
+                  ) : (
+                    <UserIcon className="size-5 text-emerald-600" />
+                  )}
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5">
+                  <span className="truncate font-bold">
+                    {isSelf ? 'วงแชร์ของฉัน' : group.creator_name}
+                  </span>
+                  {isSelf && (
+                    <span className="shrink-0 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[0.6rem] font-bold text-emerald-700">
+                      ฉัน
+                    </span>
+                  )}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {group.circles.length} วงแชร์
+                </div>
+              </div>
+              <ChevronDown
+                className={cn(
+                  'size-5 shrink-0 text-muted-foreground transition-transform',
+                  isOpen && 'rotate-180'
+                )}
+              />
+            </button>
+
+            {/* Circles list */}
+            {isOpen && (
+              <div className="flex flex-col gap-2 border-t border-primary/10 px-3 pb-3 pt-2">
+                {group.circles.map((circle) => (
+                  <CircleRow
+                    key={circle.id}
+                    circle={circle}
+                    isAdmin={isAdmin}
+                    showStatus={showStatus}
+                    onDelete={onDelete}
+                  />
+                ))}
+              </div>
+            )}
+          </Card>
+        );
+      })}
+    </div>
   );
 }
 
@@ -342,14 +443,13 @@ function CircleRow({
     <Link
       href={`/circles/${circle.id}`}
       className={cn(
-        'group flex items-center justify-between rounded-xl border border-primary/10 bg-card px-5 py-4 shadow-sm transition-all',
+        'group flex items-center justify-between rounded-xl border border-primary/10 bg-card px-4 py-3 shadow-sm transition-all',
         'hover:border-primary/30 hover:shadow-md active:scale-[0.99]'
       )}
     >
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <span className="truncate font-bold">{circle.name}</span>
-          {/* Circle type badge */}
           <span
             className={cn(
               'shrink-0 rounded-full px-1.5 py-0.5 text-[0.55rem] font-bold leading-tight',
