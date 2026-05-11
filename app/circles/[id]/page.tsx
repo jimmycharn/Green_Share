@@ -17,6 +17,7 @@ import { toast } from 'sonner';
 import { useUser } from '@/contexts/UserContext';
 import { authHeaders } from '@/lib/authHeaders';
 import { callAction } from '@/lib/api';
+import { subscribeToTable, unsubscribeChannel } from '@/lib/realtime';
 import { useConfirm } from '@/components/providers/ConfirmProvider';
 import {
   Dialog,
@@ -151,6 +152,19 @@ export default function CircleDetail() {
         })
         .catch(() => {});
     }
+    // Realtime subscriptions for live updates
+    const subs = [
+      subscribeToTable(`cp-${circleId}`, 'circle_players', `circle_id=eq.${circleId}`, fetchCircleDetail),
+      subscribeToTable(`slips-${circleId}`, 'slips', `circle_id=eq.${circleId}`, fetchCircleDetail),
+      subscribeToTable(`payouts-${circleId}`, 'admin_payments', `circle_id=eq.${circleId}`, fetchCircleDetail),
+      subscribeToTable(`bids-${circleId}`, 'bids', `circle_id=eq.${circleId}`, fetchCircleDetail),
+    ];
+    return () => {
+      unsubscribeChannel(`cp-${circleId}`);
+      unsubscribeChannel(`slips-${circleId}`);
+      unsubscribeChannel(`payouts-${circleId}`);
+      unsubscribeChannel(`bids-${circleId}`);
+    };
   }, [dbUser, circleId]);
 
   useEffect(() => {

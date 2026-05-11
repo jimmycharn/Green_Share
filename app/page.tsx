@@ -33,7 +33,8 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { subscribeToTable, unsubscribeChannel } from '@/lib/realtime';
 
 type Circle = {
   id: string;
@@ -111,6 +112,20 @@ export default function Home() {
       setJoinHouseLoading(false);
     }
   };
+
+  // Realtime subscriptions for new circles and player joins
+  useEffect(() => {
+    if (!memberId) return;
+    const channel = subscribeToTable(
+      `home-circles-${memberId}`,
+      'circles',
+      null,
+      () => mutate()
+    );
+    return () => {
+      unsubscribeChannel(`home-circles-${memberId}`);
+    };
+  }, [memberId, mutate]);
 
   if (isUserLoading) {
     return (
