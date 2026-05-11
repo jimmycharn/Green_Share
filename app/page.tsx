@@ -2,7 +2,17 @@
 
 import Link from 'next/link';
 import useSWR from 'swr';
-import { ChevronRight, ChevronDown, Plus, Trash2, Wallet, MessageCircle, HomeIcon, Crown, User as UserIcon } from 'lucide-react';
+import {
+  ChevronRight,
+  ChevronDown,
+  Plus,
+  Trash2,
+  Wallet,
+  MessageCircle,
+  HomeIcon,
+  Crown,
+  User as UserIcon,
+} from 'lucide-react';
 import { toast } from 'sonner';
 
 import { useUser } from '@/contexts/UserContext';
@@ -85,7 +95,7 @@ export default function Home() {
   const joinedCircles = filteredCircles
     .filter((c) => {
       const isCreator = isAdmin && c.creator_id === dbUser?.id;
-      const isPlaying = c.status === 'ACTIVE' || c.status === 'OPEN' || c.status === 'CLOSED';
+      const isPlaying = c.status === 'ACTIVE' || c.status === 'CLOSED';
       return (isCreator || c.is_participant) && isPlaying;
     })
     .slice(0, 5);
@@ -128,21 +138,20 @@ export default function Home() {
   // Realtime subscriptions for new circles and player joins
   useEffect(() => {
     if (!memberId) return;
-    const channel = subscribeToTable(
-      `home-circles-${memberId}`,
-      'circles',
-      null,
-      () => mutate()
-    );
+    const channel = subscribeToTable(`home-circles-${memberId}`, 'circles', null, () => mutate());
     return () => {
       unsubscribeChannel(`home-circles-${memberId}`);
     };
   }, [memberId, mutate]);
 
   // Polling fallback: refresh every 5s when tab is visible
-  usePolling(() => {
-    if (memberId) mutate();
-  }, 5000, !!memberId);
+  usePolling(
+    () => {
+      if (memberId) mutate();
+    },
+    5000,
+    Boolean(memberId)
+  );
 
   if (isUserLoading) {
     return (
@@ -348,7 +357,15 @@ function Section({
 }
 
 function groupCirclesByAdmin(circles: Circle[]) {
-  const groups = new Map<string, { creator_id: string; creator_name: string; creator_picture_url?: string | null; circles: Circle[] }>();
+  const groups = new Map<
+    string,
+    {
+      creator_id: string;
+      creator_name: string;
+      creator_picture_url?: string | null;
+      circles: Circle[];
+    }
+  >();
   for (const c of circles) {
     const cid = c.creator_id || 'unknown';
     if (!groups.has(cid)) {
@@ -458,9 +475,7 @@ function AdminCircleGroup({
                     </span>
                   )}
                 </div>
-                <div className="text-xs text-muted-foreground">
-                  {group.circles.length} วงแชร์
-                </div>
+                <div className="text-xs text-muted-foreground">{group.circles.length} วงแชร์</div>
               </div>
               <ChevronDown
                 className={cn(
@@ -502,12 +517,16 @@ function CircleRow({
   showStatus?: boolean;
   onDelete: (c: Circle) => void;
 }) {
+  const isJoinedOpen = circle.status === 'OPEN' && circle.is_participant;
+
   return (
     <Link
       href={`/circles/${circle.id}`}
       className={cn(
-        'group flex items-center justify-between rounded-xl border border-primary/10 bg-card px-4 py-3 shadow-sm transition-all',
-        'hover:border-primary/30 hover:shadow-md active:scale-[0.99]'
+        'group flex items-center justify-between rounded-xl border px-4 py-3 shadow-sm transition-all hover:shadow-md active:scale-[0.99]',
+        isJoinedOpen
+          ? 'border-emerald-300 bg-emerald-50 hover:border-emerald-400'
+          : 'border-primary/10 bg-card hover:border-primary/30'
       )}
     >
       <div className="min-w-0 flex-1">
@@ -526,6 +545,11 @@ function CircleRow({
           {showStatus && (
             <Badge variant="success" className="text-[0.55rem]">
               {circle.status}
+            </Badge>
+          )}
+          {isJoinedOpen && (
+            <Badge className="bg-emerald-100 text-emerald-700 text-[0.55rem] border-none">
+              คุณจองมือแล้ว
             </Badge>
           )}
           {isAdmin && (
