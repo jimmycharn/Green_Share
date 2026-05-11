@@ -94,19 +94,19 @@ export default function MembersPage() {
     mutate,
   } = useSWR<{ status: string; members?: Member[]; message?: string }>(
     memberId ? ['get_members', { member_id: memberId }] : null,
-    swrFetcher as any,
+    swrFetcher as any
   );
 
-  const members: Member[] = response?.status === 'success' ? response.members ?? [] : [];
+  const members: Member[] = response?.status === 'success' ? (response.members ?? []) : [];
 
   // Fetch caller's banks (for bank-assignment action). Only for admin roles.
   const isCallerAdmin =
-    !!dbUser && (dbUser.role === 'SUPERADMIN' || dbUser.role === 'ADMIN');
+    Boolean(dbUser) && (dbUser.role === 'SUPERADMIN' || dbUser.role === 'ADMIN');
   const { data: dashboardResp } = useSWR<{ status: string; banks?: Bank[] }>(
     isCallerAdmin && memberId
       ? ['get_admin_dashboard', { caller_id: memberId, caller_role: dbUser.role }]
       : null,
-    swrFetcher as any,
+    swrFetcher as any
   );
   const myBanks: Bank[] = dashboardResp?.banks ?? [];
 
@@ -286,7 +286,7 @@ export default function MembersPage() {
       (m) =>
         m.id !== dbUser.id &&
         !ADMIN_ROLES.has(m.role) &&
-        m.member_houses?.some((h) => h.admin_id === dbUser.id),
+        m.member_houses?.some((h) => h.admin_id === dbUser.id)
     );
   } else {
     myHouseAdmin = members.find((m) => ADMIN_ROLES.has(m.role)) ?? null;
@@ -298,9 +298,7 @@ export default function MembersPage() {
     : [];
 
   const getMembersByAdmin = (adminId: string) =>
-    members.filter(
-      (m) => m.id !== adminId && m.member_houses?.some((h) => h.admin_id === adminId),
-    );
+    members.filter((m) => m.id !== adminId && m.member_houses?.some((h) => h.admin_id === adminId));
 
   const myHouseContent = (
     <div className="flex flex-col gap-3">
@@ -366,7 +364,7 @@ export default function MembersPage() {
                 'flex cursor-pointer items-center gap-4 p-5 transition-all',
                 expanded
                   ? 'border-2 border-primary bg-primary/5'
-                  : 'hover:border-primary/30 hover:shadow-md',
+                  : 'hover:border-primary/30 hover:shadow-md'
               )}
             >
               <Avatar className="size-12 shrink-0 rounded-2xl">
@@ -382,8 +380,9 @@ export default function MembersPage() {
                 </AvatarFallback>
               </Avatar>
               <div className="min-w-0 flex-1">
-                <div className="truncate text-base font-extrabold">
-                  {displayNameOf(admin)}
+                <div className="truncate text-base font-extrabold">{displayNameOf(admin)}</div>
+                <div className="truncate font-mono text-[0.7rem] text-muted-foreground">
+                  ID: {admin.id}
                 </div>
                 <div className="flex items-center gap-1 truncate text-sm text-muted-foreground">
                   <Phone className="size-3.5" />
@@ -490,14 +489,10 @@ export default function MembersPage() {
 
 /* ----- Sub-components ----- */
 
-function SectionTitle({
-  children,
-  className,
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return <h3 className={cn('mb-1 text-base font-extrabold text-foreground', className)}>{children}</h3>;
+function SectionTitle({ children, className }: { children: React.ReactNode; className?: string }) {
+  return (
+    <h3 className={cn('mb-1 text-base font-extrabold text-foreground', className)}>{children}</h3>
+  );
 }
 
 function MemberCard({
@@ -526,15 +521,10 @@ function MemberCard({
         'flex items-center gap-3',
         mini ? 'p-3.5' : 'p-4',
         isSelf && 'border-primary bg-primary/5',
-        isBlocked && 'opacity-60',
+        isBlocked && 'opacity-60'
       )}
     >
-      <Avatar
-        className={cn(
-          'shrink-0 rounded-2xl',
-          mini ? 'size-10' : 'size-12',
-        )}
-      >
+      <Avatar className={cn('shrink-0 rounded-2xl', mini ? 'size-10' : 'size-12')}>
         {member.picture_url ? (
           <AvatarImage
             src={member.picture_url}
@@ -545,9 +535,7 @@ function MemberCard({
         <AvatarFallback
           className={cn(
             'rounded-2xl text-white',
-            isMemberAdmin
-              ? 'bg-gradient-to-br from-emerald-400 to-emerald-600'
-              : 'bg-slate-700',
+            isMemberAdmin ? 'bg-gradient-to-br from-emerald-400 to-emerald-600' : 'bg-slate-700'
           )}
         >
           {isMemberAdmin ? (
@@ -559,7 +547,12 @@ function MemberCard({
       </Avatar>
 
       <div className="min-w-0 flex-1">
-        <div className={cn('flex items-center gap-2 truncate font-extrabold', mini ? 'text-sm' : 'text-base')}>
+        <div
+          className={cn(
+            'flex items-center gap-2 truncate font-extrabold',
+            mini ? 'text-sm' : 'text-base'
+          )}
+        >
           <span className="truncate">{displayNameOf(member)}</span>
           {isSelf && <span className="text-primary">(ฉัน)</span>}
           {isPending && (
@@ -576,7 +569,7 @@ function MemberCard({
         <div
           className={cn(
             'flex items-center gap-1 truncate text-muted-foreground',
-            mini ? 'text-xs' : 'text-sm',
+            mini ? 'text-xs' : 'text-sm'
           )}
         >
           <Phone className={mini ? 'size-3' : 'size-3.5'} />
@@ -667,11 +660,12 @@ function SettingsDialog({
   // Nicknames are private to the viewer.
   // • SUPERADMIN can label anyone.
   // • ADMIN can label only members in their own house.
-  const canEditNickname = callerRole === 'SUPERADMIN' || (callerRole === 'ADMIN' && !!inMyHouse);
+  const canEditNickname =
+    callerRole === 'SUPERADMIN' || (callerRole === 'ADMIN' && Boolean(inMyHouse));
   // Transfer is a Superadmin-only action and only makes sense for non-admin members
   // (you don't transfer the Superadmin's own admins between houses).
   const canTransfer =
-    callerRole === 'SUPERADMIN' && !ADMIN_ROLES.has(member.role) && !!member.house_id;
+    callerRole === 'SUPERADMIN' && !ADMIN_ROLES.has(member.role) && Boolean(member.house_id);
   const nicknameChanged = (nicknameDraft || '').trim() !== (member.custom_nickname || '').trim();
 
   const currentAdminId = member.member_houses?.find((h) => h.id === member.house_id)?.admin_id;
@@ -696,7 +690,7 @@ function SettingsDialog({
 
   return (
     <Dialog
-      open={!!member}
+      open={Boolean(member)}
       onOpenChange={(open) => {
         if (!open) onClose();
       }}
@@ -738,7 +732,9 @@ function SettingsDialog({
             {(member.custom_nickname || nicknameDraft) && (
               <span className="text-[0.7rem] text-muted-foreground">
                 ชื่อจริง: {member.name}
-                {member.nickname && member.nickname !== member.name && ` · LINE: ${member.nickname}`}
+                {member.nickname &&
+                  member.nickname !== member.name &&
+                  ` · LINE: ${member.nickname}`}
               </span>
             )}
           </div>
@@ -782,7 +778,7 @@ function SettingsDialog({
               className={cn(
                 'justify-center gap-2',
                 !isBlocked &&
-                  'border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 hover:text-rose-800',
+                  'border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 hover:text-rose-800'
               )}
             >
               <Ban className="size-4" />
@@ -867,7 +863,11 @@ function SettingsDialog({
                   >
                     <Avatar className="size-9 shrink-0 rounded-xl">
                       {a.picture_url ? (
-                        <AvatarImage src={a.picture_url} alt={displayNameOf(a)} className="object-cover" />
+                        <AvatarImage
+                          src={a.picture_url}
+                          alt={displayNameOf(a)}
+                          className="object-cover"
+                        />
                       ) : null}
                       <AvatarFallback className="rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 text-white">
                         <Crown className="size-4" />
@@ -983,14 +983,17 @@ function formatBaht(n: number): string {
   return n.toLocaleString();
 }
 
-const CIRCLE_STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'warning' | 'destructive' | 'outline'> = {
+const CIRCLE_STATUS_VARIANT: Record<
+  string,
+  'default' | 'secondary' | 'warning' | 'destructive' | 'outline'
+> = {
   OPEN: 'warning',
   ACTIVE: 'default',
   CLOSED: 'secondary',
 };
 
 function isStairCircle(type?: string) {
-  return !!type && type.includes('ขั้นบันได');
+  return Boolean(type) && type.includes('ขั้นบันได');
 }
 
 type CircleStatusFilter = 'ALL' | 'OPEN' | 'ACTIVE' | 'CLOSED';
@@ -1021,7 +1024,7 @@ function AdminCirclesSection({ adminId }: { adminId: string }) {
     revalidateOnFocus: true,
   });
 
-  const circles = data?.status === 'success' ? data.circles ?? [] : [];
+  const circles = data?.status === 'success' ? (data.circles ?? []) : [];
 
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<CircleStatusFilter>('ALL');
@@ -1143,7 +1146,7 @@ function AdminCirclesSection({ adminId }: { adminId: string }) {
                     active
                       ? 'border-primary bg-primary text-primary-foreground'
                       : 'border-border bg-background text-muted-foreground hover:bg-muted',
-                    count === 0 && f.value !== 'ALL' && 'opacity-40',
+                    count === 0 && f.value !== 'ALL' && 'opacity-40'
                   )}
                 >
                   {f.label} ({count})
@@ -1164,7 +1167,7 @@ function AdminCirclesSection({ adminId }: { adminId: string }) {
                     'rounded-full border px-2.5 py-0.5 text-[0.7rem] font-medium transition-colors',
                     active
                       ? 'border-primary bg-primary/10 text-primary'
-                      : 'border-border bg-background text-muted-foreground hover:bg-muted',
+                      : 'border-border bg-background text-muted-foreground hover:bg-muted'
                   )}
                 >
                   {f.label}
@@ -1203,7 +1206,7 @@ function CircleRow({ circle }: { circle: AdminCircle }) {
           <div
             className={cn(
               'flex size-9 shrink-0 items-center justify-center rounded-xl text-white',
-              stair ? 'bg-blue-500' : 'bg-orange-500',
+              stair ? 'bg-blue-500' : 'bg-orange-500'
             )}
             aria-hidden
           >
@@ -1232,8 +1235,8 @@ function CircleRow({ circle }: { circle: AdminCircle }) {
               <span>ผู้เล่น {players.length}</span>
             </div>
             {(circle.status || '').toUpperCase() === 'ACTIVE' &&
-              !!circle.total_hands &&
-              !!circle.current_period && (
+              Boolean(circle.total_hands) &&
+              Boolean(circle.current_period) && (
                 <div className="mt-1 flex items-center gap-2">
                   <div className="h-1 flex-1 overflow-hidden rounded-full bg-muted">
                     <div
@@ -1252,7 +1255,7 @@ function CircleRow({ circle }: { circle: AdminCircle }) {
           <ChevronDown
             className={cn(
               'size-4 shrink-0 text-muted-foreground transition-transform',
-              open && 'rotate-180',
+              open && 'rotate-180'
             )}
           />
         </button>
@@ -1269,9 +1272,7 @@ function CircleRow({ circle }: { circle: AdminCircle }) {
       {open && (
         <div className="flex flex-col divide-y border-t bg-muted/20">
           {players.length === 0 ? (
-            <div className="p-3 text-center text-xs text-muted-foreground">
-              ยังไม่มีผู้เล่น
-            </div>
+            <div className="p-3 text-center text-xs text-muted-foreground">ยังไม่มีผู้เล่น</div>
           ) : (
             players.map((p) => <CirclePlayerItem key={`${p.member_id}-${p.hand_no}`} player={p} />)
           )}
@@ -1282,8 +1283,7 @@ function CircleRow({ circle }: { circle: AdminCircle }) {
 }
 
 function CirclePlayerItem({ player }: { player: CirclePlayer }) {
-  const display =
-    player.custom_nickname?.trim() || player.nickname?.trim() || player.name;
+  const display = player.custom_nickname?.trim() || player.nickname?.trim() || player.name;
   return (
     <div className="flex items-center gap-3 p-2.5">
       <span className="w-7 shrink-0 text-center font-mono text-xs text-muted-foreground">
