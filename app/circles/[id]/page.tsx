@@ -11,7 +11,7 @@ import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { supabase } from '@/lib/supabase';
 import Script from 'next/script';
 import Link from 'next/link';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { useUser } from '@/contexts/UserContext';
@@ -51,6 +51,7 @@ type Bank = AnyRecord & {
 export default function CircleDetail() {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const circleId = params.id as string;
   const confirm = useConfirm();
   const { dbUser, profile, liff, isLoading: isUserLoading } = useUser() as any;
@@ -211,9 +212,10 @@ export default function CircleDetail() {
       setPeriodDates(data.periodDates || []);
       setMyBank(data.myBank);
 
-      // Conditional Default Tab
+      // Conditional Default Tab — respect ?tab= query param
       if (!activeTab) {
-        setActiveTab('timeline');
+        const urlTab = searchParams.get('tab');
+        setActiveTab(urlTab === 'members' ? 'members' : 'timeline');
       }
     } else {
       setMessage({ type: 'error', text: data.message || 'ไม่พบวงแชร์นี้' });
