@@ -202,9 +202,8 @@ export default function Home() {
             placeholder="🔍 ค้นหาชื่อวงแชร์..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-xl border border-border bg-background px-4 py-2.5 pl-10 text-sm outline-none focus:border-primary"
+            className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary"
           />
-          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground">🔍</span>
         </div>
         <div className="flex gap-2">
           {(['ALL', 'OPEN', 'ACTIVE', 'CLOSED'] as const).map((s) => (
