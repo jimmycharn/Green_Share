@@ -3027,7 +3027,7 @@ export default function CircleDetail() {
               });
               return eligibleMembers.map((m) => (
                 <option key={m.id} value={m.id}>
-                  {m.name} ({m.nickname || m.id})
+                  {m.custom_nickname || m.name} ({m.nickname || m.id})
                 </option>
               ));
             })()}
