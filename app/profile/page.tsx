@@ -285,21 +285,21 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="animate-fade-in">
-      <Card className="p-6">
-        <div className="mb-5 flex items-center gap-3">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={() => setView('menu')}
-            aria-label="กลับ"
-          >
-            <ArrowLeft className="size-5 text-primary" />
-          </Button>
-          <h3 className="m-0 text-lg font-bold">แก้ไขข้อมูลโปรไฟล์</h3>
-        </div>
+    <div className="animate-fade-in flex flex-col gap-3 pt-2.5">
+      <div className="mb-2 flex items-center gap-3">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={() => setView('menu')}
+          aria-label="กลับ"
+        >
+          <ArrowLeft className="size-5 text-primary" />
+        </Button>
+        <h3 className="m-0 text-lg font-extrabold">แก้ไขข้อมูลโปรไฟล์</h3>
+      </div>
 
+      <Card className="p-6">
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
           <Field label="ชื่อ-นามสกุลจริง" error={errors.name?.message}>
             <Input {...register('name')} autoComplete="name" />
