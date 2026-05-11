@@ -238,6 +238,15 @@ export default function CircleDetail() {
         const urlTab = searchParams.get('tab');
         setActiveTab(urlTab === 'members' ? 'members' : 'timeline');
       }
+
+      // Auto-expand period from ?period= query param
+      const urlPeriod = searchParams.get('period');
+      if (urlPeriod) {
+        const p = parseInt(urlPeriod, 10);
+        if (!isNaN(p) && p >= 1 && p <= data.total_hands) {
+          setExpandedPeriod(p);
+        }
+      }
     } else {
       setMessage({ type: 'error', text: data.message || 'ไม่พบวงแชร์นี้' });
     }
