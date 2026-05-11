@@ -19,6 +19,8 @@ import { authHeaders } from '@/lib/authHeaders';
 import { callAction } from '@/lib/api';
 import { subscribeToTable, unsubscribeChannel } from '@/lib/realtime';
 import { usePolling } from '@/lib/polling';
+import QRCode from 'qrcode';
+import { generatePromptPayPayload, buildBankQRText } from '@/lib/promptpay';
 import { useConfirm } from '@/components/providers/ConfirmProvider';
 import {
   Dialog,
@@ -121,6 +123,7 @@ export default function CircleDetail() {
   const [bidAmount, setBidAmount] = useState<string>('');
   const [paymentMode, setPaymentMode] = useState<'TRANSFER' | 'CASH'>('TRANSFER');
   const [myBank, setMyBank] = useState<Bank | null>(null);
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [settingsData, setSettingsData] = useState<AnyRecord>({
     name: '',
     line_group_url: '',
@@ -173,6 +176,24 @@ export default function CircleDetail() {
   usePolling(() => {
     if (circleId && dbUser) fetchCircleDetail();
   }, 5000, !!(circleId && dbUser));
+
+  // Generate QR code for bank transfer when myBank is available
+  useEffect(() => {
+    if (!myBank?.account_no) {
+      setQrDataUrl(null);
+      return;
+    }
+    const payload = generatePromptPayPayload(myBank.account_no);
+    // If generatePromptPayPayload returns just the account number (not a PromptPay payload),
+    // fall back to a plain text QR
+    const qrText =
+      payload === myBank.account_no
+        ? buildBankQRText(myBank.bank_name || '', myBank.account_no, myBank.account_name || '')
+        : payload;
+    QRCode.toDataURL(qrText, { width: 200, margin: 2, color: { dark: '#000000', light: '#ffffff' } })
+      .then((url) => setQrDataUrl(url))
+      .catch(() => setQrDataUrl(null));
+  }, [myBank]);
 
   useEffect(() => {
     if (!circleId) return;
@@ -2346,6 +2367,46 @@ export default function CircleDetail() {
                                     })()
                                   ))}
 
+                                {/* QR Code for member payment */}
+                                {canPay && !isCircleAdmin && qrDataUrl && myBank && (
+                                  <div
+                                    style={{
+                                      flex: '1 1 100%',
+                                      display: 'flex',
+                                      flexDirection: 'column',
+                                      alignItems: 'center',
+                                      gap: '8px',
+                                      padding: '16px',
+                                      background: '#f8fafc',
+                                      borderRadius: '12px',
+                                      border: '1px dashed #cbd5e1',
+                                    }}
+                                  >
+                                    <div style={{ fontSize: '0.8rem', fontWeight: '700', color: '#475569' }}>
+                                      📱 สแกน QR โอนเงิน
+                                    </div>
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img
+                                      src={qrDataUrl}
+                                      alt="QR Code โอนเงิน"
+                                      style={{ width: '180px', height: '180px', borderRadius: '8px' }}
+                                    />
+                                    <div style={{ textAlign: 'center', fontSize: '0.75rem', color: '#64748b' }}>
+                                      <div style={{ fontWeight: '600' }}>{myBank.bank_name}</div>
+                                      <div>{myBank.account_no}</div>
+                                      <div>{myBank.account_name}</div>
+                                    </div>
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => copyToClipboard(myBank.account_no || '')}
+                                    >
+                                      📋 คัดลอกเลขบัญชี
+                                    </Button>
+                                  </div>
+                                )}
+
                                 {canPay && (
                                   <button
                                     onClick={async () => {
@@ -2521,6 +2582,46 @@ export default function CircleDetail() {
                             {/* Staircase/Fixed Interest Logic */}
                             {circle.type === 'ขั้นบันได (ดอกคงที่)' && (
                               <>
+                                {/* QR Code for member payment */}
+                                {canPay && !isCircleAdmin && qrDataUrl && myBank && (
+                                  <div
+                                    style={{
+                                      flex: '1 1 100%',
+                                      display: 'flex',
+                                      flexDirection: 'column',
+                                      alignItems: 'center',
+                                      gap: '8px',
+                                      padding: '16px',
+                                      background: '#f8fafc',
+                                      borderRadius: '12px',
+                                      border: '1px dashed #cbd5e1',
+                                    }}
+                                  >
+                                    <div style={{ fontSize: '0.8rem', fontWeight: '700', color: '#475569' }}>
+                                      📱 สแกน QR โอนเงิน
+                                    </div>
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img
+                                      src={qrDataUrl}
+                                      alt="QR Code โอนเงิน"
+                                      style={{ width: '180px', height: '180px', borderRadius: '8px' }}
+                                    />
+                                    <div style={{ textAlign: 'center', fontSize: '0.75rem', color: '#64748b' }}>
+                                      <div style={{ fontWeight: '600' }}>{myBank.bank_name}</div>
+                                      <div>{myBank.account_no}</div>
+                                      <div>{myBank.account_name}</div>
+                                    </div>
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => copyToClipboard(myBank.account_no || '')}
+                                    >
+                                      📋 คัดลอกเลขบัญชี
+                                    </Button>
+                                  </div>
+                                )}
+
                                 {canPay && (
                                   <button
                                     onClick={async () => {
