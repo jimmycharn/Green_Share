@@ -3,7 +3,15 @@ import { supabaseAdmin } from '@/lib/supabase';
 import { getAuthUser } from '@/lib/auth';
 import { validateAction, PUBLIC_ACTIONS, SELF_MEMBER_ACTIONS } from '@/lib/schemas';
 import { rateLimit } from '@/lib/ratelimit';
-import { registerMember, updateProfile, getMembers, checkMember } from '@/lib/controllers/member';
+import {
+  registerMember,
+  updateProfile,
+  getMembers,
+  checkMember,
+  requestJoinHouse,
+  getMyHouses,
+  generateHouseInvite,
+} from '@/lib/controllers/member';
 import {
   createCircle,
   getCircles,
@@ -90,6 +98,9 @@ const HANDLERS = {
   regenerate_period_dates: regeneratePeriodDates,
   get_period_dates: getPeriodDates,
   remove_empty_hand: removeEmptyHand,
+  request_join_house: requestJoinHouse,
+  get_my_houses: getMyHouses,
+  generate_house_invite: generateHouseInvite,
 };
 
 function errorResponse(message, status = 400, extra = {}) {

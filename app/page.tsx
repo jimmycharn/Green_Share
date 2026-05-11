@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import useSWR from 'swr';
-import { ChevronRight, Plus, Trash2, Wallet, MessageCircle } from 'lucide-react';
+import { ChevronRight, Plus, Trash2, Wallet, MessageCircle, HomeIcon } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { useUser } from '@/contexts/UserContext';
@@ -23,6 +23,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useState } from 'react';
 
 type Circle = {
@@ -52,6 +62,9 @@ export default function Home() {
   const circles = circlesResponse?.status === 'success' ? (circlesResponse.circles ?? []) : [];
 
   const [pendingDelete, setPendingDelete] = useState<Circle | null>(null);
+  const [joinHouseOpen, setJoinHouseOpen] = useState(false);
+  const [joinHouseCode, setJoinHouseCode] = useState('');
+  const [joinHouseLoading, setJoinHouseLoading] = useState(false);
 
   const isAdmin = dbUser?.role === 'SUPERADMIN' || dbUser?.role === 'ADMIN';
   const newCircles = circles.filter((c) => c.status === 'OPEN').slice(0, 5);
@@ -75,6 +88,26 @@ export default function Home() {
       toast.error(result.message || 'การลบไม่สำเร็จ');
     }
     setPendingDelete(null);
+  };
+
+  const handleJoinHouse = async () => {
+    if (!joinHouseCode.trim()) return;
+    setJoinHouseLoading(true);
+    try {
+      const result = await callAction('request_join_house', { house_code: joinHouseCode.trim() });
+      if (result.status === 'success') {
+        toast.success(result.message);
+        setJoinHouseOpen(false);
+        setJoinHouseCode('');
+        mutate();
+      } else {
+        toast.error(result.message || 'ไม่สามารถส่งคำขอได้');
+      }
+    } catch {
+      toast.error('การเชื่อมต่อขัดข้อง กรุณาลองใหม่');
+    } finally {
+      setJoinHouseLoading(false);
+    }
   };
 
   if (isUserLoading) {
@@ -116,6 +149,15 @@ export default function Home() {
       <header className="mb-6 mt-2.5">
         <h2 className="m-0 text-2xl font-extrabold">สวัสดีครับ! 🌿</h2>
         <p className="mt-1 text-sm text-muted-foreground">วันนี้มีอะไรให้ช่วยจัดการไหมครับ?</p>
+        <Button
+          variant="outline"
+          size="sm"
+          className="mt-3 w-full"
+          onClick={() => setJoinHouseOpen(true)}
+        >
+          <HomeIcon className="mr-1.5 size-4 text-primary" />
+          เข้าร่วมบ้านแชร์อื่น
+        </Button>
       </header>
 
       {/* New Circles */}
@@ -184,6 +226,34 @@ export default function Home() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Join House Dialog */}
+      <Dialog open={joinHouseOpen} onOpenChange={setJoinHouseOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>🏠 เข้าร่วมบ้านแชร์อื่น</DialogTitle>
+            <DialogDescription>กรอกรหัสบ้านที่ได้รับจากท้าวแชร์</DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-3">
+            <Label htmlFor="house-code">รหัสบ้านแชร์ (house code)</Label>
+            <Input
+              id="house-code"
+              value={joinHouseCode}
+              onChange={(e) => setJoinHouseCode(e.target.value)}
+              placeholder="M0001"
+              onKeyDown={(e) => e.key === 'Enter' && handleJoinHouse()}
+            />
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setJoinHouseOpen(false)}>
+              ยกเลิก
+            </Button>
+            <Button onClick={handleJoinHouse} disabled={joinHouseLoading || !joinHouseCode.trim()}>
+              {joinHouseLoading ? 'กำลังส่ง...' : 'ส่งคำขอ'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
