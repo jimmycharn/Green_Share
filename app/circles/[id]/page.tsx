@@ -18,6 +18,7 @@ import { useUser } from '@/contexts/UserContext';
 import { authHeaders } from '@/lib/authHeaders';
 import { callAction } from '@/lib/api';
 import { subscribeToTable, unsubscribeChannel } from '@/lib/realtime';
+import { usePolling } from '@/lib/polling';
 import { useConfirm } from '@/components/providers/ConfirmProvider';
 import {
   Dialog,
@@ -166,6 +167,11 @@ export default function CircleDetail() {
       unsubscribeChannel(`bids-${circleId}`);
     };
   }, [dbUser, circleId]);
+
+  // Polling fallback: refresh every 5s when tab is visible
+  usePolling(() => {
+    if (circleId && dbUser) fetchCircleDetail();
+  }, 5000, !!(circleId && dbUser));
 
   useEffect(() => {
     if (!circleId) return;
