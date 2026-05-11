@@ -359,12 +359,12 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="mb-8">
-      <div className="mb-4 flex items-center justify-between">
+    <section className="mb-6">
+      <div className="mb-3 flex items-center justify-between">
         <h3 className="m-0 text-base font-bold">{title}</h3>
         {action}
       </div>
-      <div className="flex flex-col gap-2.5">{children}</div>
+      <div className="flex flex-col gap-2">{children}</div>
     </section>
   );
 }
@@ -460,7 +460,7 @@ function AdminCircleGroup({
                 else next.add(group.creator_id);
                 setExpanded(next);
               }}
-              className="flex w-full items-center gap-3 px-4 py-3 text-left"
+              className="flex w-full items-center gap-3 px-3 py-2.5 text-left"
             >
               {group.creator_picture_url ? (
                 <img
@@ -500,7 +500,7 @@ function AdminCircleGroup({
 
             {/* Circles list */}
             {isOpen && (
-              <div className="flex flex-col gap-2 border-t border-primary/10 px-3 pb-3 pt-2">
+              <div className="flex flex-col gap-2 border-t border-primary/10 px-2.5 pb-2.5 pt-2">
                 {group.circles.map((circle) => (
                   <CircleRow
                     key={circle.id}
@@ -536,7 +536,7 @@ function CircleRow({
     <Link
       href={`/circles/${circle.id}`}
       className={cn(
-        'group flex items-center justify-between rounded-xl border px-4 py-3 shadow-sm transition-all hover:shadow-md active:scale-[0.99]',
+        'group flex items-center justify-between rounded-xl border px-3 py-2.5 shadow-sm transition-all hover:shadow-md active:scale-[0.99]',
         isJoinedOpen
           ? 'border-emerald-300 bg-emerald-50 hover:border-emerald-400'
           : 'border-primary/10 bg-card hover:border-primary/30'
