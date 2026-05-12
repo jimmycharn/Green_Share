@@ -1075,8 +1075,9 @@ const CIRCLE_STATUS_VARIANT: Record<
   CLOSED: 'secondary',
 };
 
-function isStairCircle(type?: string) {
-  return Boolean(type) && type.includes('ขั้นบันได');
+function isStairCircle(type?: string): boolean {
+  if (!type) return false;
+  return type.includes('ขั้นบันได');
 }
 
 type CircleStatusFilter = 'ALL' | 'OPEN' | 'ACTIVE' | 'CLOSED';
