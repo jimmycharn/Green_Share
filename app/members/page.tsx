@@ -665,18 +665,6 @@ function MemberCard({
               ไม่รับ
             </Button>
           )}
-          {!isPending && !isBlocked && onRemove && (
-            <Button
-              type="button"
-              size="icon"
-              variant="ghost"
-              onClick={() => onRemove(member)}
-              className="text-destructive hover:bg-destructive/10"
-              aria-label={`ลบ ${member.name}`}
-            >
-              <Trash2 className="size-5" />
-            </Button>
-          )}
           {onSettings && !isPending && (
             <Button
               type="button"
