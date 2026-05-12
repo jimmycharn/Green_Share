@@ -506,7 +506,7 @@ export default function MembersPage() {
       onAssignBank={handleAssignBank}
       onSetNickname={handleSetNickname}
       onTransfer={handleTransfer}
-      onDelete={handleDelete}
+      onDelete={handleRemove}
       banks={myBanks}
       admins={adminMembers}
       callerRole={dbUser.role}
