@@ -324,12 +324,17 @@ export default function MembersPage() {
 
   if (isAdmin) {
     myHouseAdmin = dbUser as Member;
-    myHouseMembers = members.filter(
-      (m) =>
-        m.id !== dbUser.id &&
-        !ADMIN_ROLES.has(m.role) &&
-        m.member_houses?.some((h) => h.admin_id === dbUser.id)
-    );
+    myHouseMembers = members
+      .filter(
+        (m) =>
+          m.id !== dbUser.id &&
+          !ADMIN_ROLES.has(m.role) &&
+          m.member_houses?.some((h) => h.admin_id === dbUser.id)
+      )
+      .map((m) => {
+        const houseInfo = m.member_houses?.find((h) => h.admin_id === dbUser.id);
+        return { ...m, house_id: houseInfo?.id, house_status: houseInfo?.status };
+      });
   } else {
     myHouseAdmin = members.find((m) => ADMIN_ROLES.has(m.role)) ?? null;
     myHouseMembers = members.filter((m) => !ADMIN_ROLES.has(m.role));
@@ -340,7 +345,12 @@ export default function MembersPage() {
     : [];
 
   const getMembersByAdmin = (adminId: string) =>
-    members.filter((m) => m.id !== adminId && m.member_houses?.some((h) => h.admin_id === adminId));
+    members
+      .filter((m) => m.id !== adminId && m.member_houses?.some((h) => h.admin_id === adminId))
+      .map((m) => {
+        const houseInfo = m.member_houses?.find((h) => h.admin_id === adminId);
+        return { ...m, house_id: houseInfo?.id, house_status: houseInfo?.status };
+      });
 
   const myHouseContent = (
     <div className="flex flex-col gap-3">
