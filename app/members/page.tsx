@@ -151,6 +151,48 @@ export default function MembersPage() {
     }
   };
 
+  const handleReject = async (target: Member) => {
+    const ok = await confirm({
+      title: 'ไม่รับสมาชิก',
+      description: `ยืนยันไม่รับคุณ ${target.name} เข้าบ้านแชร์?`,
+      destructive: true,
+    });
+    if (!ok) return;
+
+    const result = await callAction('remove_house_member', {
+      caller_id: dbUser.id,
+      caller_role: dbUser.role,
+      house_id: target.house_id,
+    });
+    if (result.status === 'success') {
+      toast.success(result.message || 'ลบคำขอเรียบร้อย');
+      mutate();
+    } else {
+      toast.error(result.message || 'ดำเนินการล้มเหลว');
+    }
+  };
+
+  const handleRemove = async (target: Member) => {
+    const ok = await confirm({
+      title: 'ลบสมาชิก',
+      description: `ยืนยันลบคุณ ${target.name} ออกจากบ้านแชร์?\n(สมาชิกที่กำลังเล่นวงแชร์จะไม่สามารถลบได้)`,
+      destructive: true,
+    });
+    if (!ok) return;
+
+    const result = await callAction('remove_house_member', {
+      caller_id: dbUser.id,
+      caller_role: dbUser.role,
+      house_id: target.house_id,
+    });
+    if (result.status === 'success') {
+      toast.success(result.message || 'ลบสมาชิกออกจากบ้านเรียบร้อย');
+      mutate();
+    } else {
+      toast.error(result.message || 'ดำเนินการล้มเหลว');
+    }
+  };
+
   const handleUpdateRole = async (target: Member, newRole: Role) => {
     const result = await callAction('update_member_role', {
       caller_id: dbUser.id,
@@ -343,6 +385,8 @@ export default function MembersPage() {
             member={m}
             dbUser={dbUser}
             onApprove={handleApprove}
+            onReject={handleReject}
+            onRemove={handleRemove}
             onSettings={openSettings}
           />
         ))
@@ -421,6 +465,8 @@ export default function MembersPage() {
                         member={m}
                         dbUser={dbUser}
                         onApprove={handleApprove}
+                        onReject={handleReject}
+                        onRemove={handleRemove}
                         onSettings={openSettings}
                         mini
                       />
@@ -499,6 +545,8 @@ function MemberCard({
   member,
   dbUser,
   onApprove,
+  onReject,
+  onRemove,
   onSettings,
   isSelf = false,
   mini = false,
@@ -506,6 +554,8 @@ function MemberCard({
   member: Member;
   dbUser: any;
   onApprove?: (m: Member) => void;
+  onReject?: (m: Member) => void;
+  onRemove?: (m: Member) => void;
   onSettings?: (m: Member) => void;
   isSelf?: boolean;
   mini?: boolean;
@@ -592,6 +642,29 @@ function MemberCard({
               className="border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800"
             >
               อนุมัติ
+            </Button>
+          )}
+          {isPending && onReject && (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => onReject(member)}
+              className="border-red-200 bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-800"
+            >
+              ไม่รับ
+            </Button>
+          )}
+          {!isPending && !isBlocked && onRemove && (
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              onClick={() => onRemove(member)}
+              className="text-destructive hover:bg-destructive/10"
+              aria-label={`ลบ ${member.name}`}
+            >
+              <Trash2 className="size-5" />
             </Button>
           )}
           {onSettings && (
@@ -993,7 +1066,7 @@ const CIRCLE_STATUS_VARIANT: Record<
 };
 
 function isStairCircle(type?: string) {
-  return !!type && type.includes('ขั้นบันได');
+  return Boolean(type) && type.includes('ขั้นบันได');
 }
 
 type CircleStatusFilter = 'ALL' | 'OPEN' | 'ACTIVE' | 'CLOSED';
