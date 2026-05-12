@@ -677,7 +677,7 @@ function MemberCard({
               <Trash2 className="size-5" />
             </Button>
           )}
-          {onSettings && (
+          {onSettings && !isPending && (
             <Button
               type="button"
               size="icon"
